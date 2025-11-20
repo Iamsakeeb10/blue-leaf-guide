@@ -1,20 +1,75 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/button.dart';
 import '../../../../shared/widgets/text_field.dart' as CustomTextField;
 import '../../../onboarding/presentation/widgets/onboarding_widgets.dart';
+import '../../providers/auth_provider.dart';
 
-class SignInScreen extends StatelessWidget {
+class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
+  State<SignInScreen> createState() => _SignInScreenState();
+}
 
+class _SignInScreenState extends State<SignInScreen> {
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  bool _obscurePassword = true;
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleSignIn() async {
+    if (emailController.text.trim().isEmpty) {
+      _showError('Please enter your email');
+      return;
+    }
+
+    if (passwordController.text.isEmpty) {
+      _showError('Please enter your password');
+      return;
+    }
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    final success = await authProvider.signIn(
+      email: emailController.text.trim(),
+      password: passwordController.text,
+    );
+
+    if (success && mounted) {
+      // Navigate to dashboard or home screen
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Signed in successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // TODO: Navigate to your dashboard/home screen
+      // context.go('/dashboard');
+    } else if (mounted) {
+      _showError(authProvider.errorMessage ?? 'Failed to sign in');
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
@@ -37,7 +92,6 @@ class SignInScreen extends StatelessWidget {
                       children: [
                         const OnboardingTitle(text: 'Sign In'),
                         SizedBox(height: 32.h),
-
                         CustomTextField.TextField(
                           controller: emailController,
                           label: 'Email',
@@ -47,17 +101,17 @@ class SignInScreen extends StatelessWidget {
                           prefixIconSvg: 'assets/icons/svg/mail.svg',
                         ),
                         SizedBox(height: 12.h),
-
                         CustomTextField.TextField(
                           controller: passwordController,
                           label: 'Password',
                           hint: 'Password',
-                          obscureText: true,
+                          obscureText: _obscurePassword,
                           textInputAction: TextInputAction.done,
-                          suffixIconSvg: 'assets/icons/svg/eye-closed.svg',
+                          suffixIconSvg: _obscurePassword
+                              ? 'assets/icons/svg/eye-closed.svg'
+                              : 'assets/icons/svg/eye.svg',
                           prefixIconSvg: 'assets/icons/svg/lock.svg',
                         ),
-
                         Align(
                           alignment: Alignment.center,
                           child: TextButton(
@@ -72,34 +126,37 @@ class SignInScreen extends StatelessWidget {
                               'Forgot Password?',
                               style: TextStyle(
                                 color: AppColors.textPrimary.withOpacity(0.7),
-                                fontSize: 14.sp, // Font Size/14
-                                height: 1.40, // line-height: 140%
-                                letterSpacing: -0.01 * 14, // -1% of font size
+                                fontSize: 14.sp,
+                                height: 1.40,
+                                letterSpacing: -0.01 * 14,
                                 decoration: TextDecoration.underline,
                                 decorationStyle: TextDecorationStyle.solid,
-                                decorationThickness:
-                                    0.07 * 14, // 7% of font-size
-                                decorationColor: AppColors
-                                    .textPrimary, // optional: matches text color
+                                decorationThickness: 0.07 * 14,
+                                decorationColor: AppColors.textPrimary,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
                         ),
-                        Button(
-                          onPressed: () {},
-                          text: 'Sign In',
-                          height: 54.h,
-                          borderRadius: BorderRadius.circular(32.r),
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w600,
-                          textColor: Colors.white,
-                          backgroundColor: AppColors.textPrimary.withOpacity(
-                            0.8,
-                          ),
+                        Consumer<AuthProvider>(
+                          builder: (context, authProvider, child) {
+                            return Button(
+                              onPressed: _handleSignIn,
+                              text: authProvider.isLoading
+                                  ? 'Signing In...'
+                                  : 'Sign In',
+                              height: 54.h,
+                              borderRadius: BorderRadius.circular(32.r),
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w600,
+                              textColor: Colors.white,
+                              backgroundColor: AppColors.textPrimary
+                                  .withOpacity(0.8),
+                              isLoading: authProvider.isLoading,
+                            );
+                          },
                         ),
                         SizedBox(height: 32.h),
-
                         Row(
                           children: [
                             Expanded(
@@ -128,15 +185,12 @@ class SignInScreen extends StatelessWidget {
                           ],
                         ),
                         SizedBox(height: 32.h),
-
                         SocialButton(
                           icon: 'assets/icons/svg/google.svg',
                           text: 'Continue with Google',
                           onTap: () {},
                         ),
-
                         SizedBox(height: 12.h),
-
                         SocialButton(
                           icon: 'assets/icons/svg/apple.svg',
                           text: 'Continue with Apple',
@@ -145,12 +199,10 @@ class SignInScreen extends StatelessWidget {
                           onTap: () {},
                         ),
                         SizedBox(height: 12.h),
-
                         AlreadyHaveAccountText(
                           firstText: "Need an account? ",
                           secondText: "Sign up",
                           onSecondTextTap: () {
-                            // Custom navigation
                             context.push('/sign-up');
                           },
                         ),

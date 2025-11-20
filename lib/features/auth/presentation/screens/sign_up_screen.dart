@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' hide BackButtonIcon;
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/utils/sizes.dart';
@@ -9,15 +10,66 @@ import '../../../../shared/widgets/button.dart';
 import '../../../../shared/widgets/custom_checkbox.dart';
 import '../../../../shared/widgets/text_field.dart' as CustomTextField;
 import '../../../onboarding/presentation/widgets/onboarding_widgets.dart';
+import '../../providers/auth_provider.dart';
 
-class SignUpScreen extends StatelessWidget {
+class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final emailController = TextEditingController();
-    bool isTermsAccepted = false;
+  State<SignUpScreen> createState() => _SignUpScreenState();
+}
 
+class _SignUpScreenState extends State<SignUpScreen> {
+  final emailController = TextEditingController();
+  bool isTermsAccepted = false;
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleContinue() async {
+    if (emailController.text.trim().isEmpty) {
+      _showError('Please enter your email');
+      return;
+    }
+
+    if (!_isValidEmail(emailController.text.trim())) {
+      _showError('Please enter a valid email');
+      return;
+    }
+
+    if (!isTermsAccepted) {
+      _showError('Please accept the Terms of Use and Privacy Policy');
+      return;
+    }
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    final success = await authProvider.sendSignUpOTP(
+      emailController.text.trim(),
+    );
+
+    if (success && mounted) {
+      context.push('/otp', extra: {'nextRoute': '/setup-account'});
+    } else if (mounted) {
+      _showError(authProvider.errorMessage ?? 'Failed to send OTP');
+    }
+  }
+
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -51,9 +103,13 @@ class SignUpScreen extends StatelessWidget {
                       children: [
                         CustomCheckbox(
                           value: isTermsAccepted,
-                          onChanged: (val) {},
+                          onChanged: (val) {
+                            setState(() {
+                              isTermsAccepted = val;
+                            });
+                          },
                           size: 20,
-                          activeColor: AppColors.iceBlue,
+                          activeColor: AppColors.brand500,
                           borderColor: AppColors.iceBlue,
                         ),
                         SizedBox(width: 10.w),
@@ -61,9 +117,7 @@ class SignUpScreen extends StatelessWidget {
                           child: Padding(
                             padding: const EdgeInsets.only(top: 3.0),
                             child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                maxWidth: 300.w, // max width applied
-                              ),
+                              constraints: BoxConstraints(maxWidth: 300.w),
                               child: RichText(
                                 text: TextSpan(
                                   style: TextStyle(
@@ -78,8 +132,7 @@ class SignUpScreen extends StatelessWidget {
                                       text: 'By registering, you accept our ',
                                     ),
                                     TextSpan(
-                                      text:
-                                          'Terms of\n', // force line break after "Terms of"
+                                      text: 'Terms of\n',
                                       style: TextStyle(
                                         color: AppColors.textPrimary,
                                         fontWeight: FontWeight.w500,
@@ -112,17 +165,22 @@ class SignUpScreen extends StatelessWidget {
                       ],
                     ),
                     SizedBox(height: 24.h),
-                    Button(
-                      onPressed: () {
-                        context.push('/otp');
+                    Consumer<AuthProvider>(
+                      builder: (context, authProvider, child) {
+                        return Button(
+                          onPressed: _handleContinue,
+                          text: authProvider.isLoading
+                              ? 'Sending...'
+                              : 'Continue',
+                          height: 54.h,
+                          borderRadius: BorderRadius.circular(32.r),
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w600,
+                          textColor: Colors.white,
+                          backgroundColor: AppColors.brand500,
+                          isLoading: authProvider.isLoading,
+                        );
                       },
-                      text: 'Continue',
-                      height: 54.h,
-                      borderRadius: BorderRadius.circular(32.r),
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w600,
-                      textColor: Colors.white,
-                      backgroundColor: AppColors.brand500,
                     ),
                     SizedBox(height: 16.h),
                   ],

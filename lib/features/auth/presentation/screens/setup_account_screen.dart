@@ -1,23 +1,85 @@
-// lib/features/auth/presentation/screens/setup_account_screen.dart
 import 'package:flutter/material.dart' hide BackButtonIcon;
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/back_button_icon.dart';
 import '../../../../shared/widgets/button.dart';
 import '../../../../shared/widgets/text_field.dart' as CustomTextField;
 import '../../../onboarding/presentation/widgets/onboarding_widgets.dart';
+import '../../providers/auth_provider.dart';
 
-class SetupAccountScreen extends StatelessWidget {
+class SetupAccountScreen extends StatefulWidget {
   const SetupAccountScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final firstNameController = TextEditingController();
-    final lastNameController = TextEditingController();
-    final passwordController = TextEditingController();
+  State<SetupAccountScreen> createState() => _SetupAccountScreenState();
+}
 
+class _SetupAccountScreenState extends State<SetupAccountScreen> {
+  final firstNameController = TextEditingController();
+  final lastNameController = TextEditingController();
+  final passwordController = TextEditingController();
+  bool _obscurePassword = true;
+
+  @override
+  void dispose() {
+    firstNameController.dispose();
+    lastNameController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleDone() async {
+    if (firstNameController.text.trim().isEmpty) {
+      _showError('Please enter your first name');
+      return;
+    }
+
+    if (lastNameController.text.trim().isEmpty) {
+      _showError('Please enter your last name');
+      return;
+    }
+
+    if (passwordController.text.length < 4) {
+      _showError('Password must be at least 4 characters');
+      return;
+    }
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    final success = await authProvider.completeSignUp(
+      firstName: firstNameController.text.trim(),
+      lastName: lastNameController.text.trim(),
+      password: passwordController.text,
+    );
+
+    if (success && mounted) {
+      // Navigate to dashboard or home screen
+      // For now, show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account created successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // TODO: Navigate to your dashboard/home screen
+      context.go('/sign-in');
+    } else if (mounted) {
+      _showError(authProvider.errorMessage ?? 'Failed to create account');
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -41,7 +103,7 @@ class SetupAccountScreen extends StatelessWidget {
                       controller: firstNameController,
                       label: 'First Name',
                       hint: 'First Name',
-                      keyboardType: TextInputType.emailAddress,
+                      keyboardType: TextInputType.name,
                       textInputAction: TextInputAction.next,
                       prefixIconSvg: 'assets/icons/svg/user.svg',
                     ),
@@ -50,7 +112,7 @@ class SetupAccountScreen extends StatelessWidget {
                       controller: lastNameController,
                       label: 'Last Name',
                       hint: 'Last Name',
-                      keyboardType: TextInputType.emailAddress,
+                      keyboardType: TextInputType.name,
                       textInputAction: TextInputAction.next,
                       prefixIconSvg: 'assets/icons/svg/user.svg',
                     ),
@@ -59,41 +121,42 @@ class SetupAccountScreen extends StatelessWidget {
                       controller: passwordController,
                       label: 'Password',
                       hint: 'Password',
-                      obscureText: true,
+                      obscureText: _obscurePassword,
                       textInputAction: TextInputAction.done,
-                      suffixIconSvg: 'assets/icons/svg/eye-closed.svg',
+                      suffixIconSvg: _obscurePassword
+                          ? 'assets/icons/svg/eye-closed.svg'
+                          : 'assets/icons/svg/eye.svg',
                       prefixIconSvg: 'assets/icons/svg/lock.svg',
                     ),
                     SizedBox(height: 12.h),
-
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
                         'Create a password with at least 4 characters',
                         style: TextStyle(
-                          fontSize: 12.sp, // Font Size/12
-                          fontWeight: FontWeight.w500, // Medium
-                          height: 1.4, // line-height: 140%
-                          letterSpacing: 0, // 0%
-                          color: AppColors.textSecondary.withOpacity(
-                            0.7,
-                          ), // optional color
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w500,
+                          height: 1.4,
+                          letterSpacing: 0,
+                          color: AppColors.textSecondary.withOpacity(0.7),
                         ),
                       ),
                     ),
                     SizedBox(height: 14.h),
-                    Button(
-                      onPressed: () {
-                        // Navigate to next screen or dashboard
-                        // context.push('/dashboard');
+                    Consumer<AuthProvider>(
+                      builder: (context, authProvider, child) {
+                        return Button(
+                          onPressed: _handleDone,
+                          text: authProvider.isLoading ? 'Creating...' : 'Done',
+                          height: 54.h,
+                          borderRadius: BorderRadius.circular(32.r),
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w600,
+                          textColor: Colors.white,
+                          backgroundColor: AppColors.brand500,
+                          isLoading: authProvider.isLoading,
+                        );
                       },
-                      text: 'Done',
-                      height: 54.h,
-                      borderRadius: BorderRadius.circular(32.r),
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w600,
-                      textColor: Colors.white,
-                      backgroundColor: AppColors.brand500,
                     ),
                   ],
                 ),
