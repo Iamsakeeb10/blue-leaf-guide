@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/button.dart';
@@ -62,6 +63,7 @@ class ForgotPasswordScreen extends StatelessWidget {
               Button(
                 onPressed: () {
                   // Reset password logic here
+                  context.push('/otp', extra: {'nextRoute': '/reset-password'});
                 },
                 text: 'Reset',
                 height: 54.h,

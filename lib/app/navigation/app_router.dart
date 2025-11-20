@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/otp_screen.dart';
+import '../../features/auth/presentation/screens/reset_password_screen.dart';
 import '../../features/auth/presentation/screens/setup_account_screen.dart';
 import '../../features/auth/presentation/screens/sign_in_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
@@ -23,7 +24,15 @@ final GoRouter router = GoRouter(
       builder: (context, state) => const SignUpScreen(),
     ),
 
-    GoRoute(path: '/otp', builder: (context, state) => const OTPScreen()),
+    GoRoute(
+      path: '/otp',
+      builder: (context, state) {
+        final nextRoute =
+            (state.extra as Map<String, dynamic>?)?['nextRoute'] as String?;
+        return OTPScreen(nextRoute: nextRoute);
+      },
+    ),
+
     GoRoute(
       path: '/setup-account',
       builder: (context, state) => const SetupAccountScreen(),
@@ -32,6 +41,11 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/forgot-password',
       builder: (context, state) => const ForgotPasswordScreen(),
+    ),
+
+    GoRoute(
+      path: '/reset-password',
+      builder: (context, state) => const ResetPasswordScreen(),
     ),
   ],
 );

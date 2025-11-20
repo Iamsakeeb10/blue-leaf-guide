@@ -9,7 +9,9 @@ import '../../../../shared/widgets/button.dart';
 import '../../../onboarding/presentation/widgets/onboarding_widgets.dart';
 
 class OTPScreen extends StatelessWidget {
-  const OTPScreen({super.key});
+  final String? nextRoute;
+
+  const OTPScreen({super.key, this.nextRoute});
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +112,7 @@ class OTPScreen extends StatelessWidget {
               Button(
                 onPressed: () {
                   // Add next navigation
-                  context.push('/setup-account');
+                  context.push(nextRoute ?? '/setup-account');
                 },
                 text: 'Continue',
                 height: 54.h,
