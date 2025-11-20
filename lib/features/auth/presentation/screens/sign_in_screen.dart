@@ -61,7 +61,9 @@ class SignInScreen extends StatelessWidget {
                         Align(
                           alignment: Alignment.center,
                           child: TextButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              context.push('/forgot-password');
+                            },
                             style: TextButton.styleFrom(
                               padding: EdgeInsets.zero,
                               minimumSize: Size(0, 24.h),
@@ -149,7 +151,7 @@ class SignInScreen extends StatelessWidget {
                           secondText: "Sign up",
                           onSecondTextTap: () {
                             // Custom navigation
-                            context.go('/sign-up');
+                            context.push('/sign-up');
                           },
                         ),
                       ],

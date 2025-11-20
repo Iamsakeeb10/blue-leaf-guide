@@ -1,6 +1,7 @@
 import 'package:blue_leaf_guide/features/auth/presentation/screens/sign_up_screen.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/otp_screen.dart';
 import '../../features/auth/presentation/screens/setup_account_screen.dart';
 import '../../features/auth/presentation/screens/sign_in_screen.dart';
@@ -26,6 +27,11 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/setup-account',
       builder: (context, state) => const SetupAccountScreen(),
+    ),
+
+    GoRoute(
+      path: '/forgot-password',
+      builder: (context, state) => const ForgotPasswordScreen(),
     ),
   ],
 );
