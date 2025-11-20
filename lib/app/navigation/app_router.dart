@@ -2,6 +2,7 @@ import 'package:blue_leaf_guide/features/auth/presentation/screens/sign_up_scree
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/screens/otp_screen.dart';
+import '../../features/auth/presentation/screens/setup_account_screen.dart';
 import '../../features/auth/presentation/screens/sign_in_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 
@@ -22,5 +23,9 @@ final GoRouter router = GoRouter(
     ),
 
     GoRoute(path: '/otp', builder: (context, state) => const OTPScreen()),
+    GoRoute(
+      path: '/setup-account',
+      builder: (context, state) => const SetupAccountScreen(),
+    ),
   ],
 );

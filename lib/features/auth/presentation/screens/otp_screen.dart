@@ -110,6 +110,7 @@ class OTPScreen extends StatelessWidget {
               Button(
                 onPressed: () {
                   // Add next navigation
+                  context.push('/setup-account');
                 },
                 text: 'Continue',
                 height: 54.h,
