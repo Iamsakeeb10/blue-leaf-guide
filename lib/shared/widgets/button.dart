@@ -94,20 +94,6 @@ class _ButtonState extends State<Button> with SingleTickerProviderStateMixin {
           decoration: BoxDecoration(
             color: widget.backgroundColor ?? AppColors.primary,
             borderRadius: borderRadius,
-            // boxShadow: [
-            //   BoxShadow(
-            //     color: (widget.backgroundColor ?? AppColors.primary)
-            //         .withOpacity(0.4),
-            //     blurRadius: 20.r,
-            //     offset: Offset(0, 10.h),
-            //   ),
-            //   BoxShadow(
-            //     color: (widget.backgroundColor ?? AppColors.primary)
-            //         .withOpacity(0.2),
-            //     blurRadius: 10.r,
-            //     offset: Offset(0, 5.h),
-            //   ),
-            // ],
           ),
           child: Center(
             child: widget.isLoading

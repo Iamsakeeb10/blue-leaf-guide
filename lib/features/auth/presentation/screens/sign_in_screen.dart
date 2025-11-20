@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/button.dart';
@@ -26,7 +27,7 @@ class SignInScreen extends StatelessWidget {
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: Padding(
                   padding: EdgeInsets.symmetric(
-                    horizontal: 24.w,
+                    horizontal: 36.w,
                     vertical: 32.h,
                   ),
                   child: Center(
@@ -148,6 +149,7 @@ class SignInScreen extends StatelessWidget {
                           secondText: "Sign up",
                           onSecondTextTap: () {
                             // Custom navigation
+                            context.go('/sign-up');
                           },
                         ),
                       ],
