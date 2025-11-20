@@ -12,7 +12,7 @@ class Button extends StatefulWidget {
   final IconData? icon;
   final double? height;
   final double? width;
-  final List<Color>? gradientColors;
+  final Color? backgroundColor; // <-- new solid bg prop
   final BorderRadius? borderRadius;
   final Color? textColor;
   final double? fontSize;
@@ -29,7 +29,7 @@ class Button extends StatefulWidget {
     this.icon,
     this.height,
     this.width,
-    this.gradientColors,
+    this.backgroundColor, // <-- use this
     this.borderRadius,
     this.textColor,
     this.fontSize,
@@ -68,22 +68,14 @@ class _ButtonState extends State<Button> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final gradientColors =
-        widget.gradientColors ?? [AppColors.primary, AppColors.brand500];
-
     final borderRadius =
         widget.borderRadius ?? BorderRadius.circular(AppRadius.r16);
 
     final textColor = widget.textColor ?? AppColors.background;
-
     final fontSize = widget.fontSize ?? AppFontSize.s18;
-
     final fontWeight = widget.fontWeight ?? FontWeight.bold;
-
     final height = widget.height ?? 58.h;
-
     final width = widget.width ?? double.infinity;
-
     final loadingColor = widget.loadingIndicatorColor ?? AppColors.background;
 
     return ScaleTransition(
@@ -100,24 +92,22 @@ class _ButtonState extends State<Button> with SingleTickerProviderStateMixin {
           height: height,
           padding: widget.padding,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: gradientColors,
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            ),
+            color: widget.backgroundColor ?? AppColors.primary,
             borderRadius: borderRadius,
-            boxShadow: [
-              BoxShadow(
-                color: gradientColors.first.withOpacity(0.4),
-                blurRadius: 20.r,
-                offset: Offset(0, 10.h),
-              ),
-              BoxShadow(
-                color: gradientColors.last.withOpacity(0.2),
-                blurRadius: 10.r,
-                offset: Offset(0, 5.h),
-              ),
-            ],
+            // boxShadow: [
+            //   BoxShadow(
+            //     color: (widget.backgroundColor ?? AppColors.primary)
+            //         .withOpacity(0.4),
+            //     blurRadius: 20.r,
+            //     offset: Offset(0, 10.h),
+            //   ),
+            //   BoxShadow(
+            //     color: (widget.backgroundColor ?? AppColors.primary)
+            //         .withOpacity(0.2),
+            //     blurRadius: 10.r,
+            //     offset: Offset(0, 5.h),
+            //   ),
+            // ],
           ),
           child: Center(
             child: widget.isLoading

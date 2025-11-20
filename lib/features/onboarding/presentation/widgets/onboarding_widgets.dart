@@ -142,7 +142,20 @@ class SocialButton extends StatelessWidget {
 
 // Already Have Account Text Widget
 class AlreadyHaveAccountText extends StatelessWidget {
-  const AlreadyHaveAccountText({super.key});
+  final String firstText;
+  final String secondText;
+  final TextStyle? firstTextStyle;
+  final TextStyle? secondTextStyle;
+  final VoidCallback? onSecondTextTap;
+
+  const AlreadyHaveAccountText({
+    super.key,
+    this.firstText = 'Already have an account? ',
+    this.secondText = 'Sign in',
+    this.firstTextStyle,
+    this.secondTextStyle,
+    this.onSecondTextTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -150,29 +163,35 @@ class AlreadyHaveAccountText extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          'Already have an account? ',
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w500,
-            height: 1.5, // Line height 150%
-            letterSpacing: 14.sp * -0.015, // Letter spacing -1.5%
-            color: AppColors.textPrimary.withOpacity(0.8),
-          ),
+          firstText,
+          style:
+              firstTextStyle ??
+              TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
+                height: 1.5, // Line height 150%
+                letterSpacing: 14.sp * -0.015, // Letter spacing -1.5%
+                color: AppColors.textPrimary.withOpacity(0.8),
+              ),
         ),
         InkWell(
-          onTap: () {
-            // Navigate to sign in
-            context.go('/sign-in');
-          },
+          onTap:
+              onSecondTextTap ??
+              () {
+                // Default navigation
+                context.go('/sign-in');
+              },
           child: Text(
-            'Sign in',
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              height: 1.3, // Line height 150%
-              letterSpacing: 14.sp * -0.01, // Letter spacing -1.5%
-              color: AppColors.textPrimary,
-            ),
+            secondText,
+            style:
+                secondTextStyle ??
+                TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  height: 1.3, // Line height 130%
+                  letterSpacing: 14.sp * -0.01, // Letter spacing -1%
+                  color: AppColors.textPrimary,
+                ),
           ),
         ),
       ],
