@@ -1,4 +1,3 @@
-// lib/app/widgets/modern_text_field.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -17,14 +16,15 @@ class TextField extends StatefulWidget {
   final Widget? suffixIcon;
   final VoidCallback? onChanged;
   final VoidCallback? onEditingComplete;
+  final VoidCallback? onSuffixIconTap; // NEW - for password toggle
   final TextInputAction? textInputAction;
   final bool enabled;
   final int? maxLines;
   final int? minLines;
   final TextCapitalization textCapitalization;
-  final String? prefixIconSvg; // NEW - for SVG path
-  final String? suffixIconSvg; // NEW - for SVG path
-  final Widget? prefixIconWidget; // For custom widget
+  final String? prefixIconSvg;
+  final String? suffixIconSvg;
+  final Widget? prefixIconWidget;
 
   const TextField({
     super.key,
@@ -38,6 +38,7 @@ class TextField extends StatefulWidget {
     this.suffixIcon,
     this.onChanged,
     this.onEditingComplete,
+    this.onSuffixIconTap,
     this.textInputAction,
     this.enabled = true,
     this.maxLines = 1,
@@ -108,13 +109,14 @@ class _TextFieldState extends State<TextField> {
                       child: _buildPrefixIcon(),
                     )
                   : null,
-
               suffixIconConstraints: BoxConstraints(
                 minWidth: 8.w + 20.r + 16.w,
                 minHeight: 12.h + 20.r + 12.h,
               ),
               suffixIcon:
-                  (widget.suffixIconSvg != null || widget.suffixIcon != null)
+                  (widget.suffixIconSvg != null ||
+                      widget.suffixIcon != null ||
+                      widget.onSuffixIconTap != null)
                   ? Padding(
                       padding: EdgeInsets.only(
                         left: 8.w,
@@ -125,7 +127,6 @@ class _TextFieldState extends State<TextField> {
                       child: _buildSuffixIcon(),
                     )
                   : null,
-
               filled: true,
               fillColor: widget.enabled
                   ? AppColors.background.withOpacity(0.5)
@@ -204,8 +205,12 @@ class _TextFieldState extends State<TextField> {
   }
 
   Widget _buildSuffixIcon() {
+    // If there's a tap handler, make it tappable
+    Widget iconWidget;
+
     if (widget.suffixIconSvg != null) {
-      return SvgPicture.asset(
+      // Use SVG icon
+      iconWidget = SvgPicture.asset(
         widget.suffixIconSvg!,
         width: 20.r,
         height: 20.r,
@@ -214,8 +219,37 @@ class _TextFieldState extends State<TextField> {
           BlendMode.srcIn,
         ),
       );
+    } else if (widget.suffixIcon != null) {
+      // Use custom widget
+      iconWidget = SizedBox(
+        width: 20.r,
+        height: 20.r,
+        child: widget.suffixIcon,
+      );
+    } else if (widget.onSuffixIconTap != null && widget.obscureText) {
+      // Default eye icon for password fields (temporary until SVG is added)
+      iconWidget = Icon(
+        Icons.visibility_off_outlined,
+        size: 20.r,
+        color: _isFocused ? AppColors.primary : AppColors.textSecondary,
+      );
+    } else if (widget.onSuffixIconTap != null && !widget.obscureText) {
+      // Default eye icon for visible password
+      iconWidget = Icon(
+        Icons.visibility_outlined,
+        size: 20.r,
+        color: _isFocused ? AppColors.primary : AppColors.textSecondary,
+      );
+    } else {
+      // Fallback to empty container
+      iconWidget = const SizedBox.shrink();
     }
 
-    return SizedBox(width: 20.r, height: 20.r, child: widget.suffixIcon);
+    // Wrap in GestureDetector if there's a tap handler
+    if (widget.onSuffixIconTap != null) {
+      return GestureDetector(onTap: widget.onSuffixIconTap, child: iconWidget);
+    }
+
+    return iconWidget;
   }
 }

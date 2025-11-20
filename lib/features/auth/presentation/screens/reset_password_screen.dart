@@ -6,19 +6,37 @@ import '../../../../shared/widgets/button.dart';
 import '../../../../shared/widgets/custom_appbar.dart';
 import '../../../../shared/widgets/text_field.dart' as CustomTextField;
 
-class ResetPasswordScreen extends StatelessWidget {
+class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final passwordController = TextEditingController();
+  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
+}
 
+class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
+  final passwordController = TextEditingController();
+  bool _obscurePassword = true;
+
+  @override
+  void dispose() {
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  void _togglePasswordVisibility() {
+    setState(() {
+      _obscurePassword = !_obscurePassword;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: const CustomAppBar(title: 'Reset Password'),
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24.w),
+          padding: EdgeInsets.symmetric(horizontal: 36.w),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -41,10 +59,13 @@ class ResetPasswordScreen extends StatelessWidget {
                 controller: passwordController,
                 label: 'Create New Password',
                 hint: 'Create New Password',
-                obscureText: true,
+                obscureText: _obscurePassword,
                 textInputAction: TextInputAction.done,
-                suffixIconSvg: 'assets/icons/svg/eye-closed.svg',
                 prefixIconSvg: 'assets/icons/svg/lock.svg',
+                suffixIconSvg: _obscurePassword
+                    ? 'assets/icons/svg/eye-closed.svg'
+                    : null, // use open-eye icon when visible
+                onSuffixIconTap: _togglePasswordVisibility,
               ),
               SizedBox(height: 12.h),
               // Instruction Text

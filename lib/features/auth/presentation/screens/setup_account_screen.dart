@@ -123,10 +123,15 @@ class _SetupAccountScreenState extends State<SetupAccountScreen> {
                       hint: 'Password',
                       obscureText: _obscurePassword,
                       textInputAction: TextInputAction.done,
+                      prefixIconSvg: 'assets/icons/svg/lock.svg',
                       suffixIconSvg: _obscurePassword
                           ? 'assets/icons/svg/eye-closed.svg'
-                          : 'assets/icons/svg/eye.svg',
-                      prefixIconSvg: 'assets/icons/svg/lock.svg',
+                          : null, // Use null to trigger icon fallback
+                      onSuffixIconTap: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
                     ),
                     SizedBox(height: 12.h),
                     Align(
