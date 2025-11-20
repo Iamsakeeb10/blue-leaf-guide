@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'features/onboarding/presentation/screens/onboarding_screen.dart';
+import 'app/navigation/app_router.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
-        return MaterialApp(
+        return MaterialApp.router(
           title: 'Blue Leaf Guide',
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
@@ -31,10 +31,9 @@ class MyApp extends StatelessWidget {
               Theme.of(context).textTheme,
             ),
           ),
-          home: child,
+          routerConfig: router,
         );
       },
-      child: const OnboardingScreen(),
     );
   }
 }
