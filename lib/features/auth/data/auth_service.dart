@@ -41,13 +41,18 @@ class AuthService {
         // Get the generated OTP
         final generatedOTP = EmailOTP.getOTP();
 
-        // Store OTP in Firestore with expiry
-        await _firestore.collection('otp_verification').doc(email).set({
-          'otp': generatedOTP,
-          'type': type,
-          'createdAt': FieldValue.serverTimestamp(),
-          'expiresAt': DateTime.now().add(const Duration(minutes: 5)),
-        });
+        final docId = email.replaceAll('.', ',');
+        try {
+          await _firestore.collection('otp_verification').doc(docId).set({
+            'otp': generatedOTP,
+            'type': type,
+            'createdAt': FieldValue.serverTimestamp(),
+            'expiresAt': DateTime.now().add(const Duration(minutes: 5)),
+          });
+          print('✅ Firestore document created: $docId');
+        } catch (e) {
+          print('❌ Firestore error: $e');
+        }
 
         print('✅ OTP sent successfully to $email: $generatedOTP');
         return true;
@@ -61,33 +66,27 @@ class AuthService {
     }
   }
 
-  // Verify OTP from Firestore
   Future<bool> verifyOTP(String email, String otp) async {
     try {
+      final docId = email.replaceAll('.', ','); // same as when saving
       final doc = await _firestore
           .collection('otp_verification')
-          .doc(email)
+          .doc(docId)
           .get();
 
-      if (!doc.exists) {
-        return false;
-      }
+      if (!doc.exists) return false;
 
       final data = doc.data()!;
       final storedOTP = data['otp'] as String;
       final expiresAt = (data['expiresAt'] as Timestamp).toDate();
 
-      // Check if OTP is expired
       if (DateTime.now().isAfter(expiresAt)) {
-        // Delete expired OTP
-        await _firestore.collection('otp_verification').doc(email).delete();
+        await _firestore.collection('otp_verification').doc(docId).delete();
         return false;
       }
 
-      // Verify OTP
       if (storedOTP == otp) {
-        // Delete OTP after successful verification
-        await _firestore.collection('otp_verification').doc(email).delete();
+        await _firestore.collection('otp_verification').doc(docId).delete();
         return true;
       }
 
