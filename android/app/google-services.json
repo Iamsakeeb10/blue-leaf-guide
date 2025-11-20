@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1022593340174",
+    "project_id": "blue-leaf-guide",
+    "storage_bucket": "blue-leaf-guide.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1022593340174:android:2b3246b8d0ab18188b7d5f",
+        "android_client_info": {
+          "package_name": "com.example.blue_leaf_guide"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC5DaxePJTZi2zEXyDMXXmw9LP--sX-Mhg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
