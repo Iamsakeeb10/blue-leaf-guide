@@ -7,14 +7,16 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/button.dart';
 
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+class MyAccountScreen extends StatelessWidget {
+  const MyAccountScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: CustomAppBar(title: 'My Profile', hideBackButton: true),
+      appBar: const CustomAppBar(
+        title: 'My Account',
+      ), // shows back button by default
       body: SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -44,10 +46,9 @@ class ProfileScreen extends StatelessWidget {
                 'Tomeka Morgan',
                 style: TextStyle(
                   color: AppColors.textPrimary.withOpacity(0.8),
-                  fontSize: 18
-                      .sp, // font-size 18 (use ScreenUtil for responsive size)
-                  height: 1.3, // line-height: 130%
-                  letterSpacing: -0.01 * 18, // letter-spacing: -1%
+                  fontSize: 18.sp,
+                  height: 1.3,
+                  letterSpacing: -0.01 * 18,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -67,8 +68,8 @@ class ProfileScreen extends StatelessWidget {
                     color: AppColors.textPrimary.withOpacity(0.8),
                     fontSize: 10.sp,
                     fontWeight: FontWeight.w600,
-                    height: 1.3, // line-height: 130%
-                    letterSpacing: -0.01 * 10, // letter-spacing: -1%
+                    height: 1.3,
+                    letterSpacing: -0.01 * 10,
                   ),
                 ),
               ),
@@ -79,39 +80,41 @@ class ProfileScreen extends StatelessWidget {
               _buildProfileItem(
                 svgIconPath: 'assets/icons/svg/profile-user.svg',
                 iconBackgroundColor: AppColors.textPrimary.withOpacity(0.05),
-                title: 'My Account',
+                title: 'Personal Information',
                 onTap: () {
-                  context.push('/my-account');
+                  context.push('/profile-information');
                 },
               ),
               _buildProfileItem(
                 svgIconPath: 'assets/icons/svg/profile-notification.svg',
                 iconBackgroundColor: AppColors.textPrimary.withOpacity(0.05),
-                title: 'Notifications',
-              ),
-              _buildProfileItem(
-                svgIconPath: 'assets/icons/svg/profile-help.svg',
-                iconBackgroundColor: AppColors.textPrimary.withOpacity(0.05),
-                title: 'Help Center',
-              ),
-              _buildProfileItem(
-                svgIconPath: 'assets/icons/svg/profile-law.svg',
-                iconBackgroundColor: AppColors.textPrimary.withOpacity(0.05),
-                title: 'Terms of Use',
-              ),
-
-              _buildProfileItem(
-                svgIconPath: 'assets/icons/svg/profile-support.svg',
-                iconBackgroundColor: AppColors.textPrimary.withOpacity(0.05),
-                title: 'Privacy Policy',
+                title: 'Change Password',
                 showDivider: false,
               ),
 
               SizedBox(height: 24.h),
 
+              // Action Buttons
               Button(
-                onPressed: () {},
-                text: 'Sign out',
+                onPressed: () {
+                  // delete account logic
+                },
+                text: 'Delete Account',
+                height: 54.h,
+                borderRadius: BorderRadius.circular(32.r),
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w600,
+                textColor: Colors.white,
+                backgroundColor: AppColors.errorRed,
+              ),
+
+              SizedBox(height: 12.h),
+
+              Button(
+                onPressed: () {
+                  // delete all data logic
+                },
+                text: 'Delete All Data',
                 height: 54.h,
                 borderRadius: BorderRadius.circular(32.r),
                 fontSize: 15.sp,
@@ -119,6 +122,8 @@ class ProfileScreen extends StatelessWidget {
                 textColor: AppColors.textPrimary,
                 backgroundColor: AppColors.textPrimary.withOpacity(0.05),
               ),
+
+              SizedBox(height: 24.h),
             ],
           ),
         ),
@@ -131,9 +136,9 @@ class ProfileScreen extends StatelessWidget {
     required Color iconBackgroundColor,
     required String title,
     bool showDivider = true,
-    VoidCallback? onTap, // optional tap callback
+    VoidCallback? onTap, // optional onTap callback
   }) {
-    final item = InkWell(
+    final item = GestureDetector(
       onTap: onTap,
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 12.h),

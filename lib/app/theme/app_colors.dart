@@ -25,4 +25,5 @@ class AppColors {
   static const Color primary = Color(0xFF1E88E5); // Blue
   static const Color tint = Color(0xFF90CAF9); // Light Blue / Tint
   static const Color danger = Color(0xFFD32F2F); // Red / Error
+  static const Color errorRed = Color(0xFFFC3939); // New red color
 }

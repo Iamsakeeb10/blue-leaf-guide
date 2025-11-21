@@ -1,3 +1,4 @@
+import 'package:blue_leaf_guide/features/profile/presentation/screens/profile_information_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -11,6 +12,7 @@ import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/home/presentation/screens/main_navigation_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
+import '../../features/profile/presentation/screens/my_account_screen.dart';
 
 final GoRouter router = GoRouter(
   initialLocation: '/',
@@ -84,6 +86,16 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/home',
       builder: (context, state) => const MainNavigationScreen(),
+    ),
+
+    GoRoute(
+      path: '/my-account',
+      builder: (context, state) => const MyAccountScreen(),
+    ),
+
+    GoRoute(
+      path: '/profile-information',
+      builder: (context, state) => const ProfileInformationScreen(),
     ),
   ],
 );
