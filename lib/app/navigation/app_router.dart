@@ -1,16 +1,54 @@
-import 'package:blue_leaf_guide/features/auth/presentation/screens/sign_up_screen.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/otp_screen.dart';
 import '../../features/auth/presentation/screens/reset_password_screen.dart';
 import '../../features/auth/presentation/screens/setup_account_screen.dart';
 import '../../features/auth/presentation/screens/sign_in_screen.dart';
+import '../../features/auth/presentation/screens/sign_up_screen.dart';
+import '../../features/auth/presentation/screens/splash_screen.dart';
+import '../../features/auth/providers/auth_provider.dart';
+import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 
 final GoRouter router = GoRouter(
-  initialLocation: '/onboarding',
+  initialLocation: '/',
+  redirect: (context, state) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isLoggedIn = authProvider.currentUser != null;
+
+    final isGoingToSplash = state.matchedLocation == '/';
+    final isGoingToAuth =
+        state.matchedLocation == '/sign-in' ||
+        state.matchedLocation == '/sign-up' ||
+        state.matchedLocation == '/onboarding' ||
+        state.matchedLocation == '/otp' ||
+        state.matchedLocation == '/setup-account' ||
+        state.matchedLocation == '/forgot-password' ||
+        state.matchedLocation == '/reset-password';
+
+    final isGoingToHome = state.matchedLocation == '/home';
+
+    // If logged in and trying to access auth screens, redirect to home
+    if (isLoggedIn && isGoingToAuth) {
+      return '/home';
+    }
+
+    // If not logged in and trying to access home, redirect to sign-in
+    if (!isLoggedIn && isGoingToHome) {
+      return '/sign-in';
+    }
+
+    // Allow splash screen
+    if (isGoingToSplash) {
+      return null;
+    }
+
+    return null;
+  },
   routes: [
+    GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
     GoRoute(
       path: '/onboarding',
       builder: (context, state) => const OnboardingScreen(),
@@ -23,7 +61,6 @@ final GoRouter router = GoRouter(
       path: '/sign-up',
       builder: (context, state) => const SignUpScreen(),
     ),
-
     GoRoute(
       path: '/otp',
       builder: (context, state) {
@@ -32,20 +69,18 @@ final GoRouter router = GoRouter(
         return OTPScreen(nextRoute: nextRoute);
       },
     ),
-
     GoRoute(
       path: '/setup-account',
       builder: (context, state) => const SetupAccountScreen(),
     ),
-
     GoRoute(
       path: '/forgot-password',
       builder: (context, state) => const ForgotPasswordScreen(),
     ),
-
     GoRoute(
       path: '/reset-password',
       builder: (context, state) => const ResetPasswordScreen(),
     ),
+    GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
   ],
 );

@@ -55,8 +55,7 @@ class _SignInScreenState extends State<SignInScreen> {
         ),
       );
 
-      // TODO: Navigate to your dashboard/home screen
-      // context.go('/dashboard');
+      context.go('/home');
     } else if (mounted) {
       _showError(authProvider.errorMessage ?? 'Failed to sign in');
     }
@@ -76,8 +75,7 @@ class _SignInScreenState extends State<SignInScreen> {
           ),
         );
 
-        // TODO: Navigate to your dashboard/home screen
-        // context.go('/dashboard');
+        context.go('/home');
       } else if (mounted) {
         if (authProvider.errorMessage != null &&
             authProvider.errorMessage != 'Sign in cancelled') {
