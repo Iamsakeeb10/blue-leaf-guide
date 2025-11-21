@@ -1,9 +1,11 @@
 import 'package:blue_leaf_guide/shared/widgets/custom_appbar.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../shared/widgets/button.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -15,6 +17,198 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   bool _isNotification1 = true;
   bool _isNotification2 = false;
+
+  void _openCustomTimePicker(BuildContext context) {
+    int selectedHour = 9;
+    int selectedMinute = 0;
+    String selectedPeriod = "AM";
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          insetPadding: EdgeInsets.symmetric(horizontal: 20.w),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.r),
+          ),
+          child: Container(
+            height: 300.h,
+            padding: EdgeInsets.symmetric(vertical: 16.h),
+            child: Column(
+              children: [
+                Text(
+                  "Get Reminder",
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+
+                SizedBox(height: 12.h),
+
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    margin: EdgeInsets.symmetric(horizontal: 12.w),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
+
+                    // ⭐ No padding → makes background seamless
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        /// HOUR PICKER
+                        SizedBox(
+                          width: 60.w,
+                          child: CupertinoPicker(
+                            itemExtent: 32.h,
+                            scrollController: FixedExtentScrollController(
+                              initialItem: selectedHour - 1,
+                            ),
+                            onSelectedItemChanged: (index) {
+                              selectedHour = index + 1;
+                            },
+                            children: List.generate(12, (i) {
+                              final hour = i + 1;
+                              return Center(
+                                child: Text(
+                                  hour.toString().padLeft(2, '0'),
+                                  style: TextStyle(
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              );
+                            }),
+                          ),
+                        ),
+
+                        /// Colon
+                        Text(
+                          ":",
+                          style: TextStyle(
+                            fontSize: 22.sp,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+
+                        /// MINUTE PICKER
+                        SizedBox(
+                          width: 60.w,
+                          child: CupertinoPicker(
+                            itemExtent: 32.h,
+                            scrollController: FixedExtentScrollController(
+                              initialItem: selectedMinute,
+                            ),
+                            onSelectedItemChanged: (index) {
+                              selectedMinute = index;
+                            },
+                            children: List.generate(60, (i) {
+                              return Center(
+                                child: Text(
+                                  i.toString().padLeft(2, '0'),
+                                  style: TextStyle(
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              );
+                            }),
+                          ),
+                        ),
+
+                        /// AM/PM PICKER
+                        SizedBox(
+                          width: 60.w,
+                          child: CupertinoPicker(
+                            itemExtent: 32.h,
+                            scrollController: FixedExtentScrollController(
+                              initialItem: selectedPeriod == "AM" ? 0 : 1,
+                            ),
+                            onSelectedItemChanged: (index) {
+                              selectedPeriod = index == 0 ? "AM" : "PM";
+                            },
+                            children: const [
+                              Center(child: Text("AM")),
+                              Center(child: Text("PM")),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 10.h),
+
+                Padding(
+                  padding: EdgeInsets.only(left: 16.w, right: 16.w, top: 12.h),
+                  child: Column(
+                    children: [
+                      Button(
+                        onPressed: () {
+                          final formattedTime =
+                              "$selectedHour:${selectedMinute.toString().padLeft(2, '0')} $selectedPeriod";
+
+                          setState(() {
+                            // _selectedTime = formattedTime;  <-- your logic
+                          });
+
+                          Navigator.pop(context);
+                        },
+                        text: 'Save',
+                        height: 54.h,
+                        borderRadius: BorderRadius.circular(32.r),
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w600,
+                        textColor: Colors.white,
+                        backgroundColor: AppColors.brand500,
+                      ),
+
+                      SizedBox(height: 12.h),
+
+                      // CANCEL Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          style: TextButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(32.r),
+                            ),
+                            padding: EdgeInsets.symmetric(vertical: 14.h),
+                          ),
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(
+                              color: AppColors.textPrimary.withOpacity(0.5),
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,23 +296,28 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ),
           ),
           isTimeItem
-              ? Row(
-                  children: [
-                    SvgPicture.asset(
-                      'assets/icons/svg/reminder.svg',
-                      width: 16.sp,
-                      height: 16.sp,
-                    ),
-                    SizedBox(width: 8.w),
-                    Text(
-                      time ?? '',
-                      style: TextStyle(
-                        color: AppColors.textPrimary.withOpacity(0.8),
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w500,
+              ? GestureDetector(
+                  onTap: () {
+                    _openCustomTimePicker(context);
+                  },
+                  child: Row(
+                    children: [
+                      SvgPicture.asset(
+                        'assets/icons/svg/reminder.svg',
+                        width: 16.sp,
+                        height: 16.sp,
                       ),
-                    ),
-                  ],
+                      SizedBox(width: 8.w),
+                      Text(
+                        time ?? '',
+                        style: TextStyle(
+                          color: AppColors.textPrimary.withOpacity(0.8),
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
                 )
               : CustomSwitch(value: switchValue!, onChanged: onSwitchChanged!),
         ],
