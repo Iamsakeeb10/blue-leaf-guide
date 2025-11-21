@@ -7,6 +7,7 @@ class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
 
   bool _isLoading = false;
+  bool _isGoogleLoading = false; // NEW: Separate loading state for Google
   String? _errorMessage;
   User? _currentUser;
   Map<String, dynamic>? _userData;
@@ -15,6 +16,7 @@ class AuthProvider with ChangeNotifier {
   String? _pendingEmail;
 
   bool get isLoading => _isLoading;
+  bool get isGoogleLoading => _isGoogleLoading; // NEW: Getter
   String? get errorMessage => _errorMessage;
   User? get currentUser => _currentUser;
   Map<String, dynamic>? get userData => _userData;
@@ -167,16 +169,16 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Sign in with Google
+  // Sign in with Google - UPDATED
   Future<bool> signInWithGoogle() async {
-    _isLoading = true;
+    _isGoogleLoading = true; // Changed from _isLoading
     _errorMessage = null;
     notifyListeners();
 
     try {
       final result = await _authService.signInWithGoogle();
 
-      _isLoading = false;
+      _isGoogleLoading = false; // Changed from _isLoading
 
       if (result['success']) {
         _currentUser = result['user'];
@@ -189,7 +191,7 @@ class AuthProvider with ChangeNotifier {
         return false;
       }
     } catch (e) {
-      _isLoading = false;
+      _isGoogleLoading = false; // Changed from _isLoading
       _errorMessage = 'An error occurred. Please try again.';
       notifyListeners();
       return false;

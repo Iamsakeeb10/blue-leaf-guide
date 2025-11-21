@@ -221,10 +221,17 @@ class _SignInScreenState extends State<SignInScreen> {
                           ],
                         ),
                         SizedBox(height: 32.h),
-                        SocialButton(
-                          icon: 'assets/icons/svg/google.svg',
-                          text: 'Continue with Google',
-                          onTap: _handleGoogleSignIn,
+                        Consumer<AuthProvider>(
+                          builder: (context, authProvider, child) {
+                            return SocialButton(
+                              icon: 'assets/icons/svg/google.svg',
+                              text: authProvider.isGoogleLoading
+                                  ? 'Signing in...'
+                                  : 'Continue with Google',
+                              onTap: _handleGoogleSignIn,
+                              isLoading: authProvider.isGoogleLoading,
+                            );
+                          },
                         ),
                         SizedBox(height: 12.h),
                         SocialButton(

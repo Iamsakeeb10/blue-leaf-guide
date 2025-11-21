@@ -89,13 +89,13 @@ class PageIndicator extends StatelessWidget {
   }
 }
 
-// Social Button Widget
 class SocialButton extends StatelessWidget {
   final String icon;
   final String text;
-  final VoidCallback onTap;
+  final VoidCallback? onTap; // Changed to nullable
   final Color? textColor;
   final Color? backgroundColor;
+  final bool isLoading; // NEW
 
   const SocialButton({
     super.key,
@@ -104,12 +104,13 @@ class SocialButton extends StatelessWidget {
     required this.onTap,
     this.textColor,
     this.backgroundColor,
+    this.isLoading = false, // NEW
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
+      onTap: isLoading ? null : onTap, // Disable when loading
       borderRadius: BorderRadius.circular(32.r),
       child: Container(
         width: double.infinity,
@@ -121,7 +122,19 @@ class SocialButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SvgPicture.asset(icon, width: 24.w, height: 24.h),
+            if (isLoading)
+              SizedBox(
+                width: 20.w,
+                height: 20.w,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    textColor ?? AppColors.textPrimary,
+                  ),
+                ),
+              )
+            else
+              SvgPicture.asset(icon, width: 24.w, height: 24.h),
             SizedBox(width: 12.w),
             Text(
               text,
