@@ -60,21 +60,21 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   icon: 'assets/icons/svg/progress.svg',
 
                   activeIcon: 'assets/icons/svg/progress-active.svg',
-                  label: 'Explore',
+                  label: 'Growth',
                 ),
                 _buildNavItem(
                   index: 2,
                   icon: 'assets/icons/svg/map.svg',
 
                   activeIcon: 'assets/icons/svg/map-active.svg',
-                  label: 'Community',
+                  label: 'Roadmap',
                 ),
                 _buildNavItem(
                   index: 3,
                   icon: 'assets/icons/svg/check-round.svg',
 
                   activeIcon: 'assets/icons/svg/check-round-active.svg',
-                  label: 'Messages',
+                  label: 'Task',
                 ),
                 _buildNavItem(
                   index: 4,
@@ -107,7 +107,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       },
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+        padding: EdgeInsets.symmetric(vertical: 4.h),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -121,9 +121,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             Text(
               label,
               style: TextStyle(
-                fontSize: 12.sp,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                color: isActive ? AppColors.brand500 : AppColors.textSecondary,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: isActive
+                    ? AppColors.brand500
+                    : AppColors.textSecondary.withOpacity(0.7),
               ),
             ),
           ],
