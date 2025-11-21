@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/utils/sizes.dart';
+import '../../../../main.dart';
 import '../../../../shared/widgets/back_button_icon.dart';
 import '../../../../shared/widgets/button.dart';
 import '../../../../shared/widgets/custom_checkbox.dart';
@@ -52,6 +53,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
 
     if (success && mounted) {
+      scaffoldMessengerKey.currentState?.showSnackBar(
+        const SnackBar(
+          content: Text('OTP sent successfully!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+
       context.push('/otp', extra: {'nextRoute': '/setup-account'});
     } else if (mounted) {
       _showError(authProvider.errorMessage ?? 'Failed to send OTP');

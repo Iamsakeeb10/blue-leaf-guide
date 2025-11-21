@@ -7,6 +7,9 @@ import 'app/navigation/app_router.dart';
 import 'app/utils/firebase_helper.dart';
 import 'features/auth/providers/auth_provider.dart';
 
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -30,6 +33,8 @@ class MyApp extends StatelessWidget {
           return MaterialApp.router(
             title: 'Blue Leaf Guide',
             debugShowCheckedModeBanner: false,
+            // 2️⃣ Add the global key here
+            scaffoldMessengerKey: scaffoldMessengerKey,
             theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(
                 seedColor: const Color(0xFF2E7D32),
