@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/button.dart';
+import '../../../../shared/widgets/custom_dialog.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -119,7 +120,30 @@ class ProfileScreen extends StatelessWidget {
               SizedBox(height: 24.h),
 
               Button(
-                onPressed: () {},
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    barrierDismissible:
+                        true, // allows dismiss by tapping outside
+                    builder: (_) => CustomDialog(
+                      title: "Sign out",
+                      subtitle:
+                          "Are you sure you would like to sign out of your The Blue Leaf Guide account?",
+                      primaryButtonText: "Sign Out",
+
+                      primaryButtonOnPressed: () {
+                        // Your delete logic here
+                        print("Account deleted");
+                        Navigator.of(context).pop(); // close dialog
+                      },
+                      secondaryButtonText: "Cancel",
+                      secondaryButtonOnPressed: () {
+                        print("Cancelled");
+                        Navigator.of(context).pop(); // close dialog
+                      },
+                    ),
+                  );
+                },
                 text: 'Sign out',
                 height: 54.h,
                 borderRadius: BorderRadius.circular(32.r),

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/button.dart';
+import '../../../../shared/widgets/custom_dialog.dart';
 
 class MyAccountScreen extends StatelessWidget {
   const MyAccountScreen({super.key});
@@ -101,6 +102,27 @@ class MyAccountScreen extends StatelessWidget {
               Button(
                 onPressed: () {
                   // delete account logic
+                  showDialog(
+                    context: context,
+                    barrierDismissible:
+                        true, // allows dismiss by tapping outside
+                    builder: (_) => CustomDialog(
+                      title: "Delete Account",
+                      subtitle:
+                          "Deleting your account will permanently remove all your data and progress.",
+                      primaryButtonText: "Yes,Delete",
+                      primaryButtonOnPressed: () {
+                        // Your delete logic here
+                        print("Account deleted");
+                        Navigator.of(context).pop(); // close dialog
+                      },
+                      secondaryButtonText: "Cancel",
+                      secondaryButtonOnPressed: () {
+                        print("Cancelled");
+                        Navigator.of(context).pop(); // close dialog
+                      },
+                    ),
+                  );
                 },
                 text: 'Delete Account',
                 height: 54.h,
@@ -116,6 +138,27 @@ class MyAccountScreen extends StatelessWidget {
               Button(
                 onPressed: () {
                   // delete all data logic
+                  showDialog(
+                    context: context,
+                    barrierDismissible:
+                        true, // allows dismiss by tapping outside
+                    builder: (_) => CustomDialog(
+                      title: "Delete All Data",
+                      subtitle:
+                          "Deleting data will be securely erased and removed from our system upon deletion.",
+                      primaryButtonText: "Yes,Delete",
+                      primaryButtonOnPressed: () {
+                        // Your delete logic here
+                        print("Account deleted");
+                        Navigator.of(context).pop(); // close dialog
+                      },
+                      secondaryButtonText: "Cancel",
+                      secondaryButtonOnPressed: () {
+                        print("Cancelled");
+                        Navigator.of(context).pop(); // close dialog
+                      },
+                    ),
+                  );
                 },
                 text: 'Delete All Data',
                 height: 54.h,

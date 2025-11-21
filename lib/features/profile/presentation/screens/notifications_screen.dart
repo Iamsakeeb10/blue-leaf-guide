@@ -26,6 +26,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     showDialog(
       context: context,
       barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.8),
       builder: (context) {
         return Dialog(
           backgroundColor: Colors.white,
@@ -155,6 +156,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     children: [
                       Button(
                         onPressed: () {
+                          // ignore: unused_local_variable
                           final formattedTime =
                               "$selectedHour:${selectedMinute.toString().padLeft(2, '0')} $selectedPeriod";
 
