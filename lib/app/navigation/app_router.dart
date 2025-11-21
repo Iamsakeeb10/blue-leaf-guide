@@ -106,10 +106,16 @@ final GoRouter router = GoRouter(
       path: '/change-password',
       builder: (context, state) => const ChangePasswordScreen(),
     ),
+
     GoRoute(
       path: '/confirm-change-password',
-      builder: (context, state) => const ConfirmChangePasswordScreen(),
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        final currentPassword = extra?['currentPassword'] as String? ?? '';
+        return ConfirmChangePasswordScreen(currentPassword: currentPassword);
+      },
     ),
+
     GoRoute(
       path: '/terms',
       builder: (context, state) => const TermsOfServiceScreen(),

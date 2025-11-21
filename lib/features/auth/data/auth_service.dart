@@ -280,6 +280,123 @@ class AuthService {
     }
   }
 
+  // Add these methods to your existing AuthService class
+
+  // Update user profile information
+  Future<Map<String, dynamic>> updateUserProfile({
+    required String uid,
+    required String firstName,
+    required String lastName,
+  }) async {
+    try {
+      await _firestore.collection('users').doc(uid).update({
+        'firstName': firstName,
+        'lastName': lastName,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      return {'success': true, 'message': 'Profile updated successfully'};
+    } catch (e) {
+      print('Error updating profile: $e');
+      return {
+        'success': false,
+        'message': 'Failed to update profile. Please try again.',
+      };
+    }
+  }
+
+  // Verify current password
+  Future<bool> verifyCurrentPassword(String password) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null || user.email == null) return false;
+
+      // Re-authenticate user with current password
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: password,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+      return true;
+    } on FirebaseAuthException catch (e) {
+      print('Password verification failed: ${e.code}');
+      return false;
+    } catch (e) {
+      print('Error verifying password: $e');
+      return false;
+    }
+  }
+
+  // Change password
+  Future<Map<String, dynamic>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null || user.email == null) {
+        return {
+          'success': false,
+          'message': 'User not found. Please sign in again.',
+        };
+      }
+
+      // First verify current password
+      final isValid = await verifyCurrentPassword(currentPassword);
+      if (!isValid) {
+        return {'success': false, 'message': 'Current password is incorrect.'};
+      }
+
+      // Update password
+      await user.updatePassword(newPassword);
+
+      return {'success': true, 'message': 'Password changed successfully'};
+    } on FirebaseAuthException catch (e) {
+      return {'success': false, 'message': _getAuthErrorMessage(e.code)};
+    } catch (e) {
+      print('Error changing password: $e');
+      return {
+        'success': false,
+        'message': 'Failed to change password. Please try again.',
+      };
+    }
+  }
+
+  // Send password reset OTP
+  Future<bool> sendPasswordResetOTP(String email) async {
+    return await sendOTP(email, type: 'password_reset');
+  }
+
+  // Reset password with OTP verification
+  Future<Map<String, dynamic>> resetPasswordWithOTP({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    try {
+      // Verify OTP first
+      final isValidOTP = await verifyOTP(email, otp);
+      if (!isValidOTP) {
+        return {'success': false, 'message': 'Invalid or expired OTP'};
+      }
+
+      // Send password reset email (Firebase will handle the reset)
+      await _auth.sendPasswordResetEmail(email: email);
+
+      return {
+        'success': true,
+        'message': 'Password reset email sent. Please check your inbox.',
+      };
+    } catch (e) {
+      print('Error resetting password: $e');
+      return {
+        'success': false,
+        'message': 'Failed to reset password. Please try again.',
+      };
+    }
+  }
+
   // Check if user is signed in with Google
   Future<bool> isSignedInWithGoogle() async {
     return await _googleSignIn.isSignedIn();

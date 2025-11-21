@@ -1,13 +1,17 @@
 import 'package:blue_leaf_guide/shared/widgets/custom_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/button.dart';
 import '../../../shared/widgets/text_field.dart' as CustomTextField;
+import '../../auth/providers/auth_provider.dart';
 
 class ConfirmChangePasswordScreen extends StatefulWidget {
-  const ConfirmChangePasswordScreen({super.key});
+  final String currentPassword;
+
+  const ConfirmChangePasswordScreen({super.key, required this.currentPassword});
 
   @override
   State<ConfirmChangePasswordScreen> createState() =>
@@ -22,6 +26,53 @@ class _ConfirmChangePasswordScreenState
 
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
+
+  Future<void> _handleContinue() async {
+    if (newPasswordController.text.length < 4) {
+      _showError('Password must be at least 4 characters');
+      return;
+    }
+
+    if (newPasswordController.text != confirmPasswordController.text) {
+      _showError('Passwords do not match');
+      return;
+    }
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    final success = await authProvider.changePassword(
+      currentPassword: widget.currentPassword,
+      newPassword: newPasswordController.text,
+    );
+
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password changed successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      // Navigate back to profile or settings screen
+      Navigator.of(context).popUntil(
+        (route) => route.isFirst || route.settings.name == '/my-account',
+      );
+    } else if (mounted) {
+      _showError(authProvider.errorMessage ?? 'Failed to change password');
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+  @override
+  void dispose() {
+    newPasswordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +95,7 @@ class _ConfirmChangePasswordScreenState
                 prefixIconSvg: 'assets/icons/svg/lock.svg',
                 suffixIconSvg: _obscureNewPassword
                     ? 'assets/icons/svg/eye-closed.svg'
-                    : 'assets/icons/svg/eye-open.svg',
+                    : null,
                 onSuffixIconTap: () {
                   setState(() {
                     _obscureNewPassword = !_obscureNewPassword;
@@ -64,7 +115,7 @@ class _ConfirmChangePasswordScreenState
                 prefixIconSvg: 'assets/icons/svg/lock.svg',
                 suffixIconSvg: _obscureConfirmPassword
                     ? 'assets/icons/svg/eye-closed.svg'
-                    : 'assets/icons/svg/eye-open.svg',
+                    : null,
                 onSuffixIconTap: () {
                   setState(() {
                     _obscureConfirmPassword = !_obscureConfirmPassword;
@@ -81,8 +132,8 @@ class _ConfirmChangePasswordScreenState
                   style: TextStyle(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w500,
-                    height: 1.4, // 140% line-height
-                    letterSpacing: 0, // 0%
+                    height: 1.4,
+                    letterSpacing: 0,
                     color: AppColors.textSecondary.withOpacity(0.7),
                   ),
                 ),
@@ -90,17 +141,20 @@ class _ConfirmChangePasswordScreenState
               SizedBox(height: 32.h),
 
               // Continue Button
-              Button(
-                onPressed: () {
-                  // Add continue logic: validate both passwords match
+              Consumer<AuthProvider>(
+                builder: (context, authProvider, child) {
+                  return Button(
+                    onPressed: _handleContinue,
+                    text: authProvider.isLoading ? 'Changing...' : 'Continue',
+                    height: 54.h,
+                    borderRadius: BorderRadius.circular(32.r),
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                    textColor: Colors.white,
+                    backgroundColor: AppColors.brand500,
+                    isLoading: authProvider.isLoading,
+                  );
                 },
-                text: 'Continue',
-                height: 54.h,
-                borderRadius: BorderRadius.circular(32.r),
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w600,
-                textColor: Colors.white,
-                backgroundColor: AppColors.brand500,
               ),
 
               SizedBox(height: 12.h),

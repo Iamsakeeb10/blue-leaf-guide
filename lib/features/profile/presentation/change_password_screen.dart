@@ -18,6 +18,31 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final TextEditingController passwordController = TextEditingController();
   bool _obscurePassword = true;
 
+  Future<void> _handleContinue() async {
+    if (passwordController.text.isEmpty) {
+      _showError('Please enter your current password');
+      return;
+    }
+
+    // Pass current password to next screen
+    context.push(
+      '/confirm-change-password',
+      extra: {'currentPassword': passwordController.text},
+    );
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+  @override
+  void dispose() {
+    passwordController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,7 +64,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 prefixIconSvg: 'assets/icons/svg/lock.svg',
                 suffixIconSvg: _obscurePassword
                     ? 'assets/icons/svg/eye-closed.svg'
-                    : 'assets/icons/svg/eye-open.svg',
+                    : null,
                 onSuffixIconTap: () {
                   setState(() {
                     _obscurePassword = !_obscurePassword;
@@ -79,10 +104,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
               // Continue Button
               Button(
-                onPressed: () {
-                  // Add continue logic here
-                  context.push('/confirm-change-password');
-                },
+                onPressed: _handleContinue,
                 text: 'Continue',
                 height: 54.h,
                 borderRadius: BorderRadius.circular(32.r),

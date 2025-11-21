@@ -198,6 +198,108 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  // Add these methods to your existing AuthProvider class
+
+  // Update user profile
+  Future<bool> updateProfile({
+    required String firstName,
+    required String lastName,
+  }) async {
+    if (_currentUser == null) {
+      _errorMessage = 'User not found. Please sign in again.';
+      notifyListeners();
+      return false;
+    }
+
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await _authService.updateUserProfile(
+        uid: _currentUser!.uid,
+        firstName: firstName,
+        lastName: lastName,
+      );
+
+      _isLoading = false;
+
+      if (result['success']) {
+        // Update local user data
+        await _loadUserData();
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = result['message'];
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'An error occurred. Please try again.';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Change password
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await _authService.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+
+      _isLoading = false;
+
+      if (result['success']) {
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = result['message'];
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'An error occurred. Please try again.';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Send password reset OTP (for forgot password flow)
+  Future<bool> sendPasswordResetOTP(String email) async {
+    _isLoading = true;
+    _errorMessage = null;
+    _pendingEmail = email;
+    notifyListeners();
+
+    try {
+      final result = await _authService.sendPasswordResetOTP(email);
+      _isLoading = false;
+
+      if (!result) {
+        _errorMessage = 'Failed to send OTP. Please try again.';
+      }
+
+      notifyListeners();
+      return result;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'An error occurred. Please try again.';
+      notifyListeners();
+      return false;
+    }
+  }
+
   // Sign out
   Future<void> signOut() async {
     await _authService.signOut();
