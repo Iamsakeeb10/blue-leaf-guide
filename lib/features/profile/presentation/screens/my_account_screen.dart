@@ -90,6 +90,9 @@ class MyAccountScreen extends StatelessWidget {
                 iconBackgroundColor: AppColors.textPrimary.withOpacity(0.05),
                 title: 'Change Password',
                 showDivider: false,
+                onTap: () {
+                  context.push('/change-password');
+                },
               ),
 
               SizedBox(height: 24.h),

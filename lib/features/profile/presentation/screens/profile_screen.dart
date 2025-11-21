@@ -98,6 +98,9 @@ class ProfileScreen extends StatelessWidget {
                 svgIconPath: 'assets/icons/svg/profile-law.svg',
                 iconBackgroundColor: AppColors.textPrimary.withOpacity(0.05),
                 title: 'Terms of Use',
+                onTap: () {
+                  context.push('/terms');
+                },
               ),
 
               _buildProfileItem(
@@ -105,6 +108,9 @@ class ProfileScreen extends StatelessWidget {
                 iconBackgroundColor: AppColors.textPrimary.withOpacity(0.05),
                 title: 'Privacy Policy',
                 showDivider: false,
+                onTap: () {
+                  context.push('/privacy-policy');
+                },
               ),
 
               SizedBox(height: 24.h),
