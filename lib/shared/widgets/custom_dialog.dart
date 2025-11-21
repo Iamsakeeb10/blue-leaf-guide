@@ -11,6 +11,7 @@ class CustomDialog extends StatelessWidget {
   final VoidCallback? primaryButtonOnPressed;
   final String secondaryButtonText;
   final VoidCallback? secondaryButtonOnPressed;
+  final bool isLoading;
 
   const CustomDialog({
     super.key,
@@ -21,6 +22,7 @@ class CustomDialog extends StatelessWidget {
     this.primaryButtonOnPressed,
     this.secondaryButtonText = 'Cancel',
     this.secondaryButtonOnPressed,
+    this.isLoading = false,
   });
 
   @override
@@ -83,6 +85,7 @@ class CustomDialog extends StatelessWidget {
               fontWeight: FontWeight.w600,
               textColor: Colors.white,
               backgroundColor: AppColors.errorRed,
+              isLoading: isLoading,
             ),
 
             SizedBox(height: 12.h),
@@ -119,18 +122,3 @@ class CustomDialog extends StatelessWidget {
     );
   }
 }
-
-/// Usage:
-/// showDialog(
-///   context: context,
-///   barrierDismissible: true,
-///   builder: (_) => CustomDialog(
-///     title: 'Logout',
-///     subtitle: 'Are you sure you want to logout? You will need to login again.',
-///     primaryButtonText: 'Logout',
-///     primaryButtonOnPressed: () {
-///       // Your logout logic
-///       Navigator.pop(context);
-///     },
-///   ),
-/// );

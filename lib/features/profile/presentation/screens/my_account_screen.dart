@@ -3,16 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../main.dart';
 import '../../../../shared/widgets/button.dart';
 import '../../../../shared/widgets/custom_dialog.dart';
+import '../../../auth/providers/auth_provider.dart';
 
 class MyAccountScreen extends StatelessWidget {
   const MyAccountScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const CustomAppBar(
@@ -98,28 +103,54 @@ class MyAccountScreen extends StatelessWidget {
 
               SizedBox(height: 24.h),
 
-              // Action Buttons
               Button(
                 onPressed: () {
-                  // delete account logic
                   showDialog(
                     context: context,
-                    barrierDismissible:
-                        true, // allows dismiss by tapping outside
-                    builder: (_) => CustomDialog(
-                      title: "Delete Account",
-                      subtitle:
-                          "Deleting your account will permanently remove all your data and progress.",
-                      primaryButtonText: "Yes,Delete",
-                      primaryButtonOnPressed: () {
-                        // Your delete logic here
-                        print("Account deleted");
-                        Navigator.of(context).pop(); // close dialog
-                      },
-                      secondaryButtonText: "Cancel",
-                      secondaryButtonOnPressed: () {
-                        print("Cancelled");
-                        Navigator.of(context).pop(); // close dialog
+                    barrierDismissible: true,
+                    builder: (_) => StatefulBuilder(
+                      builder: (context, setState) {
+                        return CustomDialog(
+                          title: "Delete Account",
+                          subtitle:
+                              "Deleting your account will permanently remove all your data and progress.",
+                          isLoading: authProvider.isLoading,
+                          primaryButtonText: "Yes, Delete",
+                          primaryButtonOnPressed: () async {
+                            // Start deletion
+                            setState(() {}); // Refresh to show loader
+                            final success = await authProvider.deleteAccount();
+
+                            if (success) {
+                              // Close dialog
+                              if (context.mounted) Navigator.of(context).pop();
+
+                              scaffoldMessengerKey.currentState?.showSnackBar(
+                                const SnackBar(
+                                  content: Text('Account deleted successfully'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+
+                              // Navigate to sign-in screen
+                              if (context.mounted) context.go('/sign-in');
+                            } else {
+                              scaffoldMessengerKey.currentState?.showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    authProvider.errorMessage ??
+                                        'Failed to delete account',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          },
+                          secondaryButtonText: "Cancel",
+                          secondaryButtonOnPressed: () {
+                            Navigator.of(context).pop(); // close dialog
+                          },
+                        );
                       },
                     ),
                   );
@@ -137,25 +168,54 @@ class MyAccountScreen extends StatelessWidget {
 
               Button(
                 onPressed: () {
-                  // delete all data logic
                   showDialog(
                     context: context,
-                    barrierDismissible:
-                        true, // allows dismiss by tapping outside
-                    builder: (_) => CustomDialog(
-                      title: "Delete All Data",
-                      subtitle:
-                          "Deleting data will be securely erased and removed from our system upon deletion.",
-                      primaryButtonText: "Yes,Delete",
-                      primaryButtonOnPressed: () {
-                        // Your delete logic here
-                        print("Account deleted");
-                        Navigator.of(context).pop(); // close dialog
-                      },
-                      secondaryButtonText: "Cancel",
-                      secondaryButtonOnPressed: () {
-                        print("Cancelled");
-                        Navigator.of(context).pop(); // close dialog
+                    barrierDismissible: true,
+                    builder: (_) => StatefulBuilder(
+                      builder: (context, setState) {
+                        return CustomDialog(
+                          title: "Delete All Data",
+                          subtitle:
+                              "Deleting data will permanently remove all your data and progress.",
+                          isLoading: authProvider.isLoading,
+                          primaryButtonText: "Yes, Delete",
+                          primaryButtonOnPressed: () async {
+                            // Start deletion
+                            setState(() {});
+                            final success = await authProvider.deleteAllData();
+
+                            if (success) {
+                              // Close dialog
+                              if (context.mounted) Navigator.of(context).pop();
+
+                              scaffoldMessengerKey.currentState?.showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'All data deleted successfully',
+                                  ),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+
+                              // Navigate to sign-in screen
+                              if (context.mounted) context.go('/sign-in');
+                            } else {
+                              scaffoldMessengerKey.currentState?.showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    authProvider.errorMessage ??
+                                        'Failed to delete data',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          },
+                          secondaryButtonText: "Cancel",
+                          secondaryButtonOnPressed: () {
+                            Navigator.of(context).pop(); // close dialog
+                          },
+                        );
                       },
                     ),
                   );

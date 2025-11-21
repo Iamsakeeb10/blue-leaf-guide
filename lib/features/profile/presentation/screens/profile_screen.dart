@@ -3,16 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../main.dart';
 import '../../../../shared/widgets/button.dart';
 import '../../../../shared/widgets/custom_dialog.dart';
+import '../../../auth/providers/auth_provider.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: CustomAppBar(title: 'My Profile', hideBackButton: true),
@@ -123,23 +128,47 @@ class ProfileScreen extends StatelessWidget {
                 onPressed: () {
                   showDialog(
                     context: context,
-                    barrierDismissible:
-                        true, // allows dismiss by tapping outside
-                    builder: (_) => CustomDialog(
-                      title: "Sign out",
-                      subtitle:
-                          "Are you sure you would like to sign out of your The Blue Leaf Guide account?",
-                      primaryButtonText: "Sign Out",
+                    barrierDismissible: true,
+                    builder: (_) => StatefulBuilder(
+                      builder: (context, setState) {
+                        bool isSigningOut = false;
 
-                      primaryButtonOnPressed: () {
-                        // Your delete logic here
-                        print("Account deleted");
-                        Navigator.of(context).pop(); // close dialog
-                      },
-                      secondaryButtonText: "Cancel",
-                      secondaryButtonOnPressed: () {
-                        print("Cancelled");
-                        Navigator.of(context).pop(); // close dialog
+                        return CustomDialog(
+                          title: "Sign out",
+                          subtitle:
+                              "Are you sure you would like to sign out of your The Blue Leaf Guide account?",
+                          isLoading: isSigningOut,
+                          primaryButtonText: "Sign Out",
+                          primaryButtonOnPressed: () async {
+                            setState(() {
+                              isSigningOut = true;
+                            });
+
+                            // Give Flutter a frame to show the loader
+                            await Future.delayed(Duration(milliseconds: 50));
+
+                            await authProvider.signOut();
+
+                            if (context.mounted) {
+                              Navigator.of(context).pop(); // close dialog
+
+                              context.go('/sign-in');
+
+                              scaffoldMessengerKey.currentState?.showSnackBar(
+                                const SnackBar(
+                                  content: Text('Signed out successfully'),
+                                  backgroundColor: Colors.green,
+                                  behavior: SnackBarBehavior.floating,
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          },
+                          secondaryButtonText: "Cancel",
+                          secondaryButtonOnPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        );
                       },
                     ),
                   );

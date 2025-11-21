@@ -397,6 +397,46 @@ class AuthService {
     }
   }
 
+  // In AuthService
+  Future<Map<String, dynamic>> deleteAccount() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        return {'success': false, 'message': 'No user signed in.'};
+      }
+
+      final uid = user.uid;
+
+      // Delete user data from Firestore
+      await _firestore.collection('users').doc(uid).delete();
+
+      // Delete user from Firebase Auth
+      await user.delete();
+
+      // Clear local login state
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+
+      // Sign out from Google if signed in
+      if (await GoogleSignIn().isSignedIn()) {
+        await GoogleSignIn().signOut();
+      }
+
+      return {'success': true, 'message': 'Account deleted successfully'};
+    } on FirebaseAuthException catch (e) {
+      // If recent login required
+      if (e.code == 'requires-recent-login') {
+        return {'success': false, 'message': 'Please re-login and try again.'};
+      }
+      return {
+        'success': false,
+        'message': e.message ?? 'Failed to delete account',
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Failed to delete account'};
+    }
+  }
+
   // Check if user is signed in with Google
   Future<bool> isSignedInWithGoogle() async {
     return await _googleSignIn.isSignedIn();

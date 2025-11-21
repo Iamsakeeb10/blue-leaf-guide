@@ -1,5 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../data/auth_service.dart';
 
@@ -300,9 +302,84 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Sign out
+  // In AuthProvider
+  Future<bool> deleteAccount() async {
+    if (_currentUser == null) return false;
+
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    final result = await _authService.deleteAccount();
+
+    _isLoading = false;
+
+    if (result['success']) {
+      _currentUser = null;
+      _userData = null;
+      _pendingEmail = null;
+      notifyListeners();
+      return true;
+    } else {
+      _errorMessage = result['message'];
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // In AuthProvider
+  Future<bool> deleteAllData() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      // Implement your logic to delete all user-related data
+      // For example: delete Firestore data
+      if (_currentUser != null) {
+        final uid = _currentUser!.uid;
+        final firestore = FirebaseFirestore.instance;
+
+        // Delete user document
+        await firestore.collection('users').doc(uid).delete();
+
+        // Delete OTP verification doc if exists
+        await firestore
+            .collection('otp_verification')
+            .doc(uid)
+            .delete()
+            .catchError((_) {});
+
+        // Add other collections if needed
+
+        // Optionally, delete Firebase Auth user
+        await _currentUser!.delete();
+      }
+
+      // Sign out after deletion
+      await signOut();
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'Failed to delete all data. Please try again.';
+      notifyListeners();
+      return false;
+    }
+  }
+
   Future<void> signOut() async {
+    // Sign out from Firebase
     await _authService.signOut();
+
+    // Sign out from Google if signed in
+    final googleSignIn = GoogleSignIn();
+    if (await googleSignIn.isSignedIn()) {
+      await googleSignIn.signOut();
+    }
+
     _currentUser = null;
     _userData = null;
     _pendingEmail = null;
