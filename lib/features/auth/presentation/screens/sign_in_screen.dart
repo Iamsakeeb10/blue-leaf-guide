@@ -62,6 +62,39 @@ class _SignInScreenState extends State<SignInScreen> {
     }
   }
 
+  Future<void> _handleGoogleSignIn() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    try {
+      final success = await authProvider.signInWithGoogle();
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Signed in with Google successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // TODO: Navigate to your dashboard/home screen
+        // context.go('/dashboard');
+      } else if (mounted) {
+        if (authProvider.errorMessage != null &&
+            authProvider.errorMessage != 'Sign in cancelled') {
+          _showError(
+            authProvider.errorMessage ?? 'Failed to sign in with Google',
+          );
+        }
+      }
+    } catch (e, stackTrace) {
+      print('❌ Google sign-in error: $e');
+      print(stackTrace);
+      if (mounted) {
+        _showError('An unexpected error occurred during Google sign-in.');
+      }
+    }
+  }
+
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
@@ -193,7 +226,7 @@ class _SignInScreenState extends State<SignInScreen> {
                         SocialButton(
                           icon: 'assets/icons/svg/google.svg',
                           text: 'Continue with Google',
-                          onTap: () {},
+                          onTap: _handleGoogleSignIn,
                         ),
                         SizedBox(height: 12.h),
                         SocialButton(

@@ -1,11 +1,20 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:email_otp/email_otp.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: kIsWeb
+        ? '1022593340174-b99mnq2r13vukratcoafrla2r0kbjhk7.apps.googleusercontent.com'
+        : null,
+  );
 
   AuthService() {
     // Initialize EmailOTP globally
@@ -18,18 +27,6 @@ class AuthService {
       expiry: 5 * 60 * 1000, // 5 minutes
     );
   }
-
-  // // Initialize Email OTP
-  // void initEmailOTP() {
-  //   EmailOTP.config(
-  //     appEmail: 'noreply@blueleafguide.com',
-  //     appName: 'Blue Leaf Guide',
-  //     otpType: OTPType.numeric,
-  //     otpLength: 4,
-  //     emailTheme: EmailTheme.v6,
-  //     expiry: 5 * 60 * 1000,
-  //   );
-  // }
 
   /// Send OTP to email and store in Firestore
   Future<bool> sendOTP(String email, {String type = 'signup'}) async {
@@ -218,5 +215,73 @@ class AuthService {
       default:
         return 'An error occurred. Please try again.';
     }
+  }
+
+  // Sign in with Google
+  Future<Map<String, dynamic>> signInWithGoogle() async {
+    try {
+      // Trigger the Google Sign In flow
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+
+      if (googleUser == null) {
+        // User canceled the sign-in
+        return {'success': false, 'message': 'Sign in cancelled'};
+      }
+
+      // Obtain the auth details from the request
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      // Create a new credential
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Sign in to Firebase with the Google credential
+      final userCredential = await _auth.signInWithCredential(credential);
+      final user = userCredential.user!;
+
+      // Check if this is a new user
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+
+      if (!userDoc.exists) {
+        // New user - create user document
+        final nameParts = user.displayName?.split(' ') ?? ['', ''];
+        await _firestore.collection('users').doc(user.uid).set({
+          'firstName': nameParts.isNotEmpty ? nameParts[0] : '',
+          'lastName': nameParts.length > 1
+              ? nameParts.sublist(1).join(' ')
+              : '',
+          'email': user.email ?? '',
+          'photoURL': user.photoURL,
+          'provider': 'google',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      // Save login state
+      await _saveLoginState(user.uid);
+
+      return {
+        'success': true,
+        'message': 'Signed in with Google successfully',
+        'user': user,
+        'isNewUser': !userDoc.exists,
+      };
+    } on FirebaseAuthException catch (e) {
+      return {'success': false, 'message': _getAuthErrorMessage(e.code)};
+    } catch (e) {
+      print('Google Sign In Error: $e');
+      return {
+        'success': false,
+        'message': 'An error occurred during Google sign in. Please try again.',
+      };
+    }
+  }
+
+  // Check if user is signed in with Google
+  Future<bool> isSignedInWithGoogle() async {
+    return await _googleSignIn.isSignedIn();
   }
 }

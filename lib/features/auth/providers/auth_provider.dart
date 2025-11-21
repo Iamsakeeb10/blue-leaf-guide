@@ -167,6 +167,35 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  // Sign in with Google
+  Future<bool> signInWithGoogle() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await _authService.signInWithGoogle();
+
+      _isLoading = false;
+
+      if (result['success']) {
+        _currentUser = result['user'];
+        await _loadUserData();
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = result['message'];
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'An error occurred. Please try again.';
+      notifyListeners();
+      return false;
+    }
+  }
+
   // Sign out
   Future<void> signOut() async {
     await _authService.signOut();
