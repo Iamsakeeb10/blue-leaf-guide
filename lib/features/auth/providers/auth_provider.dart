@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../../core/services/notification_service.dart';
 import '../data/auth_service.dart';
 
 class AuthProvider with ChangeNotifier {
@@ -35,6 +36,10 @@ class AuthProvider with ChangeNotifier {
   Future<void> _loadUserData() async {
     if (_currentUser != null) {
       _userData = await _authService.getUserData(_currentUser!.uid);
+
+      // Sync notification settings after loading user data
+      await NotificationService().syncReminderSettings(_currentUser!.uid);
+
       notifyListeners();
     }
   }
@@ -395,5 +400,14 @@ class AuthProvider with ChangeNotifier {
   void clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  Future<void> initializeNotifications() async {
+    await NotificationService().initialize();
+
+    // Sync settings if user is logged in
+    if (_currentUser != null) {
+      await NotificationService().syncReminderSettings(_currentUser!.uid);
+    }
   }
 }

@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/services/notification_service.dart';
+
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -435,6 +437,10 @@ class AuthService {
     } catch (e) {
       return {'success': false, 'message': 'Failed to delete account'};
     }
+  }
+
+  Future<void> syncNotificationSettings(String uid) async {
+    await NotificationService().syncReminderSettings(uid);
   }
 
   // Check if user is signed in with Google

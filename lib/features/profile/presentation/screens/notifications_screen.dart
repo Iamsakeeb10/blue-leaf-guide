@@ -1,11 +1,14 @@
-import 'package:blue_leaf_guide/shared/widgets/custom_appbar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../../shared/widgets/button.dart';
+import '../../../../shared/widgets/custom_appbar.dart';
+import '../../../auth/providers/auth_provider.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -16,12 +19,160 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   bool _isNotification1 = true;
-  bool _isNotification2 = false;
+  bool _isGoalRemindersEnabled = false;
+  int _selectedHour = 10;
+  int _selectedMinute = 45;
+  String _selectedPeriod = "AM";
+  bool _isLoading = true;
+
+  final NotificationService _notificationService = NotificationService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  /// Load reminder settings from local storage and Firestore
+  Future<void> _loadSettings() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final settings = await _notificationService.loadReminderSettings();
+
+      final enabled = settings['enabled'] as bool;
+      final hour24 = settings['hour'] as int;
+      final minute = settings['minute'] as int;
+
+      // Convert 24-hour to 12-hour format
+      final is12Hour = hour24 > 12;
+      final hour12 = is12Hour ? hour24 - 12 : (hour24 == 0 ? 12 : hour24);
+      final period = hour24 >= 12 ? "PM" : "AM";
+
+      setState(() {
+        _isGoalRemindersEnabled = enabled;
+        _selectedHour = hour12;
+        _selectedMinute = minute;
+        _selectedPeriod = period;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading settings: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  /// Convert 12-hour format to 24-hour format
+  int _convertTo24Hour(int hour12, String period) {
+    if (period == "AM") {
+      return hour12 == 12 ? 0 : hour12;
+    } else {
+      return hour12 == 12 ? 12 : hour12 + 12;
+    }
+  }
+
+  /// Get formatted time string
+  String _getFormattedTime() {
+    return '${_selectedHour.toString().padLeft(2, '0')}:${_selectedMinute.toString().padLeft(2, '0')} $_selectedPeriod';
+  }
+
+  /// Toggle goal reminders on/off
+  Future<void> _toggleGoalReminders(bool value) async {
+    setState(() => _isGoalRemindersEnabled = value);
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final uid = authProvider.currentUser?.uid;
+
+    if (uid == null) {
+      _showErrorSnackBar('Please sign in to enable reminders');
+      setState(() => _isGoalRemindersEnabled = false);
+      return;
+    }
+
+    try {
+      final hour24 = _convertTo24Hour(_selectedHour, _selectedPeriod);
+
+      // Save locally
+      await _notificationService.saveReminderSettings(
+        enabled: value,
+        hour: hour24,
+        minute: _selectedMinute,
+      );
+
+      // Save to Firestore
+      await _notificationService.saveReminderToFirestore(
+        uid: uid,
+        enabled: value,
+        hour: hour24,
+        minute: _selectedMinute,
+      );
+
+      if (value) {
+        // Schedule notification
+        await _notificationService.scheduleGoalReminder(
+          hour: hour24,
+          minute: _selectedMinute,
+        );
+        _showSuccessSnackBar('Goal reminder enabled at ${_getFormattedTime()}');
+      } else {
+        // Cancel notification
+        await _notificationService.cancelGoalReminder();
+        _showSuccessSnackBar('Goal reminder disabled');
+      }
+    } catch (e) {
+      _showErrorSnackBar('Failed to update reminder settings');
+      setState(() => _isGoalRemindersEnabled = !value);
+    }
+  }
+
+  /// Update reminder time
+  Future<void> _updateReminderTime(int hour, int minute, String period) async {
+    setState(() {
+      _selectedHour = hour;
+      _selectedMinute = minute;
+      _selectedPeriod = period;
+    });
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final uid = authProvider.currentUser?.uid;
+
+    if (uid == null) return;
+
+    try {
+      final hour24 = _convertTo24Hour(hour, period);
+
+      // Save locally
+      await _notificationService.saveReminderSettings(
+        enabled: _isGoalRemindersEnabled,
+        hour: hour24,
+        minute: minute,
+      );
+
+      // Save to Firestore
+      await _notificationService.saveReminderToFirestore(
+        uid: uid,
+        enabled: _isGoalRemindersEnabled,
+        hour: hour24,
+        minute: minute,
+      );
+
+      // Reschedule notification if enabled
+      if (_isGoalRemindersEnabled) {
+        await _notificationService.scheduleGoalReminder(
+          hour: hour24,
+          minute: minute,
+        );
+        _showSuccessSnackBar('Reminder time updated to ${_getFormattedTime()}');
+      }
+    } catch (e) {
+      _showErrorSnackBar('Failed to update reminder time');
+    }
+  }
 
   void _openCustomTimePicker(BuildContext context) {
-    int selectedHour = 9;
-    int selectedMinute = 0;
-    String selectedPeriod = "AM";
+    int tempHour = _selectedHour;
+    int tempMinute = _selectedMinute;
+    String tempPeriod = _selectedPeriod;
 
     showDialog(
       context: context,
@@ -47,9 +198,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     color: AppColors.textPrimary,
                   ),
                 ),
-
                 SizedBox(height: 12.h),
-
                 Expanded(
                   child: Container(
                     width: double.infinity,
@@ -58,8 +207,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(14.r),
                     ),
-
-                    // ⭐ No padding → makes background seamless
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -69,10 +216,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           child: CupertinoPicker(
                             itemExtent: 32.h,
                             scrollController: FixedExtentScrollController(
-                              initialItem: selectedHour - 1,
+                              initialItem: tempHour - 1,
                             ),
                             onSelectedItemChanged: (index) {
-                              selectedHour = index + 1;
+                              tempHour = index + 1;
                             },
                             children: List.generate(12, (i) {
                               final hour = i + 1;
@@ -89,8 +236,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             }),
                           ),
                         ),
-
-                        /// Colon
                         Text(
                           ":",
                           style: TextStyle(
@@ -106,10 +251,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           child: CupertinoPicker(
                             itemExtent: 32.h,
                             scrollController: FixedExtentScrollController(
-                              initialItem: selectedMinute,
+                              initialItem: tempMinute,
                             ),
                             onSelectedItemChanged: (index) {
-                              selectedMinute = index;
+                              tempMinute = index;
                             },
                             children: List.generate(60, (i) {
                               return Center(
@@ -132,10 +277,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           child: CupertinoPicker(
                             itemExtent: 32.h,
                             scrollController: FixedExtentScrollController(
-                              initialItem: selectedPeriod == "AM" ? 0 : 1,
+                              initialItem: tempPeriod == "AM" ? 0 : 1,
                             ),
                             onSelectedItemChanged: (index) {
-                              selectedPeriod = index == 0 ? "AM" : "PM";
+                              tempPeriod = index == 0 ? "AM" : "PM";
                             },
                             children: const [
                               Center(child: Text("AM")),
@@ -147,23 +292,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     ),
                   ),
                 ),
-
                 SizedBox(height: 10.h),
-
                 Padding(
                   padding: EdgeInsets.only(left: 16.w, right: 16.w, top: 12.h),
                   child: Column(
                     children: [
                       Button(
                         onPressed: () {
-                          // ignore: unused_local_variable
-                          final formattedTime =
-                              "$selectedHour:${selectedMinute.toString().padLeft(2, '0')} $selectedPeriod";
-
-                          setState(() {
-                            // _selectedTime = formattedTime;  <-- your logic
-                          });
-
+                          _updateReminderTime(tempHour, tempMinute, tempPeriod);
                           Navigator.pop(context);
                         },
                         text: 'Save',
@@ -174,10 +310,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         textColor: Colors.white,
                         backgroundColor: AppColors.brand500,
                       ),
-
                       SizedBox(height: 12.h),
-
-                      // CANCEL Button
                       SizedBox(
                         width: double.infinity,
                         child: TextButton(
@@ -212,8 +345,36 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: const CustomAppBar(title: 'Notifications'),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const CustomAppBar(title: 'Notifications'),
@@ -235,19 +396,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             _buildNotificationItem(
               title: 'Goal Reminders',
               subtitle: 'Track monthly goal progress',
-              switchValue: _isNotification2,
-              onSwitchChanged: (value) {
-                setState(() {
-                  _isNotification2 = value;
-                });
-              },
+              switchValue: _isGoalRemindersEnabled,
+              onSwitchChanged: _toggleGoalReminders,
             ),
             Divider(color: AppColors.neutral50, thickness: 1.w, height: 1.h),
             _buildNotificationItem(
               title: 'Everyday',
               subtitle: '',
               isTimeItem: true,
-              time: '10:45 AM',
+              time: _getFormattedTime(),
             ),
           ],
         ),
@@ -346,9 +503,7 @@ class CustomSwitch extends StatelessWidget {
         decoration: BoxDecoration(
           color: value
               ? AppColors.brand500
-              : AppColors.textPrimary.withOpacity(
-                  0.05,
-                ), // track color with 5% opacity
+              : AppColors.textPrimary.withOpacity(0.05),
           borderRadius: BorderRadius.circular(50.r),
         ),
         child: Stack(
@@ -361,16 +516,14 @@ class CustomSwitch extends StatelessWidget {
                 width: 20.w,
                 height: 20.h,
                 decoration: BoxDecoration(
-                  color: Colors.white, // circle color
+                  color: Colors.white,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(
-                        0x16330014,
-                      ), // same as #16330014 in Flutter
-                      offset: const Offset(0, 1), // x=0, y=1 (vertical)
-                      blurRadius: 2, // blur radius
-                      spreadRadius: 0, // spread radius
+                      color: const Color(0x16330014),
+                      offset: const Offset(0, 1),
+                      blurRadius: 2,
+                      spreadRadius: 0,
                     ),
                   ],
                 ),

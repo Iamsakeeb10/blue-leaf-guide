@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import 'app/navigation/app_router.dart';
 import 'app/utils/firebase_helper.dart';
+import 'core/services/notification_service.dart';
 import 'features/auth/providers/auth_provider.dart';
 
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
@@ -12,6 +13,8 @@ final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await NotificationService().initialize();
 
   await initializeFirebase();
 
