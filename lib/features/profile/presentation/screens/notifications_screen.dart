@@ -120,12 +120,72 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     ),
                   ],
                 )
-              : Switch(
-                  value: switchValue ?? false,
-                  onChanged: onSwitchChanged,
-                  activeColor: AppColors.brand500,
-                ),
+              : CustomSwitch(value: switchValue!, onChanged: onSwitchChanged!),
         ],
+      ),
+    );
+  }
+}
+
+class CustomSwitch extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const CustomSwitch({super.key, required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 44.w,
+        height: 26.h,
+        padding: EdgeInsets.all(2.w),
+        decoration: BoxDecoration(
+          color: value
+              ? AppColors.brand500
+              : AppColors.textPrimary.withOpacity(
+                  0.05,
+                ), // track color with 5% opacity
+          borderRadius: BorderRadius.circular(50.r),
+        ),
+        child: Stack(
+          children: [
+            AnimatedAlign(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+              child: Container(
+                width: 20.w,
+                height: 20.h,
+                decoration: BoxDecoration(
+                  color: Colors.white, // circle color
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(
+                        0x16330014,
+                      ), // same as #16330014 in Flutter
+                      offset: const Offset(0, 1), // x=0, y=1 (vertical)
+                      blurRadius: 2, // blur radius
+                      spreadRadius: 0, // spread radius
+                    ),
+                  ],
+                ),
+                child: value
+                    ? Center(
+                        child: Icon(
+                          Icons.check,
+                          color: AppColors.brand500,
+                          size: 16.sp,
+                        ),
+                      )
+                    : null,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
