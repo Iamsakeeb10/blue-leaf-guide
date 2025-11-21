@@ -1,5 +1,6 @@
 import 'package:blue_leaf_guide/features/profile/presentation/change_password_screen.dart';
 import 'package:blue_leaf_guide/features/profile/presentation/confirm_change_password_screen.dart';
+import 'package:blue_leaf_guide/features/profile/presentation/screens/notifications_screen.dart';
 import 'package:blue_leaf_guide/features/profile/presentation/screens/privacy_policy_screen.dart';
 import 'package:blue_leaf_guide/features/profile/presentation/screens/profile_information_screen.dart';
 import 'package:blue_leaf_guide/features/profile/presentation/screens/terms_of_service_screen.dart';
@@ -116,6 +117,10 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/privacy-policy',
       builder: (context, state) => const PrivacyPolicyScreen(),
+    ),
+    GoRoute(
+      path: '/notifications',
+      builder: (context, state) => const NotificationsScreen(),
     ),
   ],
 );

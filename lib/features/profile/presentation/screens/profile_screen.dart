@@ -88,6 +88,9 @@ class ProfileScreen extends StatelessWidget {
                 svgIconPath: 'assets/icons/svg/profile-notification.svg',
                 iconBackgroundColor: AppColors.textPrimary.withOpacity(0.05),
                 title: 'Notifications',
+                onTap: () {
+                  context.push('/notifications');
+                },
               ),
               _buildProfileItem(
                 svgIconPath: 'assets/icons/svg/profile-help.svg',
