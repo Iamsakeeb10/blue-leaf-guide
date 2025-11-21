@@ -7,8 +7,14 @@ import 'back_button_icon.dart';
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final VoidCallback? onBack;
+  final bool hideBackButton; // <-- new optional prop
 
-  const CustomAppBar({super.key, required this.title, this.onBack});
+  const CustomAppBar({
+    super.key,
+    required this.title,
+    this.onBack,
+    this.hideBackButton = false, // default false
+  });
 
   @override
   Size get preferredSize => Size.fromHeight(55.h);
@@ -24,12 +30,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: BackButtonIcon(
-                onTap: onBack ?? () => Navigator.of(context).pop(),
+            if (!hideBackButton)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: BackButtonIcon(
+                  onTap: onBack ?? () => Navigator.of(context).pop(),
+                ),
               ),
-            ),
             Center(
               child: Text(
                 title,

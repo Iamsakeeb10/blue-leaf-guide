@@ -1,3 +1,4 @@
+import 'package:blue_leaf_guide/features/profile/presentation/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -21,7 +22,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     const PlaceholderScreen(title: 'Explore'),
     const PlaceholderScreen(title: 'Community'),
     const PlaceholderScreen(title: 'Messages'),
-    const PlaceholderScreen(title: 'Profile'),
+    // const PlaceholderScreen(title: 'Profile'),
+    const ProfileScreen(),
   ];
 
   @override
