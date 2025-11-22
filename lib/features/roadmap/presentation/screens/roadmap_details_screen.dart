@@ -1,47 +1,208 @@
-import 'package:blue_leaf_guide/shared/widgets/custom_appbar.dart';
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/button.dart';
+import '../../../../shared/widgets/custom_appbar.dart';
 import '../../../../shared/widgets/custom_checkbox.dart';
+import '../../data/roadmap_service.dart';
 
 class RoadmapDetailsScreen extends StatefulWidget {
-  final Map<String, dynamic> roadmap;
+  final String roadmapId;
 
-  const RoadmapDetailsScreen({super.key, required this.roadmap});
+  const RoadmapDetailsScreen({super.key, required this.roadmapId});
 
   @override
   State<RoadmapDetailsScreen> createState() => _RoadmapDetailsScreenState();
 }
 
 class _RoadmapDetailsScreenState extends State<RoadmapDetailsScreen> {
+  final RoadmapService _roadmapService = RoadmapService();
+
+  Map<String, dynamic>? roadmap;
+  Map<String, dynamic>? progress;
+
   List<bool> checklistStates = [];
+  Map<String, TextEditingController> reflectionControllers = {};
+
+  bool isLoading = true;
+  bool isSaving = false;
+
+  StreamSubscription? _progressSubscription;
 
   @override
   void initState() {
     super.initState();
+    _loadData();
+    _listenToProgressUpdates();
+  }
 
-    final actionChecklist = List<String>.from(
-      widget.roadmap["actionChecklist"] ?? [],
+  void _listenToProgressUpdates() {
+    if (_roadmapService.currentUserId == null) return;
+
+    _progressSubscription = FirebaseFirestore.instance
+        .collection('users')
+        .doc(_roadmapService.currentUserId)
+        .collection('roadmapProgress')
+        .doc(widget.roadmapId)
+        .snapshots()
+        .listen((snapshot) {
+          if (snapshot.exists && mounted) {
+            final data = snapshot.data()!;
+            final completedChecklist = List<int>.from(
+              data['completedChecklist'] ?? [],
+            );
+
+            setState(() {
+              checklistStates = List.generate(
+                checklistStates.length,
+                (index) => completedChecklist.contains(index),
+              );
+
+              // Update reflections if needed
+              final savedReflections = Map<String, String>.from(
+                data['reflections'] ?? {},
+              );
+              reflectionControllers.forEach((label, controller) {
+                controller.text = savedReflections[label] ?? '';
+              });
+            });
+          }
+        });
+  }
+
+  @override
+  void dispose() {
+    _progressSubscription?.cancel();
+    reflectionControllers.values.forEach((controller) => controller.dispose());
+    super.dispose();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => isLoading = true);
+
+    final fetchedRoadmap = await _roadmapService.fetchRoadmapById(
+      widget.roadmapId,
+    );
+    final fetchedProgress = await _roadmapService.fetchRoadmapProgress(
+      widget.roadmapId,
     );
 
-    checklistStates = List<bool>.filled(actionChecklist.length, false);
+    if (fetchedRoadmap != null) {
+      final actionChecklist = List<String>.from(
+        fetchedRoadmap["actionChecklist"] ?? [],
+      );
+      final completedChecklist = List<int>.from(
+        fetchedProgress?['completedChecklist'] ?? [],
+      );
+
+      // Initialize checklist states
+      checklistStates = List.generate(
+        actionChecklist.length,
+        (index) => completedChecklist.contains(index),
+      );
+
+      // Initialize reflection controllers
+      final milestoneReflection = List<Map<String, dynamic>>.from(
+        fetchedRoadmap["milestoneReflection"] ?? [],
+      );
+      final savedReflections = Map<String, String>.from(
+        fetchedProgress?['reflections'] ?? {},
+      );
+
+      for (var field in milestoneReflection) {
+        final label = field["label"] as String;
+        reflectionControllers[label] = TextEditingController(
+          text: savedReflections[label] ?? '',
+        );
+      }
+    }
+
+    setState(() {
+      roadmap = fetchedRoadmap;
+      progress = fetchedProgress;
+      isLoading = false;
+    });
+  }
+
+  Future<void> _saveProgress() async {
+    if (roadmap == null) return;
+
+    setState(() => isSaving = true);
+
+    // Get completed checklist indexes
+    final completedIndexes = <int>[];
+    for (int i = 0; i < checklistStates.length; i++) {
+      if (checklistStates[i]) {
+        completedIndexes.add(i);
+      }
+    }
+
+    // Get reflections
+    final reflections = <String, String>{};
+    reflectionControllers.forEach((label, controller) {
+      reflections[label] = controller.text.trim();
+    });
+
+    // Check if roadmap is completed (all checklist items checked)
+    final isCompleted = checklistStates.every((checked) => checked);
+
+    final success = await _roadmapService.saveRoadmapProgress(
+      roadmapId: widget.roadmapId,
+      completedChecklist: completedIndexes,
+      reflections: reflections,
+      completed: isCompleted,
+    );
+
+    setState(() => isSaving = false);
+
+    if (success) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Progress saved successfully')),
+        );
+        Navigator.of(context).pop();
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to save progress')),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final description = widget.roadmap["description"] as String? ?? "";
-    final focusGoals = List<String>.from(widget.roadmap["focusGoals"] ?? []);
-    final actionChecklist = List<String>.from(
-      widget.roadmap["actionChecklist"] ?? [],
-    );
-    final milestoneReflection = List<Map<String, String>>.from(
-      widget.roadmap["milestoneReflection"] ?? [],
-    );
+    if (isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: CustomAppBar(title: ''),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
 
-    final roadmapTitle = widget.roadmap['title'] as String? ?? "";
+    if (roadmap == null) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: CustomAppBar(title: ''),
+        body: const Center(child: Text('Roadmap not found')),
+      );
+    }
+
+    final description = roadmap!["description"] as String? ?? "";
+    final focusGoals = List<String>.from(roadmap!["focusGoals"] ?? []);
+    final actionChecklist = List<String>.from(
+      roadmap!["actionChecklist"] ?? [],
+    );
+    final milestoneReflection = List<Map<String, dynamic>>.from(
+      roadmap!["milestoneReflection"] ?? [],
+    );
+    final roadmapTitle = roadmap!['title'] as String? ?? "";
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -59,17 +220,14 @@ class _RoadmapDetailsScreenState extends State<RoadmapDetailsScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                /// TOP QUOTE ICON
                 SvgPicture.asset(
                   "assets/icons/svg/quotes-right.svg",
                   width: 20.w,
                 ),
                 SizedBox(height: 12.h),
-
-                /// CENTERED TEXT
                 Text(
                   description,
-                  textAlign: TextAlign.center, // 👉 Center text
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14.sp,
                     height: 1.3,
@@ -77,10 +235,7 @@ class _RoadmapDetailsScreenState extends State<RoadmapDetailsScreen> {
                     color: AppColors.textPrimary.withOpacity(0.8),
                   ),
                 ),
-
                 SizedBox(height: 12.h),
-
-                /// BOTTOM QUOTE ICON
                 SvgPicture.asset(
                   "assets/icons/svg/quotes-left.svg",
                   width: 20.w,
@@ -148,7 +303,7 @@ class _RoadmapDetailsScreenState extends State<RoadmapDetailsScreen> {
           ),
           SizedBox(height: 20.h),
 
-          // Section 3: Action Checklist (checkboxes)
+          // Section 3: Action Checklist
           Text(
             "Action Checklist",
             style: TextStyle(
@@ -209,15 +364,15 @@ class _RoadmapDetailsScreenState extends State<RoadmapDetailsScreen> {
           ),
           SizedBox(height: 16.h),
 
-          ...milestoneReflection.map(
-            (field) => Padding(
+          ...milestoneReflection.map((field) {
+            final label = field["label"] as String;
+            return Padding(
               padding: EdgeInsets.only(bottom: 20.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 🔹 Dynamic label from roadmap item
                   Text(
-                    field["label"] ?? "",
+                    label,
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w500,
@@ -226,9 +381,8 @@ class _RoadmapDetailsScreenState extends State<RoadmapDetailsScreen> {
                     ),
                   ),
                   SizedBox(height: 8.h),
-
-                  // 🔹 Multiline textarea with static hint text
                   TextField(
+                    controller: reflectionControllers[label],
                     maxLines: 5,
                     minLines: 4,
                     decoration: InputDecoration(
@@ -242,13 +396,10 @@ class _RoadmapDetailsScreenState extends State<RoadmapDetailsScreen> {
                       fillColor: Colors.white,
                       alignLabelWithHint: true,
                       contentPadding: EdgeInsets.all(14.w),
-                      // 👉 Updated border as per requirement
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16.r),
                         borderSide: BorderSide(
-                          color: AppColors.neutral50.withOpacity(
-                            0.05,
-                          ), // #090F050D
+                          color: AppColors.neutral50.withOpacity(0.05),
                           width: 1,
                         ),
                       ),
@@ -263,25 +414,25 @@ class _RoadmapDetailsScreenState extends State<RoadmapDetailsScreen> {
                   ),
                 ],
               ),
-            ),
-          ),
+            );
+          }),
 
           SizedBox(height: 10.h),
 
           Button(
-            onPressed: () {},
-            text: 'Save',
+            onPressed: _saveProgress,
+            text: isSaving ? 'Saving...' : 'Save',
             height: 54.h,
             borderRadius: BorderRadius.circular(32.r),
             fontSize: 15.sp,
             fontWeight: FontWeight.w600,
             textColor: Colors.white,
             backgroundColor: AppColors.brand500,
+            isLoading: isSaving,
           ),
 
           SizedBox(height: 12.h),
 
-          // Cancel Button
           SizedBox(
             width: double.infinity,
             child: TextButton(

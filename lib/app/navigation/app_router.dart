@@ -133,8 +133,8 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/roadmapDetails',
       builder: (context, state) {
-        final roadmap = state.extra as Map<String, dynamic>;
-        return RoadmapDetailsScreen(roadmap: roadmap);
+        final roadmapId = state.extra as String;
+        return RoadmapDetailsScreen(roadmapId: roadmapId);
       },
     ),
   ],
