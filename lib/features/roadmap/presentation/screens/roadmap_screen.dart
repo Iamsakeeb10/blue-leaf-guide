@@ -54,69 +54,191 @@ class RoadmapScreen extends StatelessWidget {
       ],
     },
 
-    // Dummy placeholder for other roadmap items
+    // Dummy placeholder for other roadmap items No.2
     {
-      "title": "Design UI/UX",
+      "title": "Build Your Brand",
       "buttonLabel": "101-300 hours",
-      "subtitle": "Create wireframes, prototypes and user flows.",
-      "description": "Dummy description",
-      "focusGoals": ["Dummy goal 1", "Dummy goal 2"],
-      "actionChecklist": ["Dummy checklist item 1", "Dummy checklist item 2"],
+      "subtitle": "Identity, Visibility and Confidence in Your Craft.",
+
+      "description":
+          "You are your brand. Every post, every card, every conversation is a seed that grows your reputation.",
+      "focusGoals": [
+        "Create your professional image online and offline",
+        "Start building your client list",
+        "Establish habits of consistency and accountability",
+      ],
+
+      "actionChecklist": [
+        "Design and order business cards with a goal to pass out three each day",
+        "Create a simple website or online portfolio",
+        "Post weekly to your social or business page",
+        "Take before and after photos of all work",
+        "Inform family, friends, and classmates about your services",
+        "Apply for Salon Centric, Cosmotron, and Trustor professional cards",
+        "Create a vision board for your dream salon",
+        "Find 2 mentors or industry professionals to learn from",
+        "Book 10 potential clients by the end of 3 hundred hours",
+      ],
+
       "milestoneReflection": [
-        {"label": "Reflection Field 1", "value": ""},
-        {"label": "Reflection Field 2", "value": ""},
+        {
+          "label": "What does my brand communicate about me right now?",
+          "value": "",
+        },
+        {
+          "label": "How consistent have I been with posting and networking?",
+          "value": "",
+        },
       ],
     },
 
+    // No.3
     {
-      "title": "Development",
+      "title": "Grow and Connect",
       "buttonLabel": "301-600 hours",
-      "subtitle": "Implement features, write tests, integrate backend.",
-      "description": "Dummy description",
-      "focusGoals": ["Dummy goal 1", "Dummy goal 2"],
-      "actionChecklist": ["Dummy checklist item 1", "Dummy checklist item 2"],
+      "subtitle": "Networking, Real Clients and Professional Exposure",
+
+      "description":
+          "Your chair is your stage. Every client is your opportunity to build trust and leave an impression that lasts.",
+
+      "focusGoals": [
+        "Develop strong client relationships",
+        "Network with local salons and spas",
+        "Learn the rhythm and expectations of professionalism",
+      ],
+
+      "actionChecklist": [
+        "Book 15 consistent clients",
+        "Pass out a total of five hundred forty business cards",
+        "Attend 2 free classes or industry events",
+        "Visit 10 salons, spas, or barbershops and assist if possible",
+        "Rebook or prebook every client you serve",
+        "Reach a total of at least 690 work photos",
+        "Create 1 weekly post about what you are learning",
+        "Begin collecting client reviews or testimonials",
+        "Reflect weekly on what went well and what can improve",
+      ],
+
       "milestoneReflection": [
-        {"label": "Reflection Field 1", "value": ""},
-        {"label": "Reflection Field 2", "value": ""},
+        {"label": "How does it feel to serve real clients?", "value": ""},
+        {"label": "What type of clients inspire me the most?", "value": ""},
       ],
     },
 
+    // No.4
     {
-      "title": "Testing",
+      "title": "Refine and Shine",
       "buttonLabel": "901-1200 hours",
-      "subtitle": "Perform unit, integration and E2E tests.",
-      "description": "Dummy description",
-      "focusGoals": ["Dummy goal 1", "Dummy goal 2"],
-      "actionChecklist": ["Dummy checklist item 1", "Dummy checklist item 2"],
+      "subtitle": "Skill Mastery, Reviews and Professionalism",
+
+      "description":
+          "You have planted your seeds. Now polish your shine. Let your work, attitude, and consistency speak louder than words.",
+
+      "focusGoals": [
+        "Deepen relationships with repeat clients",
+        "Refine technique and professionalism",
+        "Build your social presence and reputation",
+      ],
+
+      "actionChecklist": [
+        "Secure 20 repeat clients",
+        "Collect at least 10 positive client reviews",
+        "Assist or attend 3 different salons or barbershops",
+        "Apply to seven job openings or internships",
+        "Post weekly Live from School updates",
+        "Keep your uniform, tools, and station spotless",
+        "Reach a total of 1035 photos of your work",
+        "Pass out 810 business cards in total",
+        "Write a thank-you note to a mentor or instructor",
+      ],
+
       "milestoneReflection": [
-        {"label": "Reflection Field 1", "value": ""},
-        {"label": "Reflection Field 2", "value": ""},
+        {
+          "label": "What does professionalism mean to me at this stage?",
+          "value": "",
+        },
+        {
+          "label": "Which client or mentor feedback influenced me most?",
+          "value": "",
+        },
       ],
     },
 
+    // No.5
     {
-      "title": "Release",
+      "title": "Prepare to Launch",
       "buttonLabel": "1201-1500 hours",
-      "subtitle": "Deploy to stores and monitor analytics.",
-      "description": "Dummy description",
-      "focusGoals": ["Dummy goal 1", "Dummy goal 2"],
-      "actionChecklist": ["Dummy checklist item 1", "Dummy checklist item 2"],
+      "subtitle": "Job Readiness and Career Direction",
+
+      "description":
+          "This is where school meets the real world. You are not waiting for opportunities anymore you are creating them.",
+
+      "focusGoals": [
+        "Finalize job opportunities",
+        "Strengthen your personal brand and confidence",
+        "Learn to interview and present yourself as a professional",
+      ],
+
+      "actionChecklist": [
+        "Identify your top three salons, spas, or barbershops that inspire you",
+        "Assist or shadow in each one",
+        "Create a pros and cons list for each potential workplace",
+        "Apply for at least 6 positions",
+        "Refine your professional portfolio and resume",
+        "Practice mock interviews with a mentor or instructor",
+        "Reach 1380 total photos of your work",
+        "Pass out 1080 business cards in total",
+        "Begin preparing for state board examinations",
+      ],
+
       "milestoneReflection": [
-        {"label": "Reflection Field 1", "value": ""},
-        {"label": "Reflection Field 2", "value": ""},
+        {
+          "label": "Where do I see myself thriving after graduation?",
+          "value": "",
+        },
+        {
+          "label": "What strengths have I developed that make me employable?",
+          "value": "",
+        },
       ],
     },
 
+    // No.6
     {
-      "title": "Maintenance",
+      "title": "Bloom and Graduate",
       "buttonLabel": "1501-1800 hours",
-      "subtitle": "Bug fixes, updates, and performance improvements.",
-      "description": "Dummy description",
-      "focusGoals": ["Dummy goal 1", "Dummy goal 2"],
-      "actionChecklist": ["Dummy checklist item 1", "Dummy checklist item 2"],
+      "subtitle": "Confidence, Consistency and Career Readiness",
+
+      "description":
+          "This is your time to bloom. You have put in the work. Now show the world your growth, your integrity, and your light.",
+
+      "focusGoals": [
+        "Finalize employment or booth rental",
+        "Prepare for state boards with confidence",
+        "Demonstrate professionalism in every action and interaction",
+      ],
+
+      "actionChecklist": [
+        "Prepare and polish your state board kit",
+        "Schedule mock practical and theory reviews",
+        "Confirm job offer or internship placement",
+        "Arrive 15 minutes early every day without exception",
+        "Maintain professional dress and presentation",
+        "Complete your full tool checklist including ring light, shears, and clips",
+        "Reach 1725 total photos of your work",
+        "Celebrate your growth by writing a letter to your Day One self",
+      ],
+
       "milestoneReflection": [
-        {"label": "Reflection Field 1", "value": ""},
-        {"label": "Reflection Field 2", "value": ""},
+        {
+          "label":
+              "How has this journey transformed not just my skills but my mindset?",
+          "value": "",
+        },
+        {
+          "label": "Who am I now compared to the person who first enrolled?",
+          "value": "",
+        },
       ],
     },
   ];
