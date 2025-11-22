@@ -163,14 +163,27 @@ class _RoadmapDetailsScreenState extends State<RoadmapDetailsScreen> {
     if (success) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Progress saved successfully')),
+          SnackBar(
+            content: const Text(
+              'Progress saved successfully',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: AppColors.timelinePrimary, // your custom color
+          ),
         );
+
         Navigator.of(context).pop();
       }
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to save progress')),
+          const SnackBar(
+            content: Text(
+              'Failed to save progress',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: AppColors.errorRed,
+          ),
         );
       }
     }
