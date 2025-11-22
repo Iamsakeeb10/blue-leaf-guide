@@ -10,28 +10,33 @@ class RoadmapScreen extends StatelessWidget {
   final List<Map<String, String>> items = const [
     {
       "title": "Planning Phase",
-      "buttonLabel": "Start",
+      "buttonLabel": "0-100 hours",
       "subtitle": "Orientation, Confidence, and Professional Foundation.",
     },
     {
       "title": "Design UI/UX",
-      "buttonLabel": "Next",
+      "buttonLabel": "101-300 hours",
       "subtitle": "Create wireframes, prototypes and user flows.",
     },
     {
       "title": "Development",
-      "buttonLabel": "Build",
+      "buttonLabel": "301-600 hours",
       "subtitle": "Implement features, write tests, integrate backend.",
     },
     {
       "title": "Testing",
-      "buttonLabel": "QA",
+      "buttonLabel": "901-1200 hours",
       "subtitle": "Perform unit, integration and E2E tests.",
     },
     {
       "title": "Release",
-      "buttonLabel": "Launch",
+      "buttonLabel": "1201-1500 hours",
       "subtitle": "Deploy to stores and monitor analytics.",
+    },
+    {
+      "title": "Maintenance",
+      "buttonLabel": "1501-1800 hours",
+      "subtitle": "Bug fixes, updates, and performance improvements.",
     },
   ];
 
@@ -62,6 +67,7 @@ class RoadmapScreen extends StatelessWidget {
             subtitle: item["subtitle"]!,
             buttonLabel: item["buttonLabel"]!,
             completed: index == 0, // mark the first item as completed
+            index: index,
           );
         },
       ),
@@ -76,6 +82,7 @@ class TimelineItem extends StatelessWidget {
   final String title;
   final String subtitle;
   final String buttonLabel;
+  final int index;
 
   const TimelineItem({
     super.key,
@@ -84,6 +91,7 @@ class TimelineItem extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.buttonLabel,
+    required this.index,
     this.completed = false,
   });
 
@@ -170,7 +178,10 @@ class TimelineItem extends StatelessWidget {
                         vertical: 6.h,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.lightGrey,
+                        color: index.isOdd
+                            ? Color(0xFFEFE5FA) // odd items color
+                            : AppColors
+                                  .lightGrey, // default color for even items
                         borderRadius: BorderRadius.circular(100.r),
                       ),
                       child: Text(
