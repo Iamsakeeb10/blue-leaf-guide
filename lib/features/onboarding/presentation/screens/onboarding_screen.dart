@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/services/local_storage.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../widgets/onboarding_widgets.dart';
 
@@ -145,7 +146,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               text: authProvider.isGoogleLoading
                                   ? 'Signing in...'
                                   : 'Continue with Google',
-                              onTap: _handleGoogleSignIn,
+                              onTap: () async {
+                                await LocalStorageService.instance
+                                    .setOnboardingCompleted();
+                                _handleGoogleSignIn();
+                              },
                               isLoading: authProvider.isGoogleLoading,
                             );
                           },

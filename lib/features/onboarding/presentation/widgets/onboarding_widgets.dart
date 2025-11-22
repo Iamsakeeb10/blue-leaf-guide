@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/services/local_storage.dart';
 
 // Shared Title Widget
 class OnboardingTitle extends StatelessWidget {
@@ -190,7 +191,8 @@ class AlreadyHaveAccountText extends StatelessWidget {
         InkWell(
           onTap:
               onSecondTextTap ??
-              () {
+              () async {
+                await LocalStorageService.instance.setOnboardingCompleted();
                 // Default navigation
                 context.go('/sign-in');
               },

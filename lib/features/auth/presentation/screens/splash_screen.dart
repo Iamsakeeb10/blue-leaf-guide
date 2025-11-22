@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/services/local_storage.dart';
 import '../../providers/auth_provider.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -51,18 +52,35 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> _checkAuthState() async {
     await Future.delayed(const Duration(milliseconds: 2000));
-
     if (!mounted) return;
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final isLoggedIn = await authProvider.checkLoginStatus();
+    final bool isLoggedIn = authProvider.currentUser != null;
+
+    // Log auth status
+    print('🔍 SplashScreen - isLoggedIn: $isLoggedIn');
+    if (authProvider.currentUser != null) {
+      print(
+        '📧 SplashScreen - Current user email: ${authProvider.currentUser!.email}',
+      );
+    }
+
+    // Check onboarding status
+    final bool onboardingCompleted = await LocalStorageService.instance
+        .isOnboardingCompleted();
+    print('📋 SplashScreen - onboardingCompleted: $onboardingCompleted');
 
     if (!mounted) return;
 
-    if (isLoggedIn && authProvider.currentUser != null) {
+    if (!onboardingCompleted) {
+      print('➡️ Redirecting to /onboarding (onboarding not completed)');
+      context.go('/onboarding');
+    } else if (isLoggedIn) {
+      print('➡️ Redirecting to /home (user is logged in)');
       context.go('/home');
     } else {
-      context.go('/onboarding');
+      print('➡️ Redirecting to /sign-in (onboarding done, but not logged in)');
+      context.go('/sign-in');
     }
   }
 

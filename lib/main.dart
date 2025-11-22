@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import 'app/navigation/app_router.dart';
 import 'app/utils/firebase_helper.dart';
+import 'core/services/local_storage.dart';
 import 'core/services/notification_service.dart';
 import 'features/auth/providers/auth_provider.dart';
 
@@ -17,6 +18,9 @@ void main() async {
   await NotificationService().initialize();
 
   await initializeFirebase();
+
+  // Initialize SharedPreferences
+  await LocalStorageService.instance.init();
 
   runApp(const MyApp());
 }

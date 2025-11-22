@@ -165,11 +165,18 @@ class AuthService {
     }
   }
 
-  // Sign out
   Future<void> signOut() async {
     await _auth.signOut();
+
+    // Clear only auth-related preferences
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await prefs.remove('userId');
+    await prefs.remove('isLoggedIn');
+
+    // Sign out from Google if signed in
+    if (await _googleSignIn.isSignedIn()) {
+      await _googleSignIn.signOut();
+    }
   }
 
   // Get current user
