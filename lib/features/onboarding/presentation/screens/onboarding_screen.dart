@@ -2,7 +2,10 @@ import 'package:blue_leaf_guide/app/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import '../../../auth/providers/auth_provider.dart';
 import '../widgets/onboarding_widgets.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -53,6 +56,44 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
+  Future<void> _handleGoogleSignIn() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    try {
+      final success = await authProvider.signInWithGoogle();
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Signed in with Google successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        context.go('/home');
+      } else if (mounted) {
+        if (authProvider.errorMessage != null &&
+            authProvider.errorMessage != 'Sign in cancelled') {
+          _showError(
+            authProvider.errorMessage ?? 'Failed to sign in with Google',
+          );
+        }
+      }
+    } catch (e, stackTrace) {
+      print('❌ Google sign-in error: $e');
+      print(stackTrace);
+      if (mounted) {
+        _showError('An unexpected error occurred during Google sign-in.');
+      }
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,11 +138,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
                         SizedBox(height: 32.h),
 
-                        // Social Buttons
-                        SocialButton(
-                          icon: 'assets/icons/svg/google.svg',
-                          text: 'Continue with Google',
-                          onTap: () {},
+                        Consumer<AuthProvider>(
+                          builder: (context, authProvider, child) {
+                            return SocialButton(
+                              icon: 'assets/icons/svg/google.svg',
+                              text: authProvider.isGoogleLoading
+                                  ? 'Signing in...'
+                                  : 'Continue with Google',
+                              onTap: _handleGoogleSignIn,
+                              isLoading: authProvider.isGoogleLoading,
+                            );
+                          },
                         ),
 
                         SizedBox(height: 12.h),
