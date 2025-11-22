@@ -18,6 +18,7 @@ import '../../features/auth/providers/auth_provider.dart';
 import '../../features/home/presentation/screens/main_navigation_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../features/profile/presentation/screens/my_account_screen.dart';
+import '../../features/roadmap/presentation/screens/roadmap_details_screen.dart';
 
 final GoRouter router = GoRouter(
   initialLocation: '/',
@@ -127,6 +128,14 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/notifications',
       builder: (context, state) => const NotificationsScreen(),
+    ),
+
+    GoRoute(
+      path: '/roadmapDetails',
+      builder: (context, state) {
+        final roadmap = state.extra as Map<String, dynamic>;
+        return RoadmapDetailsScreen(roadmap: roadmap);
+      },
     ),
   ],
 );

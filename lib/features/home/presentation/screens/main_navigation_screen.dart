@@ -21,7 +21,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const PlaceholderScreen(title: 'Explore'),
-    const RoadmapScreen(),
+    RoadmapScreen(),
     const PlaceholderScreen(title: 'Messages'),
     // const PlaceholderScreen(title: 'Profile'),
     const ProfileScreen(),
