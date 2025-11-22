@@ -25,6 +25,12 @@ class AppColors {
     0xFF24AC69,
   ); // your new green color
 
+  // new colors with opacity
+  static const Color lightBlue40 = Color(0x40BDEBFE); // #BDEBFE40
+  static const Color lightPurple40 = Color(0x40BCCCFF); // #BCCCFF40
+  static const Color lightPink33 = Color(0x33F4C7FF); // #F4C7FF33
+  static const Color brightPurple = Color(0xFFC822FF);
+
   // 🌿 Dummy Colors
   static const Color primary = Color(0xFF1E88E5); // Blue
   static const Color tint = Color(0xFF90CAF9); // Light Blue / Tint

@@ -239,7 +239,14 @@ class _SignInScreenState extends State<SignInScreen> {
                           text: 'Continue with Apple',
                           backgroundColor: AppColors.brand500,
                           textColor: Colors.white,
-                          onTap: () {},
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Coming Soon!'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          },
                         ),
                         SizedBox(height: 12.h),
                         AlreadyHaveAccountText(

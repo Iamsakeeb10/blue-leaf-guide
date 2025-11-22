@@ -1,140 +1,197 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_svg/svg.dart';
 
 import '../../../../app/theme/app_colors.dart';
-import '../../../auth/providers/auth_provider.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final userData = authProvider.userData;
-
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Text(
-          'Home',
-          style: TextStyle(
-            fontSize: 20.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.logout_rounded, color: AppColors.textPrimary),
-            onPressed: () async {
-              await authProvider.signOut();
-              if (context.mounted) {
-                context.go('/sign-in');
-              }
-            },
-          ),
-        ],
-      ),
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.all(16.w),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Welcome Section
-              Container(
-                padding: EdgeInsets.all(20.w),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+              // Header Section
+              Row(
+                children: [
+                  // Avatar
+                  Container(
+                    width: 45.w,
+                    height: 45.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF24AC69),
+                      image: const DecorationImage(
+                        image: NetworkImage(
+                          'https://peoplify.pics/api/generate/avatar?gender=male',
+                        ),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(width: 12.w),
+                  // Greeting Text
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Hi! Tomeka',
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textPrimary,
+                            height: 1.3,
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          'Good Morning',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textPrimary.withOpacity(0.5),
+                            height: 1.3,
+                            letterSpacing: 12 * 0.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Same Avatar on Right
+                  Container(
+                    width: 45.w,
+                    height: 45.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF24AC69),
+                      image: const DecorationImage(
+                        image: NetworkImage(
+                          'https://peoplify.pics/api/generate/avatar?gender=male',
+                        ),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 16.h),
+
+              // Subtitle
+              Text(
+                "Let's make today count",
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary.withOpacity(0.8),
+                ),
+              ),
+
+              SizedBox(height: 20.h),
+
+              // Stats Cards Row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildStatsCard(
+                    svgPath: 'assets/icons/svg/multi-user.svg',
+                    label: 'Total Client',
+                    value: '20',
                     colors: [
-                      AppColors.brand500,
-                      AppColors.brand500.withOpacity(0.8),
+                      const Color(0xFF24AC69), // green top-right
+                      const Color(0xFF24AC69), // green mid
+                      Colors.white, // white bottom-left
+                    ],
+                    stops: const [
+                      0.5, // start
+                      0.5, // keep green for top-middle
+                      0.5, // white at bottom-left
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(16.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.brand500.withOpacity(0.2),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 60.w,
-                      height: 60.w,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.person_outline,
-                        size: 30.sp,
-                        color: AppColors.brand500,
-                      ),
-                    ),
-                    SizedBox(width: 16.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Welcome back!',
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w400,
-                              color: Colors.white.withOpacity(0.9),
-                            ),
-                          ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            userData != null
-                                ? '${userData['firstName'] ?? ''} ${userData['lastName'] ?? ''}'
-                                : authProvider.currentUser?.displayName ??
-                                      'User',
-                            style: TextStyle(
-                              fontSize: 20.sp,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+
+                  _buildStatsCard(
+                    svgPath: 'assets/icons/svg/dollar.svg',
+
+                    label: 'Total Earned',
+                    value: '3K',
+                    colors: [
+                      const Color(0xFF2C63FD), // #2C63FD
+                      const Color(0xFF2C63FD), // #2C63FD
+                      Colors.white, // transparent
+                    ],
+                    stops: const [
+                      0.0, // start
+                      0.4, // keep green for top-middle
+                      0.5, // white at bottom-left
+                    ],
+                  ),
+
+                  _buildStatsCard(
+                    svgPath: 'assets/icons/svg/goal.svg',
+
+                    label: 'Goal Completed',
+                    value: '4m',
+                    colors: [
+                      const Color(0xFF6628EA), // #6628EA
+                      const Color(0xFF6628EA), // #6628EA
+                      Colors.white, // transparent
+                    ],
+                    stops: const [
+                      0.0, // start
+                      0.4, // keep green for top-middle
+                      0.5, // white at bottom-left
+                    ],
+                  ),
+                ],
               ),
-              SizedBox(height: 32.h),
-              // User Info Section
-              Text(
-                'Account Information',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
+
               SizedBox(height: 16.h),
-              _buildInfoCard(
-                icon: Icons.email_outlined,
-                title: 'Email',
-                value: authProvider.currentUser?.email ?? 'Not available',
+
+              // Quick Action Section
+              Text(
+                'Quick Action',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary.withOpacity(0.8),
+                ),
               ),
-              SizedBox(height: 12.h),
-              _buildInfoCard(
-                icon: Icons.verified_user_outlined,
-                title: 'Status',
-                value: authProvider.currentUser?.emailVerified ?? false
-                    ? 'Verified'
-                    : 'Not Verified',
+
+              SizedBox(height: 16.h),
+
+              // Roadmap Cards
+              _buildRoadmapCard(
+                title: 'View Roadmap',
+                subtitle: 'The Blue Leaf Roadmap to Get Success',
+                svgPath: 'assets/icons/svg/card-two.svg',
+                color: AppColors.lightBlue40.withOpacity(0.25),
+                textColor: AppColors.timelinePrimary,
+              ),
+              SizedBox(height: 8.h),
+              _buildRoadmapCard(
+                title: 'View Roadmap',
+                subtitle: 'The Blue Leaf Roadmap to Get Success',
+                svgPath: 'assets/icons/svg/card-one.svg',
+                color: AppColors.lightPurple40.withOpacity(0.25),
+                textColor: AppColors.brand500,
+              ),
+              SizedBox(height: 8.h),
+              _buildRoadmapCard(
+                title: 'View Roadmap',
+                subtitle: 'The Blue Leaf Roadmap to Get Success',
+                svgPath: 'assets/icons/svg/card-three.svg',
+                color: AppColors.lightPink33.withOpacity(0.2),
+                textColor: AppColors.brightPurple,
               ),
             ],
           ),
@@ -143,59 +200,168 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoCard({
-    required IconData icon,
-    required String title,
+  // Updated _buildStatsCard to use SVG
+  Widget _buildStatsCard({
+    required String svgPath, // path of your SVG asset
+    required String label,
     required String value,
+    required List<Color> colors,
+    List<double>? stops,
   }) {
     return Container(
-      padding: EdgeInsets.all(16.w),
+      width: 109.w,
       decoration: BoxDecoration(
-        color: AppColors.brand50,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(
-          color: AppColors.brand500.withOpacity(0.1),
-          width: 1,
+        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: colors,
+          stops: stops,
         ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          children: [
+            // fixed background for blur
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white, // same as your scaffold background
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 43.62, sigmaY: 43.62),
+              child: Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 40.w,
+                        height: 40.w,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(
+                            0.3,
+                          ), // background color
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: SvgPicture.asset(
+                            svgPath,
+                            width: 24.w,
+                            height: 24.h,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        label,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 4.h),
+                      Text(
+                        value,
+                        style: TextStyle(
+                          fontSize: 20.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRoadmapCard({
+    required String title,
+    required String subtitle,
+    required String svgPath, // path of your SVG asset
+    required Color color,
+    required Color textColor,
+  }) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 24.w),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          Container(
-            width: 40.w,
-            height: 40.w,
-            decoration: BoxDecoration(
-              color: AppColors.brand500.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10.r),
-            ),
-            child: Icon(icon, color: AppColors.brand500, size: 20.sp),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textSecondary,
-                  ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
                 ),
-                SizedBox(height: 2.h),
-                Text(
-                  value,
+              ),
+              SizedBox(height: 4.h),
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: 200.w),
+                child: Text(
+                  subtitle,
                   style: TextStyle(
                     fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textPrimary.withOpacity(0.8),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
+
+          const Spacer(),
+
+          SvgPicture.asset(
+            svgPath,
+            width: 80.w,
+            height: 80.h,
+            fit: BoxFit.contain,
           ),
         ],
       ),
+    );
+  }
+}
+
+// Main app wrapper with ScreenUtil initialization
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ScreenUtilInit(
+      designSize: const Size(375, 812),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (context, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Home Screen',
+          theme: ThemeData(primarySwatch: Colors.green, fontFamily: 'Roboto'),
+          home: child,
+        );
+      },
+      child: const HomeScreen(),
     );
   }
 }
