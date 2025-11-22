@@ -1,4 +1,5 @@
 import 'package:blue_leaf_guide/features/profile/presentation/screens/profile_screen.dart';
+import 'package:blue_leaf_guide/features/roadmap/presentation/screens/roadmap_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -20,7 +21,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const PlaceholderScreen(title: 'Explore'),
-    const PlaceholderScreen(title: 'Community'),
+    const RoadmapScreen(),
     const PlaceholderScreen(title: 'Messages'),
     // const PlaceholderScreen(title: 'Profile'),
     const ProfileScreen(),
