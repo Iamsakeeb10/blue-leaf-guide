@@ -115,7 +115,7 @@ class _RoadmapDetailsScreenState extends State<RoadmapDetailsScreen> {
 
                 return Padding(
                   padding: EdgeInsets.only(
-                    bottom: index < 2 ? 10.h : 0, // only first two items
+                    bottom: index == focusGoals.length - 1 ? 0 : 10.h,
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
