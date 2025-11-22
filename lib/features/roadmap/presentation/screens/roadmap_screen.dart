@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -19,10 +22,41 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
   Map<String, Map<String, dynamic>> userProgress = {};
   bool isLoading = true;
 
+  StreamSubscription? _progressSubscription;
+
   @override
   void initState() {
     super.initState();
     _loadData();
+    _listenToProgressUpdates();
+  }
+
+  void _listenToProgressUpdates() {
+    if (_roadmapService.currentUserId == null) return;
+
+    _progressSubscription = FirebaseFirestore.instance
+        .collection('users')
+        .doc(_roadmapService.currentUserId)
+        .collection('roadmapProgress')
+        .snapshots()
+        .listen((snapshot) {
+          if (mounted) {
+            final Map<String, Map<String, dynamic>> updatedProgress = {};
+            for (var doc in snapshot.docs) {
+              updatedProgress[doc.id] = doc.data();
+            }
+
+            setState(() {
+              userProgress = updatedProgress;
+            });
+          }
+        });
+  }
+
+  @override
+  void dispose() {
+    _progressSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
