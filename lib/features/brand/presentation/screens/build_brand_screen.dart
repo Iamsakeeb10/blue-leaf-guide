@@ -5,10 +5,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/button.dart';
 import '../../../../shared/widgets/profile_list_item.dart';
-// 👇 Import the new stepper
-import '../widgets/custom_stepper.dart'; // Adjust path as per your folder structure
+import '../widgets/custom_stepper.dart';
 
-// Data model for each step
 class StepData {
   final String title;
   final List<String> items;
@@ -24,16 +22,17 @@ class BuildBrandScreen extends StatefulWidget {
 }
 
 class _BuildBrandScreenState extends State<BuildBrandScreen> {
-  int currentStep = 2;
+  int currentStep = 1;
 
   final List<StepData> stepData = [
     StepData(
       title: "Strategy",
       items: [
-        "Define your brand purpose",
-        "Identify target audience",
-        "Analyze competitors",
-        "Set brand goals",
+        "Branding Basics",
+        "Vision & Mission",
+        "Target Audience",
+        "Brand Personality",
+        "Brand Story",
       ],
     ),
     StepData(
