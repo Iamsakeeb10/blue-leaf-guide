@@ -49,7 +49,8 @@ class StrategySection {
   final String subtitle;
   final List<String> bullets;
   final bool isTextField;
-  final String? fieldType; // 'text', 'dropdown', 'chips'
+  final String? fieldType;
+  final String? hintText; // ADD THIS LINE
   List<String> userInputs;
 
   StrategySection({
@@ -57,6 +58,7 @@ class StrategySection {
     this.bullets = const [],
     this.isTextField = false,
     this.fieldType = 'text',
+    this.hintText, // ADD THIS LINE
     this.userInputs = const [],
   });
 
@@ -65,6 +67,7 @@ class StrategySection {
     'bullets': bullets,
     'isTextField': isTextField,
     'fieldType': fieldType,
+    'hintText': hintText, // ADD THIS LINE
     'userInputs': userInputs,
   };
 
@@ -73,6 +76,7 @@ class StrategySection {
     bullets: map['bullets'] != null ? List<String>.from(map['bullets']) : [],
     isTextField: map['isTextField'] ?? false,
     fieldType: map['fieldType'] ?? 'text',
+    hintText: map['hintText'], // ADD THIS LINE
     userInputs: map['userInputs'] != null
         ? List<String>.from(map['userInputs'])
         : [],

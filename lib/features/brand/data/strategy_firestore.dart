@@ -145,3 +145,219 @@ void initializeStrategyTemplate() async {
     );
   }
 }
+
+// Second Script ----
+/// Update existing Strategy items with hint texts
+/// This ONLY updates the hintText field without overwriting existing data
+Future<bool> updateStrategyHintTexts() async {
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+  try {
+    // Get the existing template document
+    final docRef = firestore.collection('strategy_templates').doc('default');
+    final docSnapshot = await docRef.get();
+
+    if (!docSnapshot.exists) {
+      print('❌ Template document does not exist.');
+      return false;
+    }
+
+    // Get existing data
+    final existingData = docSnapshot.data()!;
+    final existingItems = List<Map<String, dynamic>>.from(
+      existingData['items'] ?? [],
+    );
+
+    // Update only the Strategy items with hint texts
+    for (var item in existingItems) {
+      final itemId = item['id'];
+      final sections = List<Map<String, dynamic>>.from(item['sections'] ?? []);
+
+      // Update Vision & Mission item
+      if (itemId == 'vision_mission') {
+        for (var section in sections) {
+          final subtitle = section['subtitle'] ?? '';
+
+          if (subtitle == 'Vision') {
+            section['hintText'] = 'Add your vision statement';
+          } else if (subtitle == 'Mission') {
+            section['hintText'] = 'Add your mission statement';
+          } else if (subtitle == 'Core Values') {
+            section['hintText'] = 'Core value 1';
+          }
+        }
+      }
+
+      // Update Target Audience item
+      if (itemId == 'target_audience') {
+        for (var section in sections) {
+          final subtitle = section['subtitle'] ?? '';
+
+          if (subtitle == 'Location') {
+            section['hintText'] = 'Urban area';
+          }
+        }
+      }
+
+      // Update Brand Story item
+      if (itemId == 'brand_story') {
+        for (var section in sections) {
+          final subtitle = section['subtitle'] ?? '';
+
+          if (subtitle == 'Your Brand Story') {
+            section['hintText'] =
+                "Share your brand's story, inspiration, and what makes it unique";
+          }
+        }
+      }
+
+      // Update the sections back to the item
+      item['sections'] = sections;
+    }
+
+    // Update Firestore with modified data
+    await docRef.update({
+      'items': existingItems,
+      'version': (existingData['version'] ?? 1) + 1,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    print('✅ Strategy hint texts updated successfully!');
+    print('📊 Updated items: vision_mission, target_audience, brand_story');
+    return true;
+  } catch (e) {
+    print('❌ Error updating hint texts: $e');
+    return false;
+  }
+}
+
+/// Update the complete Strategy template with hint texts (Alternative approach)
+/// This creates the complete Strategy data structure with hint texts
+Future<bool> updateCompleteStrategyTemplate() async {
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+  try {
+    // Get the existing template document
+    final docRef = firestore.collection('strategy_templates').doc('default');
+    final docSnapshot = await docRef.get();
+
+    if (!docSnapshot.exists) {
+      print('❌ Template document does not exist.');
+      return false;
+    }
+
+    // Get existing data
+    final existingData = docSnapshot.data()!;
+    final existingItems = List<Map<String, dynamic>>.from(
+      existingData['items'] ?? [],
+    );
+
+    // Find and update each Strategy item
+    for (int i = 0; i < existingItems.length; i++) {
+      final item = existingItems[i];
+      final itemId = item['id'];
+
+      if (itemId == 'vision_mission') {
+        // Update Vision & Mission with hint texts
+        existingItems[i] = {
+          'id': 'vision_mission',
+          'title': 'Vision & Mission',
+          'isCompleted': item['isCompleted'] ?? false,
+          'sections': [
+            {
+              'subtitle': 'Vision',
+              'bullets': [],
+              'isTextField': true,
+              'fieldType': 'text',
+              'userInputs': item['sections'][0]['userInputs'] ?? [],
+              'hintText': 'Add your vision statement',
+            },
+            {
+              'subtitle': 'Mission',
+              'bullets': [],
+              'isTextField': true,
+              'fieldType': 'text',
+              'userInputs': item['sections'][1]['userInputs'] ?? [],
+              'hintText': 'Add your mission statement',
+            },
+            {
+              'subtitle': 'Core Values',
+              'bullets': [],
+              'isTextField': true,
+              'fieldType': 'text',
+              'userInputs': item['sections'][2]['userInputs'] ?? [],
+              'hintText': 'Core value 1',
+            },
+          ],
+        };
+      } else if (itemId == 'target_audience') {
+        // Preserve existing sections and add hint text to Location
+        final sections = List<Map<String, dynamic>>.from(
+          item['sections'] ?? [],
+        );
+        for (var section in sections) {
+          if (section['subtitle'] == 'Location') {
+            section['hintText'] = 'Urban area';
+          }
+        }
+        existingItems[i]['sections'] = sections;
+      } else if (itemId == 'brand_story') {
+        // Update Brand Story with hint text
+        existingItems[i] = {
+          'id': 'brand_story',
+          'title': 'Brand Story',
+          'isCompleted': item['isCompleted'] ?? false,
+          'sections': [
+            {
+              'subtitle': 'Your Brand Story',
+              'bullets': [],
+              'isTextField': true,
+              'fieldType': 'text',
+              'userInputs': item['sections'][0]['userInputs'] ?? [],
+              'hintText':
+                  "Share your brand's story, inspiration, and what makes it unique",
+            },
+          ],
+        };
+      }
+    }
+
+    // Update Firestore
+    await docRef.update({
+      'items': existingItems,
+      'version': (existingData['version'] ?? 1) + 1,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    print('✅ Complete Strategy template updated with hint texts!');
+    return true;
+  } catch (e) {
+    print('❌ Error updating template: $e');
+    return false;
+  }
+}
+
+/// Example usage in your app:
+/// 
+/// Add a button in your settings or admin screen:
+/// 
+/// ElevatedButton(
+///   onPressed: () async {
+///     final success = await updateStrategyHintTexts();
+///     if (success) {
+///       ScaffoldMessenger.of(context).showSnackBar(
+///         SnackBar(content: Text('Hint texts updated successfully!')),
+///       );
+///     }
+///   },
+///   child: Text('Update Strategy Hint Texts'),
+/// ),
+/// 
+/// Or use the complete update approach:
+/// 
+/// ElevatedButton(
+///   onPressed: () async {
+///     await updateCompleteStrategyTemplate();
+///   },
+///   child: Text('Update Complete Strategy Template'),
+/// ),

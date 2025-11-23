@@ -66,6 +66,7 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
               bullets: s.bullets,
               isTextField: s.isTextField,
               fieldType: s.fieldType,
+              hintText: s.hintText,
               userInputs: List.from(s.userInputs),
             ),
           )
@@ -337,6 +338,8 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
     final subtitleLower = section.subtitle.toLowerCase();
     print('🟨 Subtitel $subtitleLower');
 
+    print('🎨 HintText value: ${section.hintText}');
+
     final isMultiLine =
         subtitleLower.contains('story') ||
         subtitleLower.contains('vision') ||
@@ -361,7 +364,7 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
           maxLines: isMultiLine ? 5 : 1,
           minLines: isMultiLine ? 4 : 1,
           decoration: InputDecoration(
-            hintText: "Write your reflection here...",
+            hintText: section.hintText ?? "Write your reflection here...",
             hintStyle: TextStyle(
               fontSize: 12.sp,
               color: AppColors.textPrimary.withOpacity(0.3),
