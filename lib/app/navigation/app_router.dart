@@ -15,6 +15,7 @@ import '../../features/auth/presentation/screens/sign_in_screen.dart';
 import '../../features/auth/presentation/screens/sign_up_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/auth/providers/auth_provider.dart';
+import '../../features/brand/presentation/screens/build_brand_screen.dart';
 import '../../features/home/presentation/screens/main_navigation_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../features/profile/presentation/screens/my_account_screen.dart';
@@ -139,6 +140,11 @@ final GoRouter router = GoRouter(
         final roadmapId = state.extra as String;
         return RoadmapDetailsScreen(roadmapId: roadmapId);
       },
+    ),
+
+    GoRoute(
+      path: '/build-brand',
+      builder: (context, state) => const BuildBrandScreen(),
     ),
   ],
 );

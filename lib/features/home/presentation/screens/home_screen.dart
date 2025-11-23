@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme/app_colors.dart';
 
@@ -160,11 +161,14 @@ class HomeScreen extends StatelessWidget {
               ),
               SizedBox(height: 8.h),
               _buildRoadmapCard(
-                title: 'View Roadmap',
-                subtitle: 'The Blue Leaf Roadmap to Get Success',
+                title: 'Build Brand',
+                subtitle: 'Build your brand step by step',
                 svgPath: 'assets/icons/svg/card-one.svg',
                 color: AppColors.lightPurple40.withOpacity(0.25),
                 textColor: AppColors.brand500,
+                onTap: () {
+                  context.push('/build-brand');
+                },
               ),
               SizedBox(height: 8.h),
               _buildRoadmapCard(
@@ -252,50 +256,54 @@ class HomeScreen extends StatelessWidget {
     required String svgPath, // path of your SVG asset
     required Color color,
     required Color textColor,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 24.w),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.w600,
-                  color: textColor,
-                ),
-              ),
-              SizedBox(height: 4.h),
-              ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: 200.w),
-                child: Text(
-                  subtitle,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 24.w),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
                   style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary.withOpacity(0.8),
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
                   ),
                 ),
-              ),
-            ],
-          ),
+                SizedBox(height: 4.h),
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: 200.w),
+                  child: Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary.withOpacity(0.8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
 
-          const Spacer(),
+            const Spacer(),
 
-          SvgPicture.asset(
-            svgPath,
-            width: 80.w,
-            height: 80.h,
-            fit: BoxFit.contain,
-          ),
-        ],
+            SvgPicture.asset(
+              svgPath,
+              width: 80.w,
+              height: 80.h,
+              fit: BoxFit.contain,
+            ),
+          ],
+        ),
       ),
     );
   }

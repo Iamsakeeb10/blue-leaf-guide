@@ -789,6 +789,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  smart_stepper:
+    dependency: "direct main"
+    description:
+      name: smart_stepper
+      sha256: "04aaf91b8067332bb66908d91e78e0189b4396722064d05f7c01bbd620c4835f"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.7"
   source_span:
     dependency: transitive
     description:
@@ -909,6 +917,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.8"
+  timelines_upgraded:
+    dependency: "direct main"
+    description:
+      name: timelines_upgraded
+      sha256: aa196cd766f31ec186f4eb955374e1ec9ce19a6407fc0211b06ef8bd00edf4b2
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.1"
   timezone:
     dependency: "direct main"
     description:
