@@ -132,8 +132,6 @@ class CustomStepper extends StatelessWidget {
                 ],
               ),
             ),
-            SizedBox(height: 12.h),
-            // Labels (also tappable)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: List.generate(totalSteps, (index) {
@@ -142,21 +140,27 @@ class CustomStepper extends StatelessWidget {
                 final isComp = isCompleted(index);
 
                 return GestureDetector(
+                  behavior: HitTestBehavior.translucent,
                   onTap: () => onStepTap?.call(stepNumber),
-                  child: Transform.translate(
-                    offset: Offset(labelOffsets[index], 0),
-                    child: Text(
-                      titles[index],
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                        color: (isSelected || isComp)
-                            ? AppColors.textPrimary.withOpacity(0.8)
-                            : AppColors.textPrimary.withOpacity(0.3),
-                        height: 1.3,
+                  child: Column(
+                    children: [
+                      SizedBox(height: 12.h),
+                      Transform.translate(
+                        offset: Offset(labelOffsets[index], 0.h),
+                        child: Text(
+                          titles[index],
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                            color: (isSelected || isComp)
+                                ? AppColors.textPrimary.withOpacity(0.8)
+                                : AppColors.textPrimary.withOpacity(0.3),
+                            height: 1.3,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 );
               }),
