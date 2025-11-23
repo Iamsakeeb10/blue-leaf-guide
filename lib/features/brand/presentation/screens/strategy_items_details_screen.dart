@@ -45,12 +45,12 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
   ];
 
   final List<String> incomeLevels = [
-    'Under \$25,000',
-    '\$25,000 - \$50,000',
-    '\$50,000 - \$75,000',
-    '\$75,000 - \$100,000',
-    '\$100,000 - \$150,000',
-    'Over \$150,000',
+    '25k',
+    '50k',
+    '75k',
+    '100k',
+    '150k',
+    '200k+',
   ];
 
   @override
@@ -127,54 +127,51 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
     if (section.fieldType == 'chips') {
       return _buildChipSection(section, sectionIndex);
     } else if (section.fieldType == 'dropdown') {
-      return _buildDropdownSection(section, sectionIndex);
+      // Check if next section is also a dropdown
+      final isNextDropdown =
+          sectionIndex + 1 < editableItem.sections.length &&
+          editableItem.sections[sectionIndex + 1].fieldType == 'dropdown';
+
+      // Check if this is the second dropdown in a pair
+      final isPreviousDropdown =
+          sectionIndex > 0 &&
+          editableItem.sections[sectionIndex - 1].fieldType == 'dropdown';
+
+      if (isNextDropdown) {
+        // This is the first dropdown, combine with next
+        return Column(
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildDropdownSection(section, sectionIndex),
+                SizedBox(width: 12.w),
+                _buildDropdownSection(
+                  editableItem.sections[sectionIndex + 1],
+                  sectionIndex + 1,
+                ),
+              ],
+            ),
+            SizedBox(height: 24.h),
+          ],
+        );
+      } else if (isPreviousDropdown) {
+        // This is the second dropdown, already rendered in the row above
+        return SizedBox.shrink();
+      } else {
+        // Single dropdown, full width
+        return Column(
+          children: [
+            _buildDropdownSection(section, sectionIndex),
+            SizedBox(height: 24.h),
+          ],
+        );
+      }
     } else if (section.isTextField) {
       return _buildTextFieldSection(section, sectionIndex);
     } else {
       return _buildStaticSection(section);
     }
-  }
-
-  Widget _buildChipSection(StrategySection section, int sectionIndex) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          section.subtitle,
-          style: TextStyle(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        SizedBox(height: 12.h),
-        Wrap(
-          spacing: 8.w,
-          runSpacing: 8.h,
-          children: section.bullets.map((trait) {
-            final isSelected = section.userInputs.contains(trait);
-            return FilterChip(
-              label: Text(trait),
-              selected: isSelected,
-              onSelected: (selected) {
-                setState(() {
-                  if (selected) {
-                    if (!section.userInputs.contains(trait)) {
-                      section.userInputs.add(trait);
-                    }
-                  } else {
-                    section.userInputs.remove(trait);
-                  }
-                });
-              },
-              selectedColor: AppColors.brand500.withOpacity(0.2),
-              checkmarkColor: AppColors.brand500,
-            );
-          }).toList(),
-        ),
-        SizedBox(height: 24.h),
-      ],
-    );
   }
 
   Widget _buildDropdownSection(StrategySection section, int sectionIndex) {
@@ -189,40 +186,138 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
         ? section.userInputs[0]
         : null;
 
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            section.subtitle,
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary.withOpacity(0.7),
+              height: 1.4,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(100.r),
+              border: Border.all(
+                color: AppColors.neutral50.withOpacity(0.05),
+                width: 1,
+              ),
+            ),
+            child: DropdownButtonFormField<String>(
+              key: ValueKey('dropdown_$sectionIndex'),
+              value: currentValue,
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 14.w,
+                  vertical: 14.h,
+                ),
+                hintText: "Select...",
+                hintStyle: TextStyle(
+                  fontSize: 12.sp,
+                  color: AppColors.textPrimary.withOpacity(0.3),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              isExpanded: true,
+              icon: Padding(
+                padding: EdgeInsets.only(right: 8.w),
+                child: Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: AppColors.textPrimary.withOpacity(0.5),
+                  size: 24.sp,
+                ),
+              ),
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w500,
+              ),
+              dropdownColor: Colors.white,
+              borderRadius: BorderRadius.circular(16.r),
+              elevation: 8,
+              menuMaxHeight: 300.h,
+              items: options.map((option) {
+                return DropdownMenuItem(
+                  value: option,
+                  child: Text(
+                    option,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  if (value != null) {
+                    section.userInputs = [value];
+                  }
+                });
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChipSection(StrategySection section, int sectionIndex) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           section.subtitle,
           style: TextStyle(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textPrimary.withOpacity(0.7),
           ),
         ),
-        SizedBox(height: 8.h),
-        DropdownButtonFormField<String>(
-          value: currentValue,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 16.w,
-              vertical: 12.h,
-            ),
-          ),
-          hint: Text('Select ${section.subtitle}'),
-          items: options.map((option) {
-            return DropdownMenuItem(value: option, child: Text(option));
+        SizedBox(height: 12.h),
+        Wrap(
+          spacing: 8.w,
+          runSpacing: 8.h,
+          children: section.bullets.map((trait) {
+            final isSelected = section.userInputs.contains(trait);
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  if (isSelected) {
+                    section.userInputs.remove(trait);
+                  } else {
+                    section.userInputs.add(trait);
+                  }
+                });
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xFFEFE5FA)
+                      : const Color(0xFF090F05).withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(100.r),
+                ),
+                child: Text(
+                  trait,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: AppColors.textPrimary.withOpacity(0.7),
+                  ),
+                ),
+              ),
+            );
           }).toList(),
-          onChanged: (value) {
-            setState(() {
-              if (value != null) {
-                section.userInputs = [value];
-              }
-            });
-          },
         ),
         SizedBox(height: 24.h),
       ],
