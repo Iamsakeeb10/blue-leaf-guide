@@ -454,4 +454,103 @@ class AuthService {
   Future<bool> isSignedInWithGoogle() async {
     return await _googleSignIn.isSignedIn();
   }
+
+  Future<Map<String, dynamic>> sendPasswordResetEmail(String email) async {
+    try {
+      final actionCodeSettings = ActionCodeSettings(
+        url: 'https://blue-leaf-guide.firebaseapp.com/__/auth/action',
+        handleCodeInApp: true, // This tells Firebase to open the app
+        androidPackageName: 'com.example.blue_leaf_guide',
+        androidInstallApp: true,
+        androidMinimumVersion: '21',
+        iOSBundleId: 'com.yourcompany.blueleafguide',
+      );
+
+      await _auth.sendPasswordResetEmail(
+        email: email,
+        actionCodeSettings: actionCodeSettings,
+      );
+
+      return {
+        'success': true,
+        'message': 'Password reset email sent successfully',
+      };
+    } on FirebaseAuthException catch (e) {
+      return {'success': false, 'message': _getAuthErrorMessage(e.code)};
+    } catch (e) {
+      print('Error sending password reset email: $e');
+      return {
+        'success': false,
+        'message': 'Failed to send password reset email. Please try again.',
+      };
+    }
+  }
+
+  // Verify password reset code
+  Future<Map<String, dynamic>> verifyPasswordResetCode(String code) async {
+    try {
+      final email = await _auth.verifyPasswordResetCode(code);
+      return {
+        'success': true,
+        'email': email,
+        'message': 'Code verified successfully',
+      };
+    } on FirebaseAuthException catch (e) {
+      String message;
+      switch (e.code) {
+        case 'invalid-action-code':
+          message = 'Invalid or expired reset code. Please request a new one.';
+          break;
+        case 'expired-action-code':
+          message = 'Reset code has expired. Please request a new one.';
+          break;
+        case 'user-disabled':
+          message = 'This account has been disabled.';
+          break;
+        case 'user-not-found':
+          message = 'No account found with this email.';
+          break;
+        default:
+          message = _getAuthErrorMessage(e.code);
+      }
+      return {'success': false, 'message': message};
+    } catch (e) {
+      print('Error verifying reset code: $e');
+      return {'success': false, 'message': 'Invalid or expired reset code.'};
+    }
+  }
+
+  // Confirm password reset with new password
+  Future<Map<String, dynamic>> confirmPasswordReset({
+    required String code,
+    required String newPassword,
+  }) async {
+    try {
+      await _auth.confirmPasswordReset(code: code, newPassword: newPassword);
+
+      return {'success': true, 'message': 'Password reset successfully'};
+    } on FirebaseAuthException catch (e) {
+      String message;
+      switch (e.code) {
+        case 'weak-password':
+          message = 'Password is too weak. Please use a stronger password.';
+          break;
+        case 'invalid-action-code':
+          message = 'Invalid or expired reset code. Please request a new one.';
+          break;
+        case 'expired-action-code':
+          message = 'Reset code has expired. Please request a new one.';
+          break;
+        default:
+          message = _getAuthErrorMessage(e.code);
+      }
+      return {'success': false, 'message': message};
+    } catch (e) {
+      print('Error confirming password reset: $e');
+      return {
+        'success': false,
+        'message': 'Failed to reset password. Please try again.',
+      };
+    }
+  }
 }

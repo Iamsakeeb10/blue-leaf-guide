@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/button.dart';
 import '../../../../shared/widgets/custom_appbar.dart';
 import '../../../../shared/widgets/text_field.dart' as CustomTextField;
+import '../../providers/auth_provider.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
-  const ResetPasswordScreen({super.key});
+  final String resetCode;
+
+  const ResetPasswordScreen({super.key, required this.resetCode});
 
   @override
   State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
@@ -15,89 +20,321 @@ class ResetPasswordScreen extends StatefulWidget {
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final passwordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+  bool _isVerifying = true;
+  String? _verifiedEmail;
 
   @override
-  void dispose() {
-    passwordController.dispose();
-    super.dispose();
-  }
-
-  void _togglePasswordVisibility() {
-    setState(() {
-      _obscurePassword = !_obscurePassword;
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _verifyResetCode();
     });
   }
 
   @override
+  void dispose() {
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _verifyResetCode() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final email = await authProvider.verifyPasswordResetCode(widget.resetCode);
+
+    if (mounted) {
+      setState(() {
+        _isVerifying = false;
+        _verifiedEmail = email;
+      });
+
+      if (email == null) {
+        _showErrorDialog(
+          authProvider.errorMessage ??
+              'Invalid or expired reset link. Please request a new one.',
+        );
+      }
+    }
+  }
+
+  Future<void> _handleResetPassword() async {
+    final password = passwordController.text;
+    final confirmPassword = confirmPasswordController.text;
+
+    if (password.isEmpty || confirmPassword.isEmpty) {
+      _showError('Please fill in all fields');
+      return;
+    }
+
+    if (password.length < 6) {
+      _showError('Password must be at least 6 characters');
+      return;
+    }
+
+    if (password != confirmPassword) {
+      _showError('Passwords do not match');
+      return;
+    }
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final success = await authProvider.confirmPasswordReset(
+      code: widget.resetCode,
+      newPassword: password,
+    );
+
+    if (success && mounted) {
+      _showSuccessDialog();
+    } else if (mounted) {
+      _showError(authProvider.errorMessage ?? 'Failed to reset password');
+    }
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        title: Column(
+          children: [
+            Icon(Icons.check_circle, size: 64.sp, color: Colors.green),
+            SizedBox(height: 16.h),
+            Text(
+              'Password Reset!',
+              style: TextStyle(
+                fontSize: 20.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Your password has been reset successfully. You can now sign in with your new password.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 14.sp,
+            color: AppColors.textSecondary,
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: Button(
+              onPressed: () {
+                context.go('/sign-in');
+              },
+              text: 'Go to Sign In',
+              height: 48.h,
+              borderRadius: BorderRadius.circular(24.r),
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w600,
+              textColor: Colors.white,
+              backgroundColor: AppColors.brand500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        title: Column(
+          children: [
+            Icon(Icons.error_outline, size: 64.sp, color: Colors.red),
+            SizedBox(height: 16.h),
+            Text(
+              'Invalid Link',
+              style: TextStyle(
+                fontSize: 20.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 14.sp,
+            color: AppColors.textSecondary,
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: Button(
+              onPressed: () {
+                context.go('/forgot-password');
+              },
+              text: 'Request New Link',
+              height: 48.h,
+              borderRadius: BorderRadius.circular(24.r),
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w600,
+              textColor: Colors.white,
+              backgroundColor: AppColors.brand500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+      ),
+    );
+  }
+
+  void _togglePasswordVisibility() {
+    setState(() => _obscurePassword = !_obscurePassword);
+  }
+
+  void _toggleConfirmPasswordVisibility() {
+    setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
+    if (_isVerifying) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: AppColors.brand500),
+              SizedBox(height: 16.h),
+              Text(
+                'Verifying reset link...',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_verifiedEmail == null) {
+      return const SizedBox(); // Dialog will handle the error state
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: const CustomAppBar(title: 'Reset Password'),
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 36.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(height: 86.h), // spacing below AppBar
-              // Title
-              Center(
-                child: Text(
-                  'Create New Password',
-                  style: TextStyle(
-                    fontSize: 24.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                    height: 1.3,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 36.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(height: 60.h),
+                Center(
+                  child: Text(
+                    'Create New Password',
+                    style: TextStyle(
+                      fontSize: 24.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                      height: 1.3,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(height: 32.h),
-
-              CustomTextField.TextField(
-                controller: passwordController,
-                label: 'Create New Password',
-                hint: 'Create New Password',
-                obscureText: _obscurePassword,
-                textInputAction: TextInputAction.done,
-                prefixIconSvg: 'assets/icons/svg/lock.svg',
-                suffixIconSvg: _obscurePassword
-                    ? 'assets/icons/svg/eye-closed.svg'
-                    : null, // use open-eye icon when visible
-                onSuffixIconTap: _togglePasswordVisibility,
-              ),
-              SizedBox(height: 12.h),
-              // Instruction Text
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Create a password with at least 4 characters',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w500,
-                    height: 1.4, // 140% line-height
-                    letterSpacing: 0, // 0%
-                    color: AppColors.textSecondary.withOpacity(0.7),
+                SizedBox(height: 8.h),
+                Center(
+                  child: Text(
+                    'For: $_verifiedEmail',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(height: 14.h),
-
-              // Done Button
-              Button(
-                onPressed: () {
-                  // Navigate to next screen, e.g., dashboard
-                },
-                text: 'Done',
-                height: 54.h,
-                borderRadius: BorderRadius.circular(32.r),
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w600,
-                textColor: Colors.white,
-                backgroundColor: AppColors.brand500,
-              ),
-            ],
+                SizedBox(height: 32.h),
+                CustomTextField.TextField(
+                  controller: passwordController,
+                  label: 'New Password',
+                  hint: 'Enter new password',
+                  obscureText: _obscurePassword,
+                  textInputAction: TextInputAction.next,
+                  prefixIconSvg: 'assets/icons/svg/lock.svg',
+                  suffixIconSvg: _obscurePassword
+                      ? 'assets/icons/svg/eye-closed.svg'
+                      : 'assets/icons/svg/eye-open.svg',
+                  onSuffixIconTap: _togglePasswordVisibility,
+                ),
+                SizedBox(height: 16.h),
+                CustomTextField.TextField(
+                  controller: confirmPasswordController,
+                  label: 'Confirm Password',
+                  hint: 'Re-enter new password',
+                  obscureText: _obscureConfirmPassword,
+                  textInputAction: TextInputAction.done,
+                  prefixIconSvg: 'assets/icons/svg/lock.svg',
+                  suffixIconSvg: _obscureConfirmPassword
+                      ? 'assets/icons/svg/eye-closed.svg'
+                      : 'assets/icons/svg/eye-open.svg',
+                  onSuffixIconTap: _toggleConfirmPasswordVisibility,
+                ),
+                SizedBox(height: 12.h),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Password must be at least 6 characters',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w500,
+                      height: 1.4,
+                      color: AppColors.textSecondary.withOpacity(0.7),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                Button(
+                  onPressed: _handleResetPassword,
+                  text: authProvider.isLoading
+                      ? 'Resetting...'
+                      : 'Reset Password',
+                  height: 54.h,
+                  borderRadius: BorderRadius.circular(32.r),
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w600,
+                  textColor: Colors.white,
+                  backgroundColor: AppColors.brand500,
+                  isLoading: authProvider.isLoading,
+                ),
+              ],
+            ),
           ),
         ),
       ),

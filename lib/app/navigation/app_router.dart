@@ -86,8 +86,11 @@ final GoRouter router = GoRouter(
       builder: (context, state) => const ForgotPasswordScreen(),
     ),
     GoRoute(
-      path: '/reset-password',
-      builder: (context, state) => const ResetPasswordScreen(),
+      path: '/reset-password/:code',
+      builder: (context, state) {
+        final code = state.pathParameters['code'] ?? '';
+        return ResetPasswordScreen(resetCode: code);
+      },
     ),
     GoRoute(
       path: '/home',

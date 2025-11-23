@@ -410,4 +410,74 @@ class AuthProvider with ChangeNotifier {
       await NotificationService().syncReminderSettings(_currentUser!.uid);
     }
   }
+
+  // Send password reset email
+  Future<bool> sendPasswordResetEmail(String email) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await _authService.sendPasswordResetEmail(email);
+
+      if (result['success']) {
+        _pendingEmail = email;
+        return true;
+      } else {
+        _errorMessage = result['message'];
+        return false;
+      }
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Verify reset code and get email
+  Future<String?> verifyPasswordResetCode(String code) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await _authService.verifyPasswordResetCode(code);
+
+      if (result['success']) {
+        return result['email'];
+      } else {
+        _errorMessage = result['message'];
+        return null;
+      }
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Confirm password reset
+  Future<bool> confirmPasswordReset({
+    required String code,
+    required String newPassword,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await _authService.confirmPasswordReset(
+        code: code,
+        newPassword: newPassword,
+      );
+
+      if (result['success']) {
+        return true;
+      } else {
+        _errorMessage = result['message'];
+        return false;
+      }
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

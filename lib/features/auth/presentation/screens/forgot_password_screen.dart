@@ -1,26 +1,132 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/button.dart';
 import '../../../../shared/widgets/custom_appbar.dart';
 import '../../../../shared/widgets/text_field.dart' as CustomTextField;
 import '../../../onboarding/presentation/widgets/onboarding_widgets.dart';
+import '../../providers/auth_provider.dart';
 
-class ForgotPasswordScreen extends StatelessWidget {
+class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+}
+
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+  final emailController = TextEditingController();
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleSendResetEmail() async {
+    final email = emailController.text.trim();
+
+    if (email.isEmpty) {
+      _showError('Please enter your email address');
+      return;
+    }
+
+    // Basic email validation
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(email)) {
+      _showError('Please enter a valid email address');
+      return;
+    }
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final success = await authProvider.sendPasswordResetEmail(email);
+
+    if (success && mounted) {
+      _showSuccessDialog();
+    } else if (mounted) {
+      _showError(authProvider.errorMessage ?? 'Failed to send reset email');
+    }
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        title: Column(
+          children: [
+            Icon(Icons.mark_email_read, size: 64.sp, color: AppColors.brand500),
+            SizedBox(height: 16.h),
+            Text(
+              'Check Your Email',
+              style: TextStyle(
+                fontSize: 20.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'We\'ve sent a password reset link to ${emailController.text}.\n\nClick the link in the email to reset your password. The link will open this app automatically.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 14.sp,
+            color: AppColors.textSecondary,
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: Button(
+              onPressed: () {
+                context.pop(); // Close dialog
+                context.pop(); // Go back to previous screen
+              },
+              text: 'Got It',
+              height: 48.h,
+              borderRadius: BorderRadius.circular(24.r),
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w600,
+              textColor: Colors.white,
+              backgroundColor: AppColors.brand500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final emailController = TextEditingController();
+    final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: const CustomAppBar(title: 'Reset Password'),
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 86.h),
+          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 40.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -28,28 +134,24 @@ class ForgotPasswordScreen extends StatelessWidget {
                 alignment: Alignment.center,
                 child: const OnboardingTitle(text: 'Reset Password'),
               ),
-              SizedBox(height: 2.h),
-
+              SizedBox(height: 8.h),
               Center(
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: 300.w,
-                  ), // set your max width
+                  constraints: BoxConstraints(maxWidth: 300.w),
                   child: Text(
-                    'Resetting passwords requires security verification. Verify via registered email.',
-                    textAlign: TextAlign.center, // optional: center text
+                    'Enter your registered email address and we\'ll send you a link to reset your password.',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w500,
-                      height: 1.3, // line-height 130%
-                      letterSpacing: -0.01 * 14, // -1% letter spacing
+                      height: 1.4,
+                      letterSpacing: -0.01 * 14,
                       color: AppColors.textPrimary.withOpacity(0.7),
                     ),
                   ),
                 ),
               ),
               SizedBox(height: 32.h),
-
               CustomTextField.TextField(
                 controller: emailController,
                 label: 'Email',
@@ -58,20 +160,17 @@ class ForgotPasswordScreen extends StatelessWidget {
                 textInputAction: TextInputAction.done,
                 prefixIconSvg: 'assets/icons/svg/mail.svg',
               ),
-              SizedBox(height: 12.h),
-
+              SizedBox(height: 24.h),
               Button(
-                onPressed: () {
-                  // Reset password logic here
-                  context.push('/otp', extra: {'nextRoute': '/reset-password'});
-                },
-                text: 'Reset',
+                onPressed: _handleSendResetEmail,
+                text: authProvider.isLoading ? 'Sending...' : 'Send Reset Link',
                 height: 54.h,
                 borderRadius: BorderRadius.circular(32.r),
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w600,
                 textColor: Colors.white,
                 backgroundColor: AppColors.brand500,
+                isLoading: authProvider.isLoading,
               ),
             ],
           ),
