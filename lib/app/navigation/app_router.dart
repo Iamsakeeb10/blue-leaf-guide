@@ -15,7 +15,9 @@ import '../../features/auth/presentation/screens/sign_in_screen.dart';
 import '../../features/auth/presentation/screens/sign_up_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/auth/providers/auth_provider.dart';
+import '../../features/brand/models/strategy_item.dart';
 import '../../features/brand/presentation/screens/build_brand_screen.dart';
+import '../../features/brand/presentation/screens/strategy_items_details_screen.dart';
 import '../../features/home/presentation/screens/main_navigation_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../features/profile/presentation/screens/my_account_screen.dart';
@@ -145,6 +147,15 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/build-brand',
       builder: (context, state) => const BuildBrandScreen(),
+    ),
+
+    // Update your GoRouter configuration with this:
+    GoRoute(
+      path: '/strategy_item/:id',
+      builder: (context, state) {
+        final StrategyItem item = state.extra as StrategyItem;
+        return StrategyItemDetailScreen(item: item);
+      },
     ),
   ],
 );

@@ -1,10 +1,14 @@
 import 'package:blue_leaf_guide/shared/widgets/custom_appbar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/button.dart';
 import '../../../../shared/widgets/profile_list_item.dart';
+import '../../data/strategy_service.dart';
+import '../../models/strategy_item.dart';
 import '../widgets/custom_stepper.dart';
 
 class StepData {
@@ -23,6 +27,9 @@ class BuildBrandScreen extends StatefulWidget {
 
 class _BuildBrandScreenState extends State<BuildBrandScreen> {
   int currentStep = 1;
+  final StrategyService _strategyService = StrategyService();
+  List<StrategyItem> strategyItems = [];
+  bool _isLoading = true;
 
   final List<StepData> stepData = [
     StepData(
@@ -65,8 +72,41 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadStrategyItems();
+  }
+
+  Future<void> _loadStrategyItems() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    try {
+      final items = await _strategyService.getUserStrategyItems(userId);
+      setState(() {
+        strategyItems = items;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading strategy items: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final List<String> currentItems = stepData[currentStep - 1].items;
+
+    if (_isLoading) {
+      return Scaffold(
+        appBar: CustomAppBar(title: 'Build Brand'),
+        backgroundColor: Colors.white,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       appBar: CustomAppBar(title: 'Build Brand'),
@@ -81,7 +121,6 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: 24.h),
-
             Padding(
               padding: EdgeInsets.only(left: 12.w, right: 20.w),
               child: CustomStepper(
@@ -93,26 +132,45 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                     currentStep = index;
                   });
                 },
-                // 👇 Pass completedSteps later like:
-                // completedSteps: [true, true, false, false],
               ),
             ),
-
             SizedBox(height: 32.h),
-
             Expanded(
               child: ListView.builder(
                 itemCount: currentItems.length,
                 itemBuilder: (context, index) {
+                  StrategyItem? item;
+                  if (currentStep == 1 && index < strategyItems.length) {
+                    item = strategyItems[index];
+                  }
+
                   return ProfileListItem(
+                    key: ValueKey(item?.id ?? index),
                     title: currentItems[index],
-                    showCheckmark: false,
-                    onTap: () => debugPrint("Tapped: ${currentItems[index]}"),
+                    showCheckmark: item?.isCompleted ?? false,
+                    onTap: () async {
+                      if (item != null) {
+                        final updatedItem = await context.push<StrategyItem>(
+                          '/strategy_item/${item.id}',
+                          extra: item,
+                        );
+
+                        if (updatedItem != null) {
+                          setState(() {
+                            final itemIndex = strategyItems.indexWhere(
+                              (e) => e.id == updatedItem.id,
+                            );
+                            if (itemIndex != -1) {
+                              strategyItems[itemIndex] = updatedItem;
+                            }
+                          });
+                        }
+                      }
+                    },
                   );
                 },
               ),
             ),
-
             Column(
               children: [
                 Button(
