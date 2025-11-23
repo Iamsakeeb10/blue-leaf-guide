@@ -152,7 +152,11 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                       if (item != null) {
                         final updatedItem = await context.push<StrategyItem>(
                           '/strategy_item/${item.id}',
-                          extra: item,
+                          extra: {
+                            'item': item,
+                            'stepTitle': stepData[currentStep - 1]
+                                .title, // pass step title
+                          },
                         );
 
                         if (updatedItem != null) {

@@ -10,7 +10,12 @@ import '../../models/strategy_item.dart';
 
 class StrategyItemDetailScreen extends StatefulWidget {
   final StrategyItem item;
-  const StrategyItemDetailScreen({required this.item, super.key});
+  final String stepTitle;
+  const StrategyItemDetailScreen({
+    required this.item,
+    required this.stepTitle,
+    super.key,
+  });
 
   @override
   State<StrategyItemDetailScreen> createState() =>
@@ -21,6 +26,13 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
   late StrategyItem editableItem;
   final StrategyService _strategyService = StrategyService();
   bool _isSaving = false;
+  Map<int, TextEditingController> _textControllers = {};
+
+  @override
+  void dispose() {
+    _textControllers.values.forEach((c) => c.dispose());
+    super.dispose();
+  }
 
   // Dropdown options
   final List<String> ageRanges = [
@@ -218,9 +230,22 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
   }
 
   Widget _buildTextFieldSection(StrategySection section, int sectionIndex) {
-    if (section.userInputs.isEmpty) {
-      section.userInputs.add('');
+    if (!_textControllers.containsKey(sectionIndex)) {
+      _textControllers[sectionIndex] = TextEditingController(
+        text: section.userInputs.isNotEmpty ? section.userInputs[0] : '',
+      );
     }
+
+    final controller = _textControllers[sectionIndex]!;
+
+    // Determine number of lines
+    final subtitleLower = section.subtitle.toLowerCase();
+    final isMultiLine =
+        subtitleLower.contains('story') ||
+        subtitleLower.contains('vision') ||
+        subtitleLower.contains('mission');
+
+    final borderRadius = isMultiLine ? 16.r : 100.r;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,27 +253,43 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
         Text(
           section.subtitle,
           style: TextStyle(
-            fontSize: 16.sp,
+            fontSize: 14.sp,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: AppColors.textPrimary.withOpacity(0.7),
+            height: 1.4,
           ),
         ),
         SizedBox(height: 8.h),
-        TextFormField(
-          initialValue: section.userInputs[0],
-          maxLines: section.subtitle.toLowerCase().contains('story') ? 5 : 1,
+        TextField(
+          controller: controller,
+          maxLines: isMultiLine ? 5 : 1,
+          minLines: isMultiLine ? 4 : 1,
           decoration: InputDecoration(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
+            hintText: "Write your reflection here...",
+            hintStyle: TextStyle(
+              fontSize: 12.sp,
+              color: AppColors.textPrimary.withOpacity(0.3),
+              fontWeight: FontWeight.w500,
             ),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 16.w,
-              vertical: 12.h,
+            filled: true,
+            fillColor: Colors.white,
+            alignLabelWithHint: true,
+            contentPadding: EdgeInsets.all(14.w),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(borderRadius),
+              borderSide: BorderSide(
+                color: AppColors.neutral50.withOpacity(0.05),
+                width: 1,
+              ),
             ),
-            hintText: 'Enter ${section.subtitle.toLowerCase()}',
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(borderRadius),
+              borderSide: BorderSide(color: AppColors.brand500, width: 1.5),
+            ),
           ),
           onChanged: (value) {
             section.userInputs[0] = value;
+            setState(() {}); // Trigger rebuild to update canSave button state
           },
         ),
         SizedBox(height: 24.h),
@@ -263,26 +304,57 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
         Text(
           section.subtitle,
           style: TextStyle(
-            fontSize: 16.sp,
+            fontSize: 14.sp,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: AppColors.textPrimary.withOpacity(0.7),
           ),
         ),
         SizedBox(height: 8.h),
-        ...section.bullets.map(
-          (bullet) => Padding(
-            padding: EdgeInsets.only(bottom: 4.h),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('• ', style: TextStyle(fontSize: 16.sp)),
-                Expanded(
-                  child: Text(bullet, style: TextStyle(fontSize: 14.sp)),
-                ),
-              ],
-            ),
+        Container(
+          padding: EdgeInsets.all(16.w),
+          decoration: BoxDecoration(
+            color: AppColors.lightGrey,
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          margin: EdgeInsets.only(bottom: 16.h),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: section.bullets
+                .map(
+                  (bullet) => Padding(
+                    padding: EdgeInsets.only(bottom: 4.h),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          "•",
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            height: 1.2,
+                            color: AppColors.textPrimary.withOpacity(0.6),
+                          ),
+                        ),
+                        SizedBox(width: 4.w),
+                        Expanded(
+                          child: Text(
+                            bullet,
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              height: 1.4,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textPrimary.withOpacity(0.7),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+                .toList(),
           ),
         ),
+
         SizedBox(height: 24.h),
       ],
     );
@@ -291,12 +363,26 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: editableItem.title),
+      appBar: CustomAppBar(title: widget.stepTitle),
       backgroundColor: Colors.white,
       body: Padding(
         padding: EdgeInsets.all(16.w),
         child: Column(
           children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                editableItem.title,
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+                textAlign: TextAlign.left,
+              ),
+            ),
+            SizedBox(height: 24.h),
+
             Expanded(
               child: ListView.builder(
                 itemCount: editableItem.sections.length,
@@ -316,6 +402,32 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
               backgroundColor: canSave()
                   ? AppColors.brand500
                   : AppColors.brand500.withOpacity(0.3),
+            ),
+
+            SizedBox(height: 12.h),
+
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(32.r),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 14.h),
+                ),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: AppColors.textPrimary.withOpacity(0.5),
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ),
           ],
         ),

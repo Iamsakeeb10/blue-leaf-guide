@@ -149,12 +149,13 @@ final GoRouter router = GoRouter(
       builder: (context, state) => const BuildBrandScreen(),
     ),
 
-    // Update your GoRouter configuration with this:
     GoRoute(
       path: '/strategy_item/:id',
       builder: (context, state) {
-        final StrategyItem item = state.extra as StrategyItem;
-        return StrategyItemDetailScreen(item: item);
+        final extra = state.extra as Map<String, dynamic>? ?? {};
+        final StrategyItem item = extra['item'];
+        final String stepTitle = extra['stepTitle'] ?? 'Strategy';
+        return StrategyItemDetailScreen(item: item, stepTitle: stepTitle);
       },
     ),
   ],
