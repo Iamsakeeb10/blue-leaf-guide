@@ -335,6 +335,8 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
 
     // Determine number of lines
     final subtitleLower = section.subtitle.toLowerCase();
+    print('🟨 Subtitel $subtitleLower');
+
     final isMultiLine =
         subtitleLower.contains('story') ||
         subtitleLower.contains('vision') ||
@@ -343,15 +345,16 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          section.subtitle,
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary.withOpacity(0.7),
-            height: 1.4,
+        if (subtitleLower != 'your brand story')
+          Text(
+            section.subtitle,
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary.withOpacity(0.7),
+              height: 1.4,
+            ),
           ),
-        ),
         SizedBox(height: 8.h),
         TextField(
           controller: controller,
@@ -478,7 +481,14 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
                 textAlign: TextAlign.left,
               ),
             ),
-            SizedBox(height: 24.h),
+            SizedBox(
+              height:
+                  (editableItem.sections.isNotEmpty &&
+                      editableItem.sections[0].subtitle.toLowerCase() ==
+                          'your brand story')
+                  ? 12.h
+                  : 24.h,
+            ),
 
             Expanded(
               child: ListView.builder(
