@@ -245,8 +245,6 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
         subtitleLower.contains('vision') ||
         subtitleLower.contains('mission');
 
-    final borderRadius = isMultiLine ? 16.r : 100.r;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -276,19 +274,23 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
             alignLabelWithHint: true,
             contentPadding: EdgeInsets.all(14.w),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(borderRadius),
+              borderRadius: BorderRadius.circular(16.r),
               borderSide: BorderSide(
                 color: AppColors.neutral50.withOpacity(0.05),
                 width: 1,
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(borderRadius),
+              borderRadius: BorderRadius.circular(16.r),
               borderSide: BorderSide(color: AppColors.brand500, width: 1.5),
             ),
           ),
           onChanged: (value) {
-            section.userInputs[0] = value;
+            if (section.userInputs.isEmpty) {
+              section.userInputs.add(value);
+            } else {
+              section.userInputs[0] = value;
+            }
             setState(() {}); // Trigger rebuild to update canSave button state
           },
         ),
