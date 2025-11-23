@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -107,49 +105,32 @@ class HomeScreen extends StatelessWidget {
                     svgPath: 'assets/icons/svg/multi-user.svg',
                     label: 'Total Client',
                     value: '20',
-                    colors: [
-                      const Color(0xFF24AC69), // green top-right
-                      const Color(0xFF24AC69), // green mid
-                      Colors.white, // white bottom-left
-                    ],
-                    stops: const [
-                      0.5, // start
-                      0.5, // keep green for top-middle
-                      0.5, // white at bottom-left
+                    gradientColors: [
+                      Colors.white.withOpacity(0),
+                      const Color(0xFF24AC69).withOpacity(0.4),
+                      const Color(0xFF24AC69),
                     ],
                   ),
 
                   _buildStatsCard(
                     svgPath: 'assets/icons/svg/dollar.svg',
-
                     label: 'Total Earned',
                     value: '3K',
-                    colors: [
-                      const Color(0xFF2C63FD), // #2C63FD
-                      const Color(0xFF2C63FD), // #2C63FD
-                      Colors.white, // transparent
-                    ],
-                    stops: const [
-                      0.0, // start
-                      0.4, // keep green for top-middle
-                      0.5, // white at bottom-left
+                    gradientColors: [
+                      Colors.white.withOpacity(0),
+                      const Color(0xFF2C63FD).withOpacity(0.4),
+                      const Color(0xFF2C63FD),
                     ],
                   ),
 
                   _buildStatsCard(
                     svgPath: 'assets/icons/svg/goal.svg',
-
                     label: 'Goal Completed',
                     value: '4m',
-                    colors: [
-                      const Color(0xFF6628EA), // #6628EA
-                      const Color(0xFF6628EA), // #6628EA
-                      Colors.white, // transparent
-                    ],
-                    stops: const [
-                      0.0, // start
-                      0.4, // keep green for top-middle
-                      0.5, // white at bottom-left
+                    gradientColors: [
+                      Colors.white.withOpacity(0),
+                      const Color(0xFF6628EA).withOpacity(0.4),
+                      const Color(0xFF6628EA),
                     ],
                   ),
                 ],
@@ -200,89 +181,66 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Updated _buildStatsCard to use SVG
   Widget _buildStatsCard({
-    required String svgPath, // path of your SVG asset
+    required String svgPath,
     required String label,
     required String value,
-    required List<Color> colors,
-    List<double>? stops,
+    required List<Color> gradientColors,
+    List<double>? gradientStops,
   }) {
     return Container(
       width: 109.w,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        gradient: LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-          colors: colors,
-          stops: stops,
+        gradient: RadialGradient(
+          center: const Alignment(-0.9, 0.9), // bottom-left glow
+          radius: 2.5,
+          colors: gradientColors,
+          stops: gradientStops ?? const [0.0, 0.3, 1.0],
         ),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Stack(
-          children: [
-            // fixed background for blur
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white, // same as your scaffold background
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 43.62, sigmaY: 43.62),
-              child: Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16.h),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 40.w,
-                        height: 40.w,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(
-                            0.3,
-                          ), // background color
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: SvgPicture.asset(
-                            svgPath,
-                            width: 24.w,
-                            height: 24.h,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
-                      Text(
-                        label,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        value,
-                        style: TextStyle(
-                          fontSize: 20.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ],
+      child: Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 16.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40.w,
+                height: 40.w,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.3),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: SvgPicture.asset(
+                    svgPath,
+                    width: 24.w,
+                    height: 24.h,
+                    fit: BoxFit.contain,
                   ),
                 ),
               ),
-            ),
-          ],
+              SizedBox(height: 8.h),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 4.h),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
