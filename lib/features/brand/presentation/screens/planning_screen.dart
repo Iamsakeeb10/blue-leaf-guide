@@ -48,6 +48,12 @@ class _PlanningScreenState extends State<PlanningScreen> {
     _loadPlanningData();
   }
 
+  bool get hasAnyCheckboxSelected {
+    return month1Checkboxes.any((e) => e) ||
+        month2Checkboxes.any((e) => e) ||
+        month3Checkboxes.any((e) => e);
+  }
+
   Future<void> _loadPlanningData() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) {
@@ -240,14 +246,16 @@ class _PlanningScreenState extends State<PlanningScreen> {
               ),
             ),
             Button(
-              onPressed: _savePlanningData,
+              onPressed: hasAnyCheckboxSelected ? _savePlanningData : null,
               text: _isSaving ? 'Saving...' : 'Save',
               height: 54.h,
               borderRadius: BorderRadius.circular(32.r),
               fontSize: 15.sp,
               fontWeight: FontWeight.w600,
               textColor: Colors.white,
-              backgroundColor: AppColors.brand500,
+              backgroundColor: hasAnyCheckboxSelected
+                  ? AppColors.brand500
+                  : AppColors.brand500.withOpacity(0.3),
             ),
             SizedBox(height: 12.h),
             SizedBox(

@@ -74,23 +74,36 @@ class _MarketingItemDetailScreenState extends State<MarketingItemDetailScreen> {
   }
 
   bool canSave() {
+    bool hasAnyInput = false;
+
     for (var section in editableItem.sections) {
       if (section.isTextField) {
         if (section.fieldType == 'multi_text') {
-          if (section.userInputs.isEmpty ||
-              section.userInputs.every((e) => e.trim().isEmpty)) {
-            return false;
+          // For multi_text, at least one non-empty field is enough
+          if (section.userInputs.any((e) => e.trim().isNotEmpty)) {
+            hasAnyInput = true;
           }
-        } else if (section.userInputs.isEmpty ||
-            section.userInputs.any((e) => e.trim().isEmpty)) {
-          return false;
+        } else {
+          // For single text fields, check if it's filled
+          if (section.userInputs.isNotEmpty &&
+              section.userInputs[0].trim().isNotEmpty) {
+            hasAnyInput = true;
+          }
+        }
+      } else if (section.fieldType == 'checkbox') {
+        // Check if any checkbox is selected
+        if (section.checkboxStates.any((checked) => checked)) {
+          hasAnyInput = true;
         }
       }
     }
-    return true;
+
+    return hasAnyInput;
   }
 
   Future<void> _saveItem() async {
+    if (!canSave()) return; // Don't save if nothing is filled
+
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) {
       ScaffoldMessenger.of(
@@ -100,6 +113,13 @@ class _MarketingItemDetailScreenState extends State<MarketingItemDetailScreen> {
     }
 
     setState(() => _isSaving = true);
+
+    // Clean up empty inputs before saving
+    for (var section in editableItem.sections) {
+      if (section.fieldType == 'multi_text') {
+        section.userInputs.removeWhere((input) => input.trim().isEmpty);
+      }
+    }
 
     editableItem.isCompleted = canSave();
 
@@ -426,7 +446,7 @@ class _MarketingItemDetailScreenState extends State<MarketingItemDetailScreen> {
               ),
             ),
             Button(
-              onPressed: _saveItem,
+              onPressed: canSave() ? _saveItem : null,
               text: _isSaving ? 'Saving...' : 'Save',
               height: 54.h,
               borderRadius: BorderRadius.circular(32.r),

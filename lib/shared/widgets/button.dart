@@ -6,13 +6,13 @@ import '../../app/theme/app_colors.dart';
 import '../../app/utils/sizes.dart';
 
 class Button extends StatefulWidget {
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed; // <-- Changed to nullable
   final bool isLoading;
   final String text;
   final IconData? icon;
   final double? height;
   final double? width;
-  final Color? backgroundColor; // <-- new solid bg prop
+  final Color? backgroundColor;
   final BorderRadius? borderRadius;
   final Color? textColor;
   final double? fontSize;
@@ -29,7 +29,7 @@ class Button extends StatefulWidget {
     this.icon,
     this.height,
     this.width,
-    this.backgroundColor, // <-- use this
+    this.backgroundColor,
     this.borderRadius,
     this.textColor,
     this.fontSize,
@@ -77,16 +77,22 @@ class _ButtonState extends State<Button> with SingleTickerProviderStateMixin {
     final height = widget.height ?? 58.h;
     final width = widget.width ?? double.infinity;
     final loadingColor = widget.loadingIndicatorColor ?? AppColors.background;
+    final isEnabled =
+        widget.onPressed != null && !widget.isLoading; // <-- Check if enabled
 
     return ScaleTransition(
       scale: _scaleAnimation,
       child: GestureDetector(
-        onTapDown: (_) => _controller.forward(),
-        onTapUp: (_) {
-          _controller.reverse();
-          if (!widget.isLoading) widget.onPressed();
-        },
-        onTapCancel: () => _controller.reverse(),
+        onTapDown: isEnabled
+            ? (_) => _controller.forward()
+            : null, // <-- Only animate if enabled
+        onTapUp: isEnabled
+            ? (_) {
+                _controller.reverse();
+                widget.onPressed!(); // <-- Safe to use ! here since we checked
+              }
+            : null,
+        onTapCancel: isEnabled ? () => _controller.reverse() : null,
         child: Container(
           width: width,
           height: height,
