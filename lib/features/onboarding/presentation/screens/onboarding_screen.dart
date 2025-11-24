@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:blue_leaf_guide/app/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -145,21 +147,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   SizedBox(height: 12.h),
 
-                  SocialButton(
-                    icon: 'assets/icons/svg/apple.svg',
-                    text: 'Continue with Apple',
-                    backgroundColor: AppColors.brand500,
-                    textColor: Colors.white,
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Coming Soon!'),
-                          duration: Duration(seconds: 2),
+                  if (!Platform.isAndroid)
+                    Column(
+                      children: [
+                        SocialButton(
+                          icon: 'assets/icons/svg/apple.svg',
+                          text: 'Continue with Apple',
+                          backgroundColor: AppColors.brand500,
+                          textColor: Colors.white,
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Coming Soon!'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
-                  SizedBox(height: 12.h),
+                        SizedBox(height: 12.h),
+                      ],
+                    ),
 
                   const AlreadyHaveAccountText(),
                   SizedBox(height: 32.h),

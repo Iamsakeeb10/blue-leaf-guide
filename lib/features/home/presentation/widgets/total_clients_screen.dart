@@ -19,145 +19,203 @@ class TotalClientsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: CustomAppBar(title: 'Clients'),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: ClientService().getClientsStream(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Error loading clients',
-                style: TextStyle(color: AppColors.danger, fontSize: 16.sp),
-              ),
-            );
-          }
+    return WillPopScope(
+      onWillPop: () async {
+        final router = GoRouter.of(context);
+        if (router.canPop()) {
+          router.pop(); // safe pop
+        } else {
+          router.go('/home'); // fallback
+        }
+        return false; // prevent default pop
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: CustomAppBar(
+          title: 'Clients',
+          onBack: () {
+            // Use GoRouter to safely navigate back
+            if (GoRouter.of(context).canPop()) {
+              GoRouter.of(context).pop();
+            } else {
+              GoRouter.of(context).go('/home'); // safe fallback
+            }
+          },
+        ),
+        body: StreamBuilder<QuerySnapshot>(
+          stream: ClientService().getClientsStream(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(
+                child: Text(
+                  'Error loading clients',
+                  style: TextStyle(color: AppColors.danger, fontSize: 16.sp),
+                ),
+              );
+            }
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            );
-          }
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              );
+            }
 
-          final clients = snapshot.data?.docs ?? [];
-          final totalClients = clients.length;
+            final clients = snapshot.data?.docs ?? [];
+            final totalClients = clients.length;
 
-          if (clients.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.people_outline,
-                    size: 80.r,
-                    color: AppColors.textSecondary.withOpacity(0.3),
-                  ),
-                  SizedBox(height: 16.h),
-                  Text(
-                    'No clients added yet',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    'Tap + to add your first client',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      color: AppColors.textSecondary.withOpacity(0.7),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return Column(
-            children: [
-              /// TOP BAR SHOWING COUNT
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            if (clients.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          'All Clients',
-                          style: TextStyle(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary.withOpacity(0.9),
-                          ),
-                        ),
-                        SizedBox(width: 6.w),
-                        Text(
-                          '(${clients.length})',
-                          style: TextStyle(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary.withOpacity(0.5),
-                          ),
-                        ),
-                      ],
+                    Icon(
+                      Icons.people_outline,
+                      size: 80.r,
+                      color: AppColors.textSecondary.withOpacity(0.3),
                     ),
-
-                    /// Add Client Button
-                    GestureDetector(
-                      onTap: () => context.push('/add-client'),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          vertical: 10.h,
-                          horizontal: 16.w,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.brand500,
-                          borderRadius: BorderRadius.circular(32.r),
+                    SizedBox(height: 16.h),
+                    Text(
+                      'No clients added yet',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    Text(
+                      'Tap the button below to add your first client',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: AppColors.textSecondary.withOpacity(0.7),
+                      ),
+                    ),
+                    SizedBox(height: 24.h),
+                    SizedBox(
+                      width: 180.w,
+                      height: 50.h,
+                      child: ElevatedButton(
+                        onPressed: () => context.push('/add-client'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.brand500,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(32.r),
+                          ),
+                          elevation: 4,
                         ),
                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
+                            Icon(Icons.add, size: 20.r, color: Colors.white),
+                            SizedBox(width: 8.w),
                             Text(
-                              "Add Client",
+                              'Add Client',
                               style: TextStyle(
-                                fontSize: 14.sp,
+                                fontSize: 16.sp,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white,
                               ),
                             ),
-                            SizedBox(width: 8.w),
-                            Icon(Icons.add, size: 18.r, color: Colors.white),
                           ],
                         ),
                       ),
                     ),
                   ],
                 ),
-              ),
+              );
+            }
 
-              SizedBox(height: 10.h),
+            return Column(
+              children: [
+                /// TOP BAR SHOWING COUNT
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'All Clients',
+                            style: TextStyle(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary.withOpacity(0.9),
+                            ),
+                          ),
+                          SizedBox(width: 6.w),
+                          Text(
+                            '(${clients.length})',
+                            style: TextStyle(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary.withOpacity(0.5),
+                            ),
+                          ),
+                        ],
+                      ),
 
-              Expanded(
-                child: clients.isEmpty
-                    ? Center(child: Text("No clients added yet"))
-                    : Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.w),
-                        child: ListView.builder(
-                          itemCount: totalClients,
-                          itemBuilder: (context, index) {
-                            final doc = clients[index];
-                            final client = doc.data() as Map<String, dynamic>;
-                            final clientId = doc.id;
-                            return _buildClientCard(context, client, clientId);
-                          },
+                      /// Add Client Button
+                      GestureDetector(
+                        onTap: () => context.push('/add-client'),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            vertical: 10.h,
+                            horizontal: 16.w,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.brand500,
+                            borderRadius: BorderRadius.circular(32.r),
+                          ),
+                          child: Row(
+                            children: [
+                              Text(
+                                "Add Client",
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: 8.w),
+                              Icon(Icons.add, size: 18.r, color: Colors.white),
+                            ],
+                          ),
                         ),
                       ),
-              ),
-            ],
-          );
-        },
+                    ],
+                  ),
+                ),
+
+                SizedBox(height: 10.h),
+
+                Expanded(
+                  child: clients.isEmpty
+                      ? Center(child: Text("No clients added yet"))
+                      : Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16.w),
+                          child: ListView.builder(
+                            itemCount: totalClients,
+                            itemBuilder: (context, index) {
+                              final doc = clients[index];
+                              final client = doc.data() as Map<String, dynamic>;
+                              final clientId = doc.id;
+                              return _buildClientCard(
+                                context,
+                                client,
+                                clientId,
+                              );
+                            },
+                          ),
+                        ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -522,7 +580,7 @@ class _DeleteClientDialogState extends State<DeleteClientDialog> {
             SizedBox(height: 20.h),
             Button(
               onPressed: _isDeleting ? null : _deleteClient,
-              text: 'Delete',
+              text: 'Yes, Delete',
               height: 54.h,
               borderRadius: BorderRadius.circular(32.r),
               fontSize: 15.sp,

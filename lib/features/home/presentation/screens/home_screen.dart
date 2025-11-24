@@ -1,15 +1,34 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../auth/providers/auth_provider.dart';
+import '../../../roadmap/presentation/screens/roadmap_screen.dart';
+import '../../data/client_service.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // Inside your HomeScreen build method, replace the header Row
+    final userData = context.watch<AuthProvider>().userData;
+    final firstName = userData?['firstName'] ?? 'User';
+    final photoURL = userData?['photoURL'];
+
+    print('🟨 Photo URL $photoURL');
+
+    String _getGreeting() {
+      final hour = DateTime.now().hour;
+      if (hour < 12) return "Good Morning";
+      if (hour < 18) return "Good Afternoon";
+      return "Good Evening";
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -22,18 +41,35 @@ class HomeScreen extends StatelessWidget {
               Row(
                 children: [
                   // Avatar
-                  Container(
-                    width: 45.w,
-                    height: 45.w,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFF24AC69),
-                      image: const DecorationImage(
-                        image: NetworkImage(
-                          'https://peoplify.pics/api/generate/avatar?gender=male',
-                        ),
-                        fit: BoxFit.cover,
+                  GestureDetector(
+                    onTap: () {
+                      context.push('/profile');
+                    },
+                    child: Container(
+                      width: 45.w,
+                      height: 45.w,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFF24AC69),
+                        image: (photoURL != null && photoURL.isNotEmpty)
+                            ? DecorationImage(
+                                image: NetworkImage(photoURL),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
                       ),
+                      child: (photoURL == null || photoURL.isEmpty)
+                          ? Center(
+                              child: Text(
+                                firstName[0].toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            )
+                          : null,
                     ),
                   ),
 
@@ -44,7 +80,7 @@ class HomeScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Hi! Tomeka',
+                          'Hi, $firstName',
                           style: TextStyle(
                             fontSize: 18.sp,
                             fontWeight: FontWeight.w500,
@@ -54,7 +90,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                         SizedBox(height: 2.h),
                         Text(
-                          'Good Morning',
+                          _getGreeting(),
                           style: TextStyle(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w500,
@@ -66,17 +102,18 @@ class HomeScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Same Avatar on Right
-                  Container(
-                    width: 45.w,
-                    height: 45.w,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFF24AC69),
-                      image: const DecorationImage(
-                        image: NetworkImage(
-                          'https://peoplify.pics/api/generate/avatar?gender=male',
+                  GestureDetector(
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Coming soon!'),
+                          behavior: SnackBarBehavior.floating,
                         ),
+                      );
+                    },
+                    child: ClipOval(
+                      child: SvgPicture.asset(
+                        'assets/icons/svg/bell.svg',
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -98,21 +135,31 @@ class HomeScreen extends StatelessWidget {
 
               SizedBox(height: 20.h),
 
-              // Stats Cards Row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildStatsCard(
-                    svgPath: 'assets/icons/svg/multi-user.svg',
-                    label: 'Total Client',
-                    value: '20',
-                    gradientColors: [
-                      Colors.white.withOpacity(0),
-                      const Color(0xFF24AC69).withOpacity(0.4),
-                      const Color(0xFF24AC69),
-                    ],
-                    onTap: () {
-                      context.push('/total-clients');
+                  StreamBuilder<QuerySnapshot>(
+                    stream: ClientService().getClientsStream(),
+                    builder: (context, snapshot) {
+                      int totalClients = 0;
+                      if (snapshot.hasData) {
+                        totalClients = snapshot.data?.docs.length ?? 0;
+                      }
+
+                      return _buildStatsCard(
+                        svgPath: 'assets/icons/svg/multi-user.svg',
+                        label: 'Total Client',
+                        value:
+                            '$totalClients', // dynamically show total clients
+                        gradientColors: [
+                          Colors.white.withOpacity(0),
+                          const Color(0xFF24AC69).withOpacity(0.4),
+                          const Color(0xFF24AC69),
+                        ],
+                        onTap: () {
+                          context.push('/total-clients');
+                        },
+                      );
                     },
                   ),
 
@@ -125,6 +172,14 @@ class HomeScreen extends StatelessWidget {
                       const Color(0xFF2C63FD).withOpacity(0.4),
                       const Color(0xFF2C63FD),
                     ],
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Coming soon!'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
                   ),
 
                   _buildStatsCard(
@@ -136,6 +191,14 @@ class HomeScreen extends StatelessWidget {
                       const Color(0xFF6628EA).withOpacity(0.4),
                       const Color(0xFF6628EA),
                     ],
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Coming soon!'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -161,7 +224,12 @@ class HomeScreen extends StatelessWidget {
                 svgPath: 'assets/icons/svg/card-two.svg',
                 color: AppColors.lightBlue40.withOpacity(0.25),
                 textColor: AppColors.timelinePrimary,
-                onTap: () async {},
+                onTap: () async {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => RoadmapScreen()),
+                  );
+                },
               ),
               SizedBox(height: 8.h),
               _buildRoadmapCard(
@@ -176,8 +244,8 @@ class HomeScreen extends StatelessWidget {
               ),
               SizedBox(height: 8.h),
               _buildRoadmapCard(
-                title: 'View Roadmap',
-                subtitle: 'The Blue Leaf Roadmap to Get Success',
+                title: 'View Daily Task',
+                subtitle: 'Track your daily activities and monthly goals',
                 svgPath: 'assets/icons/svg/card-three.svg',
                 color: AppColors.lightPink33.withOpacity(0.2),
                 textColor: AppColors.brightPurple,

@@ -1,4 +1,3 @@
-import 'package:blue_leaf_guide/features/profile/presentation/screens/profile_screen.dart';
 import 'package:blue_leaf_guide/features/roadmap/presentation/screens/roadmap_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -24,7 +23,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     RoadmapScreen(),
     const PlaceholderScreen(title: 'Messages'),
     // const PlaceholderScreen(title: 'Profile'),
-    const ProfileScreen(),
+    const PlaceholderScreen(title: 'AI Tutor'),
   ];
 
   @override
@@ -81,10 +80,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 ),
                 _buildNavItem(
                   index: 4,
-                  icon: 'assets/icons/svg/user-circle.svg',
+                  icon: 'assets/icons/svg/tutor.svg',
 
-                  activeIcon: 'assets/icons/svg/user-circle-active.svg',
-                  label: 'Profile',
+                  activeIcon: 'assets/icons/svg/tutor-active.svg',
+                  label: 'AI Tutor',
                 ),
               ],
             ),

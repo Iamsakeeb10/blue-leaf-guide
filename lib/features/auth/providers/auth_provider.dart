@@ -189,6 +189,8 @@ class AuthProvider with ChangeNotifier {
 
       if (result['success']) {
         _currentUser = result['user'];
+        print('🟨 Current User $_currentUser');
+
         await _loadUserData();
         notifyListeners();
         return true;

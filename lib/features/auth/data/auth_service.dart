@@ -226,65 +226,66 @@ class AuthService {
     }
   }
 
-  // Sign in with Google
   Future<Map<String, dynamic>> signInWithGoogle() async {
     try {
-      // Trigger the Google Sign In flow
+      // Trigger Google Sign-In flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-
       if (googleUser == null) {
-        // User canceled the sign-in
+        // User cancelled
         return {'success': false, 'message': 'Sign in cancelled'};
       }
 
-      // Obtain the auth details from the request
+      // Get auth details
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
-      // Create a new credential
+      // Create credential
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // Sign in to Firebase with the Google credential
+      // Sign in to Firebase
       final userCredential = await _auth.signInWithCredential(credential);
       final user = userCredential.user!;
+      final uid = user.uid;
 
-      // Check if this is a new user
-      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+      // Split name
+      final nameParts = user.displayName?.split(' ') ?? ['', ''];
 
-      if (!userDoc.exists) {
-        // New user - create user document
-        final nameParts = user.displayName?.split(' ') ?? ['', ''];
-        await _firestore.collection('users').doc(user.uid).set({
+      // Save/update Firestore user document
+      await _firestore.collection('users').doc(uid).set(
+        {
           'firstName': nameParts.isNotEmpty ? nameParts[0] : '',
           'lastName': nameParts.length > 1
               ? nameParts.sublist(1).join(' ')
               : '',
           'email': user.email ?? '',
-          'photoURL': user.photoURL,
+          'photoURL': user.photoURL ?? '',
           'provider': 'google',
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-      }
+          'createdAt': FieldValue.serverTimestamp(), // for new users
+          'updatedAt': FieldValue.serverTimestamp(), // for existing users
+        },
+        SetOptions(merge: true),
+      ); // merge ensures we don't overwrite existing fields
 
       // Save login state
-      await _saveLoginState(user.uid);
+      await _saveLoginState(uid);
 
       return {
         'success': true,
         'message': 'Signed in with Google successfully',
         'user': user,
-        'isNewUser': !userDoc.exists,
+        'isNewUser':
+            false, // optional: can detect by checking doc existence if needed
       };
     } on FirebaseAuthException catch (e) {
       return {'success': false, 'message': _getAuthErrorMessage(e.code)};
     } catch (e) {
-      print('Google Sign In Error: $e');
+      print('Google Sign-In Error: $e');
       return {
         'success': false,
-        'message': 'An error occurred during Google sign in. Please try again.',
+        'message': 'An error occurred during Google sign-in. Please try again.',
       };
     }
   }

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -234,21 +236,26 @@ class _SignInScreenState extends State<SignInScreen> {
                           },
                         ),
                         SizedBox(height: 12.h),
-                        SocialButton(
-                          icon: 'assets/icons/svg/apple.svg',
-                          text: 'Continue with Apple',
-                          backgroundColor: AppColors.brand500,
-                          textColor: Colors.white,
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Coming Soon!'),
-                                duration: Duration(seconds: 2),
+                        if (!Platform.isAndroid)
+                          Column(
+                            children: [
+                              SocialButton(
+                                icon: 'assets/icons/svg/apple.svg',
+                                text: 'Continue with Apple',
+                                backgroundColor: AppColors.brand500,
+                                textColor: Colors.white,
+                                onTap: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Coming Soon!'),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                },
                               ),
-                            );
-                          },
-                        ),
-                        SizedBox(height: 12.h),
+                              SizedBox(height: 12.h),
+                            ],
+                          ),
                         AlreadyHaveAccountText(
                           firstText: "Need an account? ",
                           secondText: "Sign up",

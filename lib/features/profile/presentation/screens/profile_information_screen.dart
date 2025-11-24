@@ -82,6 +82,11 @@ class _ProfileInformationScreenState extends State<ProfileInformationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userData = authProvider.userData;
+    final firstName = userData?['firstName'] ?? '';
+    final photoURL = userData?['photoURL'];
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const CustomAppBar(title: 'Personal Information'),
@@ -92,42 +97,55 @@ class _ProfileInformationScreenState extends State<ProfileInformationScreen> {
             children: [
               SizedBox(height: 12.h),
 
-              // Avatar
               Container(
                 width: 72.w,
                 height: 72.h,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.neutral50,
+                  color: const Color(0xFF24AC69), // fallback background color
+                  image: (photoURL != null && photoURL.isNotEmpty)
+                      ? DecorationImage(
+                          image: NetworkImage(photoURL),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
-                child: Icon(
-                  Icons.person,
-                  size: 50.sp,
-                  color: AppColors.textSecondary,
-                ),
+                child: (photoURL == null || photoURL.isEmpty)
+                    ? Center(
+                        child: Text(
+                          firstName.isNotEmpty
+                              ? firstName[0].toUpperCase()
+                              : '',
+                          style: TextStyle(
+                            fontSize: 24.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      )
+                    : null,
               ),
 
               SizedBox(height: 8.h),
 
-              // Edit Profile Button
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: AppColors.lightGrey,
-                  borderRadius: BorderRadius.circular(100.r),
-                ),
-                child: Text(
-                  'Edit Profile',
-                  style: TextStyle(
-                    color: AppColors.textPrimary.withOpacity(0.8),
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w600,
-                    height: 1.3,
-                    letterSpacing: -0.01 * 10,
-                  ),
-                ),
-              ),
-
+              // // Edit Profile Button
+              // Container(
+              //   padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+              //   decoration: BoxDecoration(
+              //     color: AppColors.lightGrey,
+              //     borderRadius: BorderRadius.circular(100.r),
+              //   ),
+              //   child: Text(
+              //     'Edit Profile',
+              //     style: TextStyle(
+              //       color: AppColors.textPrimary.withOpacity(0.8),
+              //       fontSize: 10.sp,
+              //       fontWeight: FontWeight.w600,
+              //       height: 1.3,
+              //       letterSpacing: -0.01 * 10,
+              //     ),
+              //   ),
+              // ),
               SizedBox(height: 32.h),
 
               // First Name
