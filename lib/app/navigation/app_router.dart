@@ -179,12 +179,12 @@ final GoRouter router = GoRouter(
 
     GoRoute(
       path: '/total-clients',
-      builder: (context, state) =>
-          const TotalClientsScreen(), // ✅ no extra needed
+      builder: (context, state) => const TotalClientsScreen(),
     ),
     GoRoute(
       path: '/add-client',
-      builder: (context, state) => const AddClientScreen(),
+      builder: (context, state) =>
+          AddClientScreen(extra: state.extra as Map<String, dynamic>?),
     ),
   ],
 );
