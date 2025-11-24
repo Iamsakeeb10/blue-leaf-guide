@@ -155,6 +155,8 @@ class _MarketingItemDetailScreenState extends State<MarketingItemDetailScreen> {
             child: Row(
               children: [
                 CustomCheckbox(
+                  activeColor: AppColors.brand500,
+                  borderColor: AppColors.iceBlue,
                   value: section.checkboxStates[index],
                   onChanged: (value) {
                     setState(() {
@@ -223,14 +225,14 @@ class _MarketingItemDetailScreenState extends State<MarketingItemDetailScreen> {
             alignLabelWithHint: true,
             contentPadding: EdgeInsets.all(14.w),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16.r),
+              borderRadius: BorderRadius.circular(100.r),
               borderSide: BorderSide(
                 color: AppColors.neutral50.withOpacity(0.05),
                 width: 1,
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16.r),
+              borderRadius: BorderRadius.circular(100.r),
               borderSide: BorderSide(color: AppColors.brand500, width: 1.5),
             ),
           ),
@@ -279,54 +281,105 @@ class _MarketingItemDetailScreenState extends State<MarketingItemDetailScreen> {
         ...List.generate(controllers.length, (index) {
           return Padding(
             padding: EdgeInsets.only(bottom: 12.h),
-            child: TextField(
-              controller: controllers[index],
-              decoration: InputDecoration(
-                hintText: "${section.hintText ?? 'Core pillar'} ${index + 1}",
-                hintStyle: TextStyle(
-                  fontSize: 12.sp,
-                  color: AppColors.textPrimary.withOpacity(0.3),
-                  fontWeight: FontWeight.w500,
-                ),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: EdgeInsets.all(14.w),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.r),
-                  borderSide: BorderSide(
-                    color: AppColors.neutral50.withOpacity(0.05),
-                    width: 1,
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: controllers[index],
+                    decoration: InputDecoration(
+                      hintText:
+                          "${section.hintText ?? 'Core pillar'} ${index + 1}",
+                      hintStyle: TextStyle(
+                        fontSize: 12.sp,
+                        color: AppColors.textPrimary.withOpacity(0.3),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: EdgeInsets.all(12.w),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(100.r),
+                        borderSide: BorderSide(
+                          color: AppColors.neutral50.withOpacity(0.05),
+                          width: 1,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(100.r),
+                        borderSide: BorderSide(
+                          color: AppColors.brand500,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      section.userInputs[index] = value;
+                      setState(() {});
+                    },
                   ),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.r),
-                  borderSide: BorderSide(color: AppColors.brand500, width: 1.5),
-                ),
-              ),
-              onChanged: (value) {
-                section.userInputs[index] = value;
-                setState(() {});
-              },
+                SizedBox(width: 8.w),
+                // Show Add button only on first field, Delete button on others
+                if (index == 0)
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        controllers.add(TextEditingController());
+                        section.userInputs.add("");
+                      });
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 12.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.lightGrey,
+                        borderRadius: BorderRadius.circular(100.r),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.add,
+                            color: AppColors.textPrimary.withOpacity(0.8),
+                            size: 20.sp,
+                          ),
+                          SizedBox(width: 6.w),
+                          Text(
+                            "Add",
+                            style: TextStyle(
+                              fontSize: 15.sp,
+                              color: AppColors.textPrimary.withOpacity(0.8),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        controllers[index].dispose();
+                        controllers.removeAt(index);
+                        section.userInputs.removeAt(index);
+                      });
+                    },
+                    child: Container(
+                      padding: EdgeInsets.all(10.w),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(100.r),
+                      ),
+                      child: Icon(Icons.remove, color: Colors.red, size: 20.sp),
+                    ),
+                  ),
+              ],
             ),
           );
         }),
-        TextButton.icon(
-          onPressed: () {
-            setState(() {
-              controllers.add(TextEditingController());
-              section.userInputs.add("");
-            });
-          },
-          icon: Icon(Icons.add, color: AppColors.brand500, size: 20.sp),
-          label: Text(
-            'Add',
-            style: TextStyle(
-              color: AppColors.brand500,
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
         SizedBox(height: 12.h),
       ],
     );
@@ -462,14 +515,14 @@ class _MarketingItemDetailScreenState extends State<MarketingItemDetailScreen> {
                       fillColor: Colors.white,
                       contentPadding: EdgeInsets.all(14.w),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16.r),
+                        borderRadius: BorderRadius.circular(100.r),
                         borderSide: BorderSide(
                           color: AppColors.neutral50.withOpacity(0.05),
                           width: 1,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16.r),
+                        borderRadius: BorderRadius.circular(100.r),
                         borderSide: BorderSide(
                           color: AppColors.brand500,
                           width: 1.5,
@@ -516,14 +569,14 @@ class _MarketingItemDetailScreenState extends State<MarketingItemDetailScreen> {
                       fillColor: Colors.white,
                       contentPadding: EdgeInsets.all(14.w),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16.r),
+                        borderRadius: BorderRadius.circular(100.r),
                         borderSide: BorderSide(
                           color: AppColors.neutral50.withOpacity(0.05),
                           width: 1,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16.r),
+                        borderRadius: BorderRadius.circular(100.r),
                         borderSide: BorderSide(
                           color: AppColors.brand500,
                           width: 1.5,

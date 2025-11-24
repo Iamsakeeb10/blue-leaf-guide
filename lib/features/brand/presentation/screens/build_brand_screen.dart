@@ -134,9 +134,14 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                 totalSteps: stepData.length,
                 titles: stepData.map((d) => d.title).toList(),
                 onStepTap: (index) {
-                  setState(() {
-                    currentStep = index;
-                  });
+                  if (index == 4) {
+                    // Navigate to PlanningScreen when step 4 is tapped
+                    context.push('/planning');
+                  } else {
+                    setState(() {
+                      currentStep = index;
+                    });
+                  }
                 },
               ),
             ),
@@ -238,9 +243,14 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                 Button(
                   onPressed: () {
                     if (currentStep < stepData.length) {
-                      setState(() {
-                        currentStep++;
-                      });
+                      if (currentStep == 3) {
+                        // Navigate to planning when moving from step 3 to step 4
+                        context.push('/planning');
+                      } else {
+                        setState(() {
+                          currentStep++;
+                        });
+                      }
                     }
                   },
                   text: currentStep == stepData.length

@@ -150,6 +150,8 @@ class _PlanningScreenState extends State<PlanningScreen> {
                 CustomCheckbox(
                   value: checkboxes[index],
                   onChanged: (value) => onChanged(index, value),
+                  activeColor: AppColors.brand500,
+                  borderColor: AppColors.iceBlue,
                 ),
                 SizedBox(width: 12.w),
                 Expanded(
