@@ -8,6 +8,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../../app/theme/app_colors.dart';
@@ -199,9 +200,9 @@ class _AddClientScreenState extends State<AddClientScreen> {
     );
 
     if (picked != null) {
+      final formattedDate = DateFormat('MMM dd, yyyy').format(picked);
       setState(() {
-        joinDateController.text =
-            '${picked.day}/${picked.month}/${picked.year}';
+        joinDateController.text = formattedDate;
       });
     }
   }

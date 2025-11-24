@@ -408,9 +408,13 @@ class TotalClientsScreen extends StatelessWidget {
               try {
                 await launchUrl(uri, mode: LaunchMode.externalApplication);
               } catch (e) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text('Could not open link')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'CThe link seems incorrect. Please check and try again.',
+                    ),
+                  ),
+                );
               }
             },
             child: Container(
