@@ -29,6 +29,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
   final VisualService _visualService = VisualService();
   bool _isSaving = false;
   late List<TextEditingController> _controllers;
+  String? _colorSelectionSource; // 'palette' or 'custom'
 
   @override
   void initState() {
@@ -38,6 +39,18 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
         text: section.userInputs.isNotEmpty ? section.userInputs.first : '',
       );
     }).toList();
+
+    // Check if colors already exist and set source
+    for (var section in widget.item.sections) {
+      if (section.fieldType == 'color' && section.userInputs.isNotEmpty) {
+        // Try to get the source from metadata if you stored it
+        // For now, we'll default to 'custom' if colors exist
+        _colorSelectionSource = section.selectedOptions?.isNotEmpty == true
+            ? section.selectedOptions!.first
+            : 'custom';
+        break;
+      }
+    }
   }
 
   @override
@@ -51,92 +64,11 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
   Future<void> _handleColorSelection(
     VisualSection section,
     int sectionIndex,
+    String source,
   ) async {
-    // Show bottom sheet to choose between custom color or palette
-    final choice = await showModalBottomSheet<String>(
-      context: context,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
-      builder: (context) => Container(
-        padding: EdgeInsets.all(24.w),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40.w,
-              height: 4.h,
-              margin: EdgeInsets.only(bottom: 20.h),
-              decoration: BoxDecoration(
-                color: AppColors.neutral50.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(2.r),
-              ),
-            ),
-            Text(
-              'Choose Color Option',
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            SizedBox(height: 20.h),
-            ListTile(
-              leading: Container(
-                padding: EdgeInsets.all(8.w),
-                decoration: BoxDecoration(
-                  color: AppColors.brand500.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Icon(Icons.palette, color: AppColors.brand500),
-              ),
-              title: Text(
-                'Choose from Palette',
-                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w500),
-              ),
-              subtitle: Text(
-                'Select from curated color palettes',
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  color: AppColors.textPrimary.withOpacity(0.6),
-                ),
-              ),
-              onTap: () => Navigator.pop(context, 'palette'),
-            ),
-            SizedBox(height: 8.h),
-            ListTile(
-              leading: Container(
-                padding: EdgeInsets.all(8.w),
-                decoration: BoxDecoration(
-                  color: AppColors.brand500.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Icon(Icons.color_lens, color: AppColors.brand500),
-              ),
-              title: Text(
-                'Custom Color',
-                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w500),
-              ),
-              subtitle: Text(
-                'Create your own color combination',
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  color: AppColors.textPrimary.withOpacity(0.6),
-                ),
-              ),
-              onTap: () => Navigator.pop(context, 'custom'),
-            ),
-            SizedBox(height: 20.h),
-          ],
-        ),
-      ),
-    );
-
-    if (choice == null) return;
-
     List<String>? selectedColors;
 
-    if (choice == 'palette') {
+    if (source == 'palette') {
       selectedColors = await Navigator.push<List<String>>(
         context,
         MaterialPageRoute(
@@ -157,8 +89,73 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
     if (selectedColors != null && selectedColors.isNotEmpty) {
       setState(() {
         section.userInputs = selectedColors!;
+        // Store the source in selectedOptions for tracking
+        section.selectedOptions = [source];
+        _colorSelectionSource = source;
+
+        // Mark item as complete when colors are saved
+        widget.item.isCompleted = true;
       });
       await _saveItem();
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Colors saved and marked as complete!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteColors(VisualSection section) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete Colors'),
+        content: Text('Are you sure you want to delete all selected colors?'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textPrimary.withOpacity(0.6)),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      setState(() {
+        section.userInputs = [];
+        section.selectedOptions = [];
+        _colorSelectionSource = null;
+
+        // Unmark as complete when colors are deleted
+        widget.item.isCompleted = false;
+      });
+      await _saveItem();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Colors deleted'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
@@ -253,123 +250,12 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
 
   Widget _buildSectionContent(VisualSection section, int sectionIndex) {
     if (section.fieldType == 'color') {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (section.userInputs.isNotEmpty) ...[
-            Text(
-              'Selected Colors (${section.userInputs.length}/4)',
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary.withOpacity(0.7),
-              ),
-            ),
-            SizedBox(height: 12.h),
-            Wrap(
-              spacing: 12.w,
-              runSpacing: 12.h,
-              children: section.userInputs.map((colorHex) {
-                return Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      width: 60.w,
-                      height: 60.w,
-                      decoration: BoxDecoration(
-                        color: Color(int.parse('0xff$colorHex')),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.neutral50.withOpacity(0.3),
-                          width: 2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 4,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Positioned(
-                      top: -5,
-                      right: -5,
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            section.userInputs.remove(colorHex);
-                          });
-                          _saveItem();
-                        },
-                        child: Container(
-                          width: 24.w,
-                          height: 24.w,
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 4,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            Icons.close,
-                            color: Colors.white,
-                            size: 16.sp,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              }).toList(),
-            ),
-            SizedBox(height: 16.h),
-          ],
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: section.userInputs.length >= 4
-                  ? null
-                  : () => _handleColorSelection(section, sectionIndex),
-              icon: Icon(Icons.add, size: 20.sp),
-              label: Text(
-                section.userInputs.isEmpty
-                    ? 'Add Brand Colors'
-                    : 'Add More Colors (${section.userInputs.length}/4)',
-                style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: section.userInputs.length >= 4
-                    ? AppColors.brand500.withOpacity(0.3)
-                    : AppColors.brand500,
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(vertical: 14.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                elevation: 0,
-              ),
-            ),
-          ),
-          if (section.userInputs.length >= 4)
-            Padding(
-              padding: EdgeInsets.only(top: 8.h),
-              child: Text(
-                'Maximum 4 colors reached',
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: AppColors.textPrimary.withOpacity(0.5),
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ),
-        ],
-      );
+      // Show result screen if colors are selected
+      if (section.userInputs.isNotEmpty) {
+        return _buildColorResultScreen(section, sectionIndex);
+      }
+      // Show initial selection screen
+      return _buildColorInitialScreen(section, sectionIndex);
     } else if (section.isTextField && section.fieldType == 'text') {
       return TextField(
         controller: _controllers[sectionIndex],
@@ -447,6 +333,194 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
     }
 
     return SizedBox.shrink();
+  }
+
+  Widget _buildColorInitialScreen(VisualSection section, int sectionIndex) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Choose how you want to add your brand colors',
+          style: TextStyle(
+            fontSize: 14.sp,
+            color: AppColors.textPrimary.withOpacity(0.6),
+          ),
+        ),
+        SizedBox(height: 16.h),
+        // Color Palette Button
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () =>
+                _handleColorSelection(section, sectionIndex, 'palette'),
+            icon: Icon(Icons.palette, size: 24.sp),
+            label: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Choose from Palette',
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  'Select from curated color palettes',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.brand500,
+              padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
+              side: BorderSide(color: AppColors.brand500, width: 2),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              alignment: Alignment.centerLeft,
+            ),
+          ),
+        ),
+        SizedBox(height: 12.h),
+        // Custom Color Button
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () =>
+                _handleColorSelection(section, sectionIndex, 'custom'),
+            icon: Icon(Icons.color_lens, size: 24.sp),
+            label: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Custom Color',
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  'Create your own color combination',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.brand500,
+              padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
+              side: BorderSide(color: AppColors.brand500, width: 2),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              alignment: Alignment.centerLeft,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildColorResultScreen(VisualSection section, int sectionIndex) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Display selected colors
+        Text(
+          'Selected Colors (${section.userInputs.length})',
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary.withOpacity(0.7),
+          ),
+        ),
+        SizedBox(height: 12.h),
+        Wrap(
+          spacing: 12.w,
+          runSpacing: 12.h,
+          children: section.userInputs.map((colorHex) {
+            return Container(
+              width: 60.w,
+              height: 60.w,
+              decoration: BoxDecoration(
+                color: Color(int.parse('0xff$colorHex')),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.neutral50.withOpacity(0.3),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+        SizedBox(height: 20.h),
+        // Edit and Delete buttons
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  final source = section.selectedOptions?.isNotEmpty == true
+                      ? section.selectedOptions!.first
+                      : 'custom';
+                  _handleColorSelection(section, sectionIndex, source);
+                },
+                icon: Icon(Icons.edit, size: 20.sp),
+                label: Text(
+                  'Edit Colors',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.brand500,
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  side: BorderSide(color: AppColors.brand500, width: 1.5),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => _deleteColors(section),
+                icon: Icon(Icons.delete_outline, size: 20.sp),
+                label: Text(
+                  'Delete',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red,
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  side: BorderSide(color: Colors.red, width: 1.5),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 
   @override

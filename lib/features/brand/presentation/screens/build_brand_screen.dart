@@ -190,6 +190,7 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                               }
                             },
                           );
+                          // In BuildBrandScreen, update the Visual items section (around line 173)
                         } else if (currentStep == 2) {
                           // Visual items
                           VisualItem? item;
@@ -213,15 +214,9 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                                       },
                                     );
 
-                                if (updatedItem != null) {
-                                  setState(() {
-                                    final itemIndex = visualItems.indexWhere(
-                                      (e) => e.id == updatedItem.id,
-                                    );
-                                    if (itemIndex != -1) {
-                                      visualItems[itemIndex] = updatedItem;
-                                    }
-                                  });
+                                // Reload data from Firestore to get fresh state
+                                if (updatedItem != null || mounted) {
+                                  await _loadData(); // Reload all data to ensure consistency
                                 }
                               }
                             },
