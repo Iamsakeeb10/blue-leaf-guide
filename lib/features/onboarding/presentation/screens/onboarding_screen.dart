@@ -100,92 +100,73 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final double availableHeight = constraints.maxHeight;
-            final double bottomContentHeight = 320.h;
-            final double pageViewHeight =
-                availableHeight - bottomContentHeight - 24.h;
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Expanded(
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: _pages.length,
+                onPageChanged: (index) {
+                  setState(() => _currentPage = index);
+                },
+                itemBuilder: (context, index) =>
+                    _buildOnboardingPage(_pages[index]),
+              ),
+            ),
 
-            return Align(
-              alignment: Alignment.center,
+            // Bottom content
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24.w),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // PageView with calculated height
-                  SizedBox(
-                    height: pageViewHeight,
-                    child: PageView.builder(
-                      controller: _pageController,
-                      itemCount: _pages.length,
-                      onPageChanged: (index) {
-                        setState(() => _currentPage = index);
-                      },
-                      itemBuilder: (context, index) {
-                        return _buildOnboardingPage(_pages[index]);
-                      },
-                    ),
+                  PageIndicator(
+                    currentIndex: _currentPage,
+                    totalPages: _pages.length,
                   ),
+                  SizedBox(height: 32.h),
 
-                  // Bottom content container
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
-                    child: Column(
-                      children: [
-                        PageIndicator(
-                          currentIndex: _currentPage,
-                          totalPages: _pages.length,
-                        ),
-
-                        SizedBox(height: 32.h),
-
-                        Consumer<AuthProvider>(
-                          builder: (context, authProvider, child) {
-                            return SocialButton(
-                              icon: 'assets/icons/svg/google.svg',
-                              text: authProvider.isGoogleLoading
-                                  ? 'Signing in...'
-                                  : 'Continue with Google',
-                              onTap: () async {
-                                await LocalStorageService.instance
-                                    .setOnboardingCompleted();
-                                _handleGoogleSignIn();
-                              },
-                              isLoading: authProvider.isGoogleLoading,
-                            );
-                          },
-                        ),
-
-                        SizedBox(height: 12.h),
-
-                        SocialButton(
-                          icon: 'assets/icons/svg/apple.svg',
-                          text: 'Continue with Apple',
-                          backgroundColor: AppColors.brand500,
-                          textColor: Colors.white,
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Coming Soon!'),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                          },
-                        ),
-
-                        SizedBox(height: 12.h),
-
-                        // Sign In Text
-                        const AlreadyHaveAccountText(),
-
-                        SizedBox(height: 32.h),
-                      ],
-                    ),
+                  // Social login buttons
+                  Consumer<AuthProvider>(
+                    builder: (context, authProvider, child) {
+                      return SocialButton(
+                        icon: 'assets/icons/svg/google.svg',
+                        text: authProvider.isGoogleLoading
+                            ? 'Signing in...'
+                            : 'Continue with Google',
+                        onTap: () async {
+                          await LocalStorageService.instance
+                              .setOnboardingCompleted();
+                          _handleGoogleSignIn();
+                        },
+                        isLoading: authProvider.isGoogleLoading,
+                      );
+                    },
                   ),
+                  SizedBox(height: 12.h),
+
+                  SocialButton(
+                    icon: 'assets/icons/svg/apple.svg',
+                    text: 'Continue with Apple',
+                    backgroundColor: AppColors.brand500,
+                    textColor: Colors.white,
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Coming Soon!'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                  ),
+                  SizedBox(height: 12.h),
+
+                  const AlreadyHaveAccountText(),
+                  SizedBox(height: 32.h),
                 ],
               ),
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
