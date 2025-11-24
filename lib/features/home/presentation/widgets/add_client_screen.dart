@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -39,8 +40,8 @@ class _AddClientScreenState extends State<AddClientScreen> {
   final TextEditingController linkedinController = TextEditingController();
   final TextEditingController twitterController = TextEditingController();
 
-  String clientType = 'Regular';
-  final List<String> clientTypes = ['Regular', 'Premium', 'VIP'];
+  String clientType = 'Personal Client';
+  final List<String> clientTypes = ['Personal Client', 'School Client'];
 
   String? _selectedImagePath;
   String? _existingImageBase64;
@@ -301,33 +302,128 @@ class _AddClientScreenState extends State<AddClientScreen> {
     }
   }
 
+  Widget _buildImageContainer() {
+    if (_selectedImagePath != null ||
+        (_existingImageBase64 != null && _existingImageBase64!.isNotEmpty)) {
+      // Avatar with image
+      return Container(
+        width: 100.w,
+        height: 100.w,
+        decoration: BoxDecoration(
+          color: Color(0xFFF7F7F7), // var(--800)
+          borderRadius: BorderRadius.circular(100.r),
+        ),
+        child: _buildImagePreview(),
+      );
+    } else {
+      // Full width card with fallback text
+
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 16.w),
+        decoration: BoxDecoration(
+          color: Color(0xFFF7F7F7),
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        child: Center(
+          child: GestureDetector(
+            onTap: _pickImage,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // SVG with white circular background
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  padding: EdgeInsets.all(8.w), // optional padding for SVG
+                  child: SvgPicture.asset(
+                    'assets/icons/svg/picker-user-round.svg', // replace with your svg path
+                    width: 48.w,
+                    height: 48.h,
+                  ),
+                ),
+                SizedBox(height: 12.h),
+                // Upload text
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      vertical: 12.h,
+                      horizontal: 16.w,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Color(0xCC090F05), // var(--transparent-black-80)
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Text(
+                      'Upload Photo (optional)',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
   Widget _buildImagePreview() {
+    final double size = 72.w; // width & height
+
     if (_selectedImagePath != null) {
-      return Image.file(
-        File(_selectedImagePath!),
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Icon(Icons.person, size: 40.r, color: AppColors.textSecondary);
-        },
+      return SizedBox(
+        width: size,
+        height: size,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(100), // circular
+          child: Image.file(
+            File(_selectedImagePath!),
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) =>
+                const SizedBox.shrink(),
+          ),
+        ),
       );
     } else if (_existingImageBase64 != null &&
         _existingImageBase64!.isNotEmpty) {
-      return Image.memory(
-        const Base64Decoder().convert(_existingImageBase64!),
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Icon(Icons.person, size: 40.r, color: AppColors.textSecondary);
-        },
+      return SizedBox(
+        width: size,
+        height: size,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(100),
+          child: Image.memory(
+            const Base64Decoder().convert(_existingImageBase64!),
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) =>
+                const SizedBox.shrink(),
+          ),
+        ),
       );
     } else {
-      return Icon(Icons.person, size: 40.r, color: AppColors.textSecondary);
+      return SizedBox(
+        width: size,
+        height: size,
+        child: const SizedBox.shrink(), // fallback handled elsewhere
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: _isEditMode ? 'Edit Client' : 'Add Client'),
+      backgroundColor: Colors.white,
+      appBar: CustomAppBar(
+        title: _isEditMode ? 'Edit Client' : 'Add New Client',
+      ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.w),
         child: Form(
@@ -337,40 +433,37 @@ class _AddClientScreenState extends State<AddClientScreen> {
               // Profile image picker
               Stack(
                 alignment: Alignment.bottomRight,
-                children: [
-                  Container(
-                    width: 100.w,
-                    height: 100.w,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.neutral10.withOpacity(0.2),
-                        width: 2,
-                      ),
-                      color: AppColors.neutral10.withOpacity(0.05),
-                    ),
-                    child: ClipOval(child: _buildImagePreview()),
-                  ),
-                  GestureDetector(
-                    onTap: _pickImage,
-                    child: Container(
-                      width: 32.w,
-                      height: 32.w,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                      child: Icon(
-                        Icons.camera_alt,
-                        color: Colors.white,
-                        size: 16.r,
-                      ),
-                    ),
-                  ),
-                ],
+                children: [_buildImageContainer()],
               ),
-              SizedBox(height: 24.h),
+
+              SizedBox(height: 8.h),
+
+              if (_isEditMode)
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 6.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.lightGrey,
+                      borderRadius: BorderRadius.circular(100.r),
+                    ),
+                    child: Text(
+                      'Change Image',
+                      style: TextStyle(
+                        color: AppColors.textPrimary.withOpacity(0.8),
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w600,
+                        height: 1.3, // line-height: 130%
+                        letterSpacing: -0.01 * 10, // letter-spacing: -1%
+                      ),
+                    ),
+                  ),
+                ),
+
+              SizedBox(height: 20.h),
 
               // Name fields
               Row(
@@ -379,8 +472,8 @@ class _AddClientScreenState extends State<AddClientScreen> {
                     child: custom.TextField(
                       controller: firstNameController,
                       label: 'First Name',
-                      hint: 'Enter first name',
-                      icon: Icons.person_outline,
+                      hint: 'Kristina',
+                      prefixIconSvg: 'assets/icons/svg/user.svg',
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'First name is required';
@@ -394,8 +487,8 @@ class _AddClientScreenState extends State<AddClientScreen> {
                     child: custom.TextField(
                       controller: lastNameController,
                       label: 'Last Name',
-                      hint: 'Enter last name',
-                      icon: Icons.person_outline,
+                      hint: 'Mehta',
+                      prefixIconSvg: 'assets/icons/svg/user.svg',
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Last name is required';
@@ -412,7 +505,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
               custom.TextField(
                 controller: emailController,
                 label: 'Email',
-                hint: 'Enter email address',
+                hint: 'jonjons@gmail.com',
                 icon: Icons.email_outlined,
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
@@ -428,7 +521,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
               custom.TextField(
                 controller: phoneController,
                 label: 'Phone',
-                hint: 'Enter phone number',
+                hint: '(555) 247-8391',
                 icon: Icons.phone_outlined,
                 keyboardType: TextInputType.phone,
                 validator: (value) {
@@ -440,109 +533,143 @@ class _AddClientScreenState extends State<AddClientScreen> {
               ),
               SizedBox(height: 16.h),
 
-              // Client Type Dropdown
-              DropdownButtonFormField<String>(
-                value: clientType,
-                decoration: InputDecoration(
-                  labelText: 'Client Type',
-                  prefixIcon: Icon(Icons.category_outlined, size: 20.r),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
+              Row(
+                children: [
+                  // Client Type Dropdown
+                  Expanded(
+                    child: custom.TextField(
+                      controller: TextEditingController(text: clientType),
+                      label: 'Client Type',
+                      hint: 'Select Client Type',
+                      suffixIcon: Icon(Icons.arrow_drop_down, size: 24.r),
+                      readOnly: true, // makes field not editable, dropdown only
+                      onTap: () async {
+                        final selected = await showDialog<String>(
+                          context: context,
+                          builder: (ctx) => SimpleDialog(
+                            title: const Text('Select Client Type'),
+                            children: clientTypes
+                                .map(
+                                  (type) => SimpleDialogOption(
+                                    onPressed: () => Navigator.pop(ctx, type),
+                                    child: Text(type),
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        );
+                        if (selected != null)
+                          setState(() => clientType = selected);
+                      },
+                    ),
                   ),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 16.h,
-                  ),
-                ),
-                items: clientTypes.map((type) {
-                  return DropdownMenuItem(value: type, child: Text(type));
-                }).toList(),
-                onChanged: (value) {
-                  setState(() => clientType = value!);
-                },
-              ),
-              SizedBox(height: 16.h),
+                  SizedBox(width: 12.w),
 
-              // Join Date
-              GestureDetector(
-                onTap: _selectDate,
-                child: AbsorbPointer(
-                  child: custom.TextField(
-                    controller: joinDateController,
-                    label: 'Join Date',
-                    hint: 'Select join date',
-                    icon: Icons.calendar_today_outlined,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Join date is required';
-                      }
-                      return null;
-                    },
+                  // Join Date
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: _selectDate,
+                      child: AbsorbPointer(
+                        child: custom.TextField(
+                          controller: joinDateController,
+                          label: 'Join Date',
+                          hint: 'Nov 21, 2025',
+                          prefixIconSvg: 'assets/icons/svg/calendar.svg',
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-              SizedBox(height: 24.h),
+
+              SizedBox(height: 16.h),
 
               // Social Media Section
-              Text(
-                'Social Media (Optional)',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
+              // Instagram & TikTok (Row 1)
+              Row(
+                children: [
+                  Expanded(
+                    child: custom.TextField(
+                      controller: instagramController,
+                      label: 'Instagram',
+                      hint: '@username',
+                      prefixIconSvg: 'assets/icons/svg/insta.svg',
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: custom.TextField(
+                      controller: tiktokController,
+                      label: 'TikTok',
+                      hint: '@username',
+                      prefixIconSvg: 'assets/icons/svg/tik.svg',
+                    ),
+                  ),
+                ],
               ),
               SizedBox(height: 16.h),
 
-              // Instagram
-              custom.TextField(
-                controller: instagramController,
-                label: 'Instagram',
-                hint: '@username',
-                icon: Icons.camera_alt_outlined,
-              ),
-              SizedBox(height: 16.h),
-
-              // TikTok
-              custom.TextField(
-                controller: tiktokController,
-                label: 'TikTok',
-                hint: '@username',
-                icon: Icons.video_library_outlined,
-              ),
-              SizedBox(height: 16.h),
-
-              // LinkedIn
-              custom.TextField(
-                controller: linkedinController,
-                label: 'LinkedIn',
-                hint: 'Profile URL',
-                icon: Icons.business_outlined,
-              ),
-              SizedBox(height: 16.h),
-
-              // Twitter
-              custom.TextField(
-                controller: twitterController,
-                label: 'Twitter',
-                hint: '@username',
-                icon: Icons.alternate_email,
+              // LinkedIn & Twitter (Row 2)
+              Row(
+                children: [
+                  Expanded(
+                    child: custom.TextField(
+                      controller: linkedinController,
+                      label: 'LinkedIn',
+                      hint: '@username',
+                      prefixIconSvg: 'assets/icons/svg/link.svg',
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: custom.TextField(
+                      controller: twitterController,
+                      label: 'Twitter',
+                      hint: '@username',
+                      prefixIconSvg: 'assets/icons/svg/twitter.svg',
+                    ),
+                  ),
+                ],
               ),
               SizedBox(height: 32.h),
 
               // Submit Button
               Button(
                 onPressed: _isLoading ? null : _submitForm,
-                text: _isEditMode ? 'Update Client' : 'Add Client',
+                text: _isEditMode ? 'Update' : 'Save',
                 height: 54.h,
                 borderRadius: BorderRadius.circular(32.r),
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w600,
                 textColor: Colors.white,
-                backgroundColor: AppColors.primary,
+                backgroundColor: AppColors.brand500,
                 isLoading: _isLoading,
               ),
               SizedBox(height: 16.h),
+
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(32.r),
+                    ),
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                  ),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: AppColors.textPrimary.withOpacity(0.5),
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),

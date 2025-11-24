@@ -26,6 +26,11 @@ class TextField extends StatefulWidget {
   final String? suffixIconSvg;
   final Widget? prefixIconWidget;
 
+  final bool readOnly;
+  final VoidCallback? onTap;
+  final Color? labelBackgroundColor;
+  final double? borderRadius;
+
   const TextField({
     super.key,
     required this.controller,
@@ -47,6 +52,10 @@ class TextField extends StatefulWidget {
     this.prefixIconSvg,
     this.prefixIconWidget,
     this.suffixIconSvg,
+    this.readOnly = false,
+    this.onTap,
+    this.labelBackgroundColor,
+    this.borderRadius,
   });
 
   @override
@@ -61,6 +70,28 @@ class _TextFieldState extends State<TextField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (widget.label.isNotEmpty)
+          Container(
+            color: widget.labelBackgroundColor ?? Colors.transparent,
+            padding: widget.labelBackgroundColor != null
+                ? EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h)
+                : null,
+            child: Text(
+              widget.label,
+              style: TextStyle(
+                fontFamily: 'Family/Font',
+                fontWeight: FontWeight.w500,
+                fontStyle: FontStyle.normal,
+                fontSize: 14.sp,
+                height: 1.4,
+                letterSpacing: -0.01,
+                color: AppColors.textPrimary.withOpacity(0.7),
+              ),
+            ),
+          ),
+
+        SizedBox(height: 8.h),
+
         Focus(
           onFocusChange: (hasFocus) {
             setState(() => _isFocused = hasFocus);
@@ -69,6 +100,8 @@ class _TextFieldState extends State<TextField> {
             controller: widget.controller,
             obscureText: widget.obscureText,
             keyboardType: widget.keyboardType,
+            readOnly: widget.readOnly,
+            onTap: widget.onTap,
             validator: widget.validator,
             enabled: widget.enabled,
             maxLines: widget.obscureText ? 1 : widget.maxLines,
@@ -186,15 +219,7 @@ class _TextFieldState extends State<TextField> {
     }
 
     if (widget.prefixIconSvg != null) {
-      return SvgPicture.asset(
-        widget.prefixIconSvg!,
-        width: 20.r,
-        height: 20.r,
-        colorFilter: ColorFilter.mode(
-          _isFocused ? AppColors.primary : AppColors.textSecondary,
-          BlendMode.srcIn,
-        ),
-      );
+      return SvgPicture.asset(widget.prefixIconSvg!, width: 20.r, height: 20.r);
     }
 
     return Icon(
