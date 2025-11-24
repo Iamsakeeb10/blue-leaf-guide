@@ -1,3 +1,4 @@
+import 'package:blue_leaf_guide/features/home/presentation/widgets/add_client_screen.dart';
 import 'package:blue_leaf_guide/features/profile/presentation/change_password_screen.dart';
 import 'package:blue_leaf_guide/features/profile/presentation/confirm_change_password_screen.dart';
 import 'package:blue_leaf_guide/features/profile/presentation/screens/notifications_screen.dart';
@@ -22,6 +23,7 @@ import '../../features/brand/presentation/screens/marketing_item_detail_screen.d
 import '../../features/brand/presentation/screens/planning_screen.dart';
 import '../../features/brand/presentation/screens/strategy_items_details_screen.dart';
 import '../../features/home/presentation/screens/main_navigation_screen.dart';
+import '../../features/home/presentation/widgets/total_clients_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../features/profile/presentation/screens/my_account_screen.dart';
 import '../../features/roadmap/presentation/screens/roadmap_details_screen.dart';
@@ -174,5 +176,15 @@ final GoRouter router = GoRouter(
     ),
 
     GoRoute(path: '/planning', builder: (context, state) => PlanningScreen()),
+
+    GoRoute(
+      path: '/total-clients',
+      builder: (context, state) =>
+          const TotalClientsScreen(), // ✅ no extra needed
+    ),
+    GoRoute(
+      path: '/add-client',
+      builder: (context, state) => const AddClientScreen(),
+    ),
   ],
 );

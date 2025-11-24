@@ -111,6 +111,9 @@ class HomeScreen extends StatelessWidget {
                       const Color(0xFF24AC69).withOpacity(0.4),
                       const Color(0xFF24AC69),
                     ],
+                    onTap: () {
+                      context.push('/total-clients');
+                    },
                   ),
 
                   _buildStatsCard(
@@ -192,59 +195,64 @@ class HomeScreen extends StatelessWidget {
     required String value,
     required List<Color> gradientColors,
     List<double>? gradientStops,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      width: 109.w,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        gradient: RadialGradient(
-          center: const Alignment(-0.9, 0.9), // bottom-left glow
-          radius: 2.5,
-          colors: gradientColors,
-          stops: gradientStops ?? const [0.0, 0.3, 1.0],
+    return InkWell(
+      borderRadius: BorderRadius.circular(12.r), // match card's radius
+      onTap: onTap,
+      child: Container(
+        width: 109.w,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: RadialGradient(
+            center: const Alignment(-0.9, 0.9), // bottom-left glow
+            radius: 2.5,
+            colors: gradientColors,
+            stops: gradientStops ?? const [0.0, 0.3, 1.0],
+          ),
         ),
-      ),
-      child: Center(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 16.h),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40.w,
-                height: 40.w,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.3),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: SvgPicture.asset(
-                    svgPath,
-                    width: 24.w,
-                    height: 24.h,
-                    fit: BoxFit.contain,
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 16.h),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40.w,
+                  height: 40.w,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.3),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: SvgPicture.asset(
+                      svgPath,
+                      width: 24.w,
+                      height: 24.h,
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(height: 8.h),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                SizedBox(height: 8.h),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-              ),
-              SizedBox(height: 4.h),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                SizedBox(height: 4.h),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

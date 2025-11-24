@@ -49,12 +49,7 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
     ),
     StepData(
       title: "Visual",
-      items: [
-        "Choose brand colors",
-        "Design logo",
-        "Select typography",
-        "Create brand guidelines",
-      ],
+      items: ["Business Name", "Color Palette", "Logo Design", "Business Card"],
     ),
     StepData(
       title: "Marketing",
