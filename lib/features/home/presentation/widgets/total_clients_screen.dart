@@ -8,6 +8,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/button.dart';
@@ -272,7 +273,7 @@ class TotalClientsScreen extends StatelessWidget {
           SizedBox(height: 4.h),
 
           // SOCIAL ICONS Centered
-          _buildSocialIcons(client),
+          _buildSocialIcons(client, context),
 
           SizedBox(height: 12.h),
 
@@ -370,37 +371,58 @@ class TotalClientsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSocialIcons(Map<String, dynamic> client) {
+  Widget _buildSocialIcons(Map<String, dynamic> client, context) {
     final socials = <String, String>{};
+
     if (client['instagram']?.isNotEmpty ?? false) {
-      socials['Instagram'] = 'assets/icons/svg/insta.svg';
+      socials['https://instagram.com/${client['instagram']}'] =
+          'assets/icons/svg/insta.svg';
     }
     if (client['tiktok']?.isNotEmpty ?? false) {
-      socials['TikTok'] = 'assets/icons/svg/tik.svg';
+      socials['https://www.tiktok.com/@${client['tiktok']}'] =
+          'assets/icons/svg/tik.svg';
     }
     if (client['linkedin']?.isNotEmpty ?? false) {
-      socials['LinkedIn'] = 'assets/icons/svg/link.svg';
+      socials['https://www.linkedin.com/in/${client['linkedin']}'] =
+          'assets/icons/svg/link.svg';
     }
     if (client['twitter']?.isNotEmpty ?? false) {
-      socials['Twitter'] = 'assets/icons/svg/twitter.svg';
+      socials['https://twitter.com/${client['twitter']}'] =
+          'assets/icons/svg/twitter.svg';
     }
 
     if (socials.isEmpty) return const SizedBox.shrink();
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: socials.values.map((path) {
+      children: socials.entries.map((entry) {
+        final url = entry.key;
+        final path = entry.value;
+
         return Padding(
           padding: EdgeInsets.only(right: 12.w),
-          child: Container(
-            width: 35.w,
-            height: 35.h,
-            decoration: BoxDecoration(
-              color: Colors.white, // background color
-              borderRadius: BorderRadius.circular(100.r),
-            ),
-            child: Center(
-              child: SvgPicture.asset(path, width: 20.w, height: 20.h),
+          child: GestureDetector(
+            onTap: () async {
+              final uri = Uri.parse(url);
+
+              try {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              } catch (e) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text('Could not open link')));
+              }
+            },
+            child: Container(
+              width: 35.w,
+              height: 35.h,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(100.r),
+              ),
+              child: Center(
+                child: SvgPicture.asset(path, width: 20.w, height: 20.h),
+              ),
             ),
           ),
         );
