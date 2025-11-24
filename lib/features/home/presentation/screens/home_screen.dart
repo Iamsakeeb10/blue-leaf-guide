@@ -4,7 +4,6 @@ import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme/app_colors.dart';
-import '../../../brand/data/strategy_firestore.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -159,16 +158,7 @@ class HomeScreen extends StatelessWidget {
                 svgPath: 'assets/icons/svg/card-two.svg',
                 color: AppColors.lightBlue40.withOpacity(0.25),
                 textColor: AppColors.timelinePrimary,
-                onTap: () async {
-                  final success = await updateStrategyHintTexts();
-                  if (success) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Hint texts updated successfully!'),
-                      ),
-                    );
-                  }
-                },
+                onTap: () async {},
               ),
               SizedBox(height: 8.h),
               _buildRoadmapCard(

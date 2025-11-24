@@ -15,8 +15,11 @@ import '../../features/auth/presentation/screens/sign_in_screen.dart';
 import '../../features/auth/presentation/screens/sign_up_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/auth/providers/auth_provider.dart';
+import '../../features/brand/models/marketing_item.dart';
 import '../../features/brand/models/strategy_item.dart';
 import '../../features/brand/presentation/screens/build_brand_screen.dart';
+import '../../features/brand/presentation/screens/marketing_item_detail_screen.dart';
+import '../../features/brand/presentation/screens/planning_screen.dart';
 import '../../features/brand/presentation/screens/strategy_items_details_screen.dart';
 import '../../features/home/presentation/screens/main_navigation_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
@@ -158,5 +161,18 @@ final GoRouter router = GoRouter(
         return StrategyItemDetailScreen(item: item, stepTitle: stepTitle);
       },
     ),
+
+    GoRoute(
+      path: '/marketing_item/:id',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return MarketingItemDetailScreen(
+          item: extra['item'] as MarketingItem,
+          stepTitle: extra['stepTitle'] as String,
+        );
+      },
+    ),
+
+    GoRoute(path: '/planning', builder: (context, state) => PlanningScreen()),
   ],
 );

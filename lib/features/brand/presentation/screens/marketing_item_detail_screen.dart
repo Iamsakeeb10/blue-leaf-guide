@@ -1,0 +1,551 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+import '../../../../app/theme/app_colors.dart';
+import '../../../../shared/widgets/button.dart';
+import '../../../../shared/widgets/custom_appbar.dart';
+import '../../../../shared/widgets/custom_checkbox.dart';
+import '../../data/marketing_service.dart';
+import '../../models/marketing_item.dart';
+
+class MarketingItemDetailScreen extends StatefulWidget {
+  final MarketingItem item;
+  final String stepTitle;
+
+  const MarketingItemDetailScreen({
+    required this.item,
+    required this.stepTitle,
+    super.key,
+  });
+
+  @override
+  State<MarketingItemDetailScreen> createState() =>
+      _MarketingItemDetailScreenState();
+}
+
+class _MarketingItemDetailScreenState extends State<MarketingItemDetailScreen> {
+  late MarketingItem editableItem;
+  final MarketingService _marketingService = MarketingService();
+  bool _isSaving = false;
+  Map<int, List<TextEditingController>> _textControllers = {};
+
+  @override
+  void initState() {
+    super.initState();
+    editableItem = MarketingItem(
+      id: widget.item.id,
+      title: widget.item.title,
+      sections: widget.item.sections
+          .map(
+            (s) => MarketingSection(
+              subtitle: s.subtitle,
+              checkboxOptions: s.checkboxOptions,
+              isTextField: s.isTextField,
+              fieldType: s.fieldType,
+              hintText: s.hintText,
+              userInputs: List.from(s.userInputs),
+              checkboxStates: List.from(s.checkboxStates),
+            ),
+          )
+          .toList(),
+      isCompleted: widget.item.isCompleted,
+    );
+
+    // Initialize checkbox states
+    for (var section in editableItem.sections) {
+      if (section.fieldType == 'checkbox' && section.checkboxStates.isEmpty) {
+        section.checkboxStates = List.filled(
+          section.checkboxOptions.length,
+          false,
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _textControllers.values.forEach((controllers) {
+      for (var c in controllers) {
+        c.dispose();
+      }
+    });
+    super.dispose();
+  }
+
+  bool canSave() {
+    for (var section in editableItem.sections) {
+      if (section.isTextField) {
+        if (section.fieldType == 'multi_text') {
+          if (section.userInputs.isEmpty ||
+              section.userInputs.every((e) => e.trim().isEmpty)) {
+            return false;
+          }
+        } else if (section.userInputs.isEmpty ||
+            section.userInputs.any((e) => e.trim().isEmpty)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  Future<void> _saveItem() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Please login to save')));
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    editableItem.isCompleted = canSave();
+
+    final success = await _marketingService.saveMarketingItem(
+      userId,
+      editableItem,
+    );
+
+    setState(() => _isSaving = false);
+
+    if (success) {
+      Navigator.of(context).pop(editableItem);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Saved successfully!')));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save. Please try again.')),
+      );
+    }
+  }
+
+  Widget _buildSection(MarketingSection section, int sectionIndex) {
+    if (section.fieldType == 'checkbox') {
+      return _buildCheckboxSection(section, sectionIndex);
+    } else if (section.fieldType == 'multi_text') {
+      return _buildMultiTextSection(section, sectionIndex);
+    } else if (section.isTextField) {
+      return _buildTextFieldSection(section, sectionIndex);
+    }
+    return SizedBox.shrink();
+  }
+
+  Widget _buildCheckboxSection(MarketingSection section, int sectionIndex) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (section.subtitle.isNotEmpty) ...[
+          Text(
+            section.subtitle,
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary.withOpacity(0.7),
+              height: 1.4,
+            ),
+          ),
+          SizedBox(height: 12.h),
+        ],
+        ...List.generate(section.checkboxOptions.length, (index) {
+          return Padding(
+            padding: EdgeInsets.only(bottom: 12.h),
+            child: Row(
+              children: [
+                CustomCheckbox(
+                  value: section.checkboxStates[index],
+                  onChanged: (value) {
+                    setState(() {
+                      section.checkboxStates[index] = value;
+                    });
+                  },
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Text(
+                    section.checkboxOptions[index],
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: AppColors.textPrimary.withOpacity(0.7),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+        SizedBox(height: 12.h),
+      ],
+    );
+  }
+
+  Widget _buildTextFieldSection(MarketingSection section, int sectionIndex) {
+    if (!_textControllers.containsKey(sectionIndex)) {
+      _textControllers[sectionIndex] = [
+        TextEditingController(
+          text: section.userInputs.isNotEmpty ? section.userInputs[0] : '',
+        ),
+      ];
+    }
+
+    final controller = _textControllers[sectionIndex]![0];
+    final isTextarea = section.fieldType == 'textarea';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          section.subtitle,
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary.withOpacity(0.7),
+            height: 1.4,
+          ),
+        ),
+        SizedBox(height: 8.h),
+        TextField(
+          controller: controller,
+          maxLines: isTextarea ? 5 : 1,
+          minLines: isTextarea ? 4 : 1,
+          decoration: InputDecoration(
+            hintText: section.hintText ?? "Enter text...",
+            hintStyle: TextStyle(
+              fontSize: 12.sp,
+              color: AppColors.textPrimary.withOpacity(0.3),
+              fontWeight: FontWeight.w500,
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            alignLabelWithHint: true,
+            contentPadding: EdgeInsets.all(14.w),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16.r),
+              borderSide: BorderSide(
+                color: AppColors.neutral50.withOpacity(0.05),
+                width: 1,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16.r),
+              borderSide: BorderSide(color: AppColors.brand500, width: 1.5),
+            ),
+          ),
+          onChanged: (value) {
+            if (section.userInputs.isEmpty) {
+              section.userInputs.add(value);
+            } else {
+              section.userInputs[0] = value;
+            }
+            setState(() {});
+          },
+        ),
+        SizedBox(height: 24.h),
+      ],
+    );
+  }
+
+  Widget _buildMultiTextSection(MarketingSection section, int sectionIndex) {
+    if (!_textControllers.containsKey(sectionIndex)) {
+      final controllers = <TextEditingController>[];
+      for (var i = 0; i < section.userInputs.length; i++) {
+        controllers.add(TextEditingController(text: section.userInputs[i]));
+      }
+      if (controllers.isEmpty) {
+        controllers.add(TextEditingController());
+        section.userInputs.add("");
+      }
+      _textControllers[sectionIndex] = controllers;
+    }
+
+    final controllers = _textControllers[sectionIndex]!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          section.subtitle,
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary.withOpacity(0.7),
+            height: 1.4,
+          ),
+        ),
+        SizedBox(height: 8.h),
+        ...List.generate(controllers.length, (index) {
+          return Padding(
+            padding: EdgeInsets.only(bottom: 12.h),
+            child: TextField(
+              controller: controllers[index],
+              decoration: InputDecoration(
+                hintText: "${section.hintText ?? 'Core pillar'} ${index + 1}",
+                hintStyle: TextStyle(
+                  fontSize: 12.sp,
+                  color: AppColors.textPrimary.withOpacity(0.3),
+                  fontWeight: FontWeight.w500,
+                ),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: EdgeInsets.all(14.w),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.r),
+                  borderSide: BorderSide(
+                    color: AppColors.neutral50.withOpacity(0.05),
+                    width: 1,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.r),
+                  borderSide: BorderSide(color: AppColors.brand500, width: 1.5),
+                ),
+              ),
+              onChanged: (value) {
+                section.userInputs[index] = value;
+                setState(() {});
+              },
+            ),
+          );
+        }),
+        TextButton.icon(
+          onPressed: () {
+            setState(() {
+              controllers.add(TextEditingController());
+              section.userInputs.add("");
+            });
+          },
+          icon: Icon(Icons.add, color: AppColors.brand500, size: 20.sp),
+          label: Text(
+            'Add',
+            style: TextStyle(
+              color: AppColors.brand500,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        SizedBox(height: 12.h),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Check if Instagram and TikTok need to be side-by-side
+    final isSocialMedia = editableItem.id == "social_media_marketing";
+
+    return Scaffold(
+      appBar: CustomAppBar(title: widget.stepTitle),
+      backgroundColor: Colors.white,
+      body: Padding(
+        padding: EdgeInsets.all(16.w),
+        child: Column(
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                editableItem.title,
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+                textAlign: TextAlign.left,
+              ),
+            ),
+            SizedBox(height: 24.h),
+            Expanded(
+              child: ListView.builder(
+                itemCount: editableItem.sections.length,
+                itemBuilder: (context, index) {
+                  // Special handling for social media Instagram/TikTok row
+                  if (isSocialMedia && index == 0) {
+                    return _buildSocialMediaRow();
+                  } else if (isSocialMedia && index == 1) {
+                    return SizedBox.shrink(); // Skip TikTok, already rendered
+                  }
+
+                  return _buildSection(editableItem.sections[index], index);
+                },
+              ),
+            ),
+            Button(
+              onPressed: _saveItem,
+              text: _isSaving ? 'Saving...' : 'Save',
+              height: 54.h,
+              borderRadius: BorderRadius.circular(32.r),
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w600,
+              textColor: Colors.white,
+              backgroundColor: canSave()
+                  ? AppColors.brand500
+                  : AppColors.brand500.withOpacity(0.3),
+            ),
+            SizedBox(height: 12.h),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(32.r),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 14.h),
+                ),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: AppColors.textPrimary.withOpacity(0.5),
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSocialMediaRow() {
+    final instagram = editableItem.sections[0];
+    final tiktok = editableItem.sections[1];
+
+    if (!_textControllers.containsKey(0)) {
+      _textControllers[0] = [
+        TextEditingController(
+          text: instagram.userInputs.isNotEmpty ? instagram.userInputs[0] : '',
+        ),
+      ];
+    }
+    if (!_textControllers.containsKey(1)) {
+      _textControllers[1] = [
+        TextEditingController(
+          text: tiktok.userInputs.isNotEmpty ? tiktok.userInputs[0] : '',
+        ),
+      ];
+    }
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    instagram.subtitle,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary.withOpacity(0.7),
+                      height: 1.4,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  TextField(
+                    controller: _textControllers[0]![0],
+                    decoration: InputDecoration(
+                      hintText: instagram.hintText,
+                      hintStyle: TextStyle(
+                        fontSize: 12.sp,
+                        color: AppColors.textPrimary.withOpacity(0.3),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: EdgeInsets.all(14.w),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.r),
+                        borderSide: BorderSide(
+                          color: AppColors.neutral50.withOpacity(0.05),
+                          width: 1,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.r),
+                        borderSide: BorderSide(
+                          color: AppColors.brand500,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      if (instagram.userInputs.isEmpty) {
+                        instagram.userInputs.add(value);
+                      } else {
+                        instagram.userInputs[0] = value;
+                      }
+                      setState(() {});
+                    },
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    tiktok.subtitle,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary.withOpacity(0.7),
+                      height: 1.4,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  TextField(
+                    controller: _textControllers[1]![0],
+                    decoration: InputDecoration(
+                      hintText: tiktok.hintText,
+                      hintStyle: TextStyle(
+                        fontSize: 12.sp,
+                        color: AppColors.textPrimary.withOpacity(0.3),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: EdgeInsets.all(14.w),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.r),
+                        borderSide: BorderSide(
+                          color: AppColors.neutral50.withOpacity(0.05),
+                          width: 1,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.r),
+                        borderSide: BorderSide(
+                          color: AppColors.brand500,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      if (tiktok.userInputs.isEmpty) {
+                        tiktok.userInputs.add(value);
+                      } else {
+                        tiktok.userInputs[0] = value;
+                      }
+                      setState(() {});
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 24.h),
+      ],
+    );
+  }
+}

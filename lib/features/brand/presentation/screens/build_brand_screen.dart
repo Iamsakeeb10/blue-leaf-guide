@@ -7,7 +7,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/button.dart';
 import '../../../../shared/widgets/profile_list_item.dart';
+import '../../data/marketing_service.dart';
 import '../../data/strategy_service.dart';
+import '../../models/marketing_item.dart';
 import '../../models/strategy_item.dart';
 import '../widgets/custom_stepper.dart';
 
@@ -28,7 +30,10 @@ class BuildBrandScreen extends StatefulWidget {
 class _BuildBrandScreenState extends State<BuildBrandScreen> {
   int currentStep = 1;
   final StrategyService _strategyService = StrategyService();
+  final MarketingService _marketingService = MarketingService();
+
   List<StrategyItem> strategyItems = [];
+  List<MarketingItem> marketingItems = [];
   bool _isLoading = true;
 
   final List<StepData> stepData = [
@@ -54,30 +59,24 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
     StepData(
       title: "Marketing",
       items: [
-        "Build social media presence",
-        "Create content calendar",
-        "Plan launch campaign",
-        "Engage early customers",
+        "Marketing Collateral",
+        "Email Marketing",
+        "Social Media Marketing",
+        "Website",
+        "SEO & Content Strategy",
+        "Offline Marketing & Social Impact",
       ],
     ),
-    StepData(
-      title: "Planning",
-      items: [
-        "Set growth KPIs",
-        "Build customer feedback loop",
-        "Plan product iterations",
-        "Schedule brand audits",
-      ],
-    ),
+    StepData(title: "Planning", items: []),
   ];
 
   @override
   void initState() {
     super.initState();
-    _loadStrategyItems();
+    _loadData();
   }
 
-  Future<void> _loadStrategyItems() async {
+  Future<void> _loadData() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) {
       setState(() => _isLoading = false);
@@ -85,15 +84,22 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
     }
 
     try {
-      final items = await _strategyService.getUserStrategyItems(userId);
+      final strategy = await _strategyService.getUserStrategyItems(userId);
+      final marketing = await _marketingService.getUserMarketingItems(userId);
+
       setState(() {
-        strategyItems = items;
+        strategyItems = strategy;
+        marketingItems = marketing;
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading strategy items: $e');
+      print('Error loading data: $e');
       setState(() => _isLoading = false);
     }
+  }
+
+  void _navigateToPlanning() {
+    context.push('/planning');
   }
 
   @override
@@ -136,56 +142,118 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
             ),
             SizedBox(height: 32.h),
             Expanded(
-              child: ListView.builder(
-                itemCount: currentItems.length,
-                itemBuilder: (context, index) {
-                  StrategyItem? item;
-                  if (currentStep == 1 && index < strategyItems.length) {
-                    item = strategyItems[index];
-                  }
+              child: currentStep == 4
+                  ? _buildPlanningButton()
+                  : ListView.builder(
+                      itemCount: currentItems.length,
+                      itemBuilder: (context, index) {
+                        if (currentStep == 1) {
+                          // Strategy items
+                          StrategyItem? item;
+                          if (index < strategyItems.length) {
+                            item = strategyItems[index];
+                          }
 
-                  return ProfileListItem(
-                    key: ValueKey(item?.id ?? index),
-                    title: currentItems[index],
-                    showCheckmark: item?.isCompleted ?? false,
-                    onTap: () async {
-                      if (item != null) {
-                        final updatedItem = await context.push<StrategyItem>(
-                          '/strategy_item/${item.id}',
-                          extra: {
-                            'item': item,
-                            'stepTitle': stepData[currentStep - 1]
-                                .title, // pass step title
-                          },
-                        );
+                          return ProfileListItem(
+                            key: ValueKey(item?.id ?? index),
+                            title: currentItems[index],
+                            showCheckmark: item?.isCompleted ?? false,
+                            onTap: () async {
+                              if (item != null) {
+                                final updatedItem = await context
+                                    .push<StrategyItem>(
+                                      '/strategy_item/${item.id}',
+                                      extra: {
+                                        'item': item,
+                                        'stepTitle':
+                                            stepData[currentStep - 1].title,
+                                      },
+                                    );
 
-                        if (updatedItem != null) {
-                          setState(() {
-                            final itemIndex = strategyItems.indexWhere(
-                              (e) => e.id == updatedItem.id,
-                            );
-                            if (itemIndex != -1) {
-                              strategyItems[itemIndex] = updatedItem;
-                            }
-                          });
+                                if (updatedItem != null) {
+                                  setState(() {
+                                    final itemIndex = strategyItems.indexWhere(
+                                      (e) => e.id == updatedItem.id,
+                                    );
+                                    if (itemIndex != -1) {
+                                      strategyItems[itemIndex] = updatedItem;
+                                    }
+                                  });
+                                }
+                              }
+                            },
+                          );
+                        } else if (currentStep == 3) {
+                          // Marketing items
+                          MarketingItem? item;
+                          if (index < marketingItems.length) {
+                            item = marketingItems[index];
+                          }
+
+                          return ProfileListItem(
+                            key: ValueKey(item?.id ?? index),
+                            title: currentItems[index],
+                            showCheckmark: item?.isCompleted ?? false,
+                            onTap: () async {
+                              if (item != null) {
+                                final updatedItem = await context
+                                    .push<MarketingItem>(
+                                      '/marketing_item/${item.id}',
+                                      extra: {
+                                        'item': item,
+                                        'stepTitle':
+                                            stepData[currentStep - 1].title,
+                                      },
+                                    );
+
+                                if (updatedItem != null) {
+                                  setState(() {
+                                    final itemIndex = marketingItems.indexWhere(
+                                      (e) => e.id == updatedItem.id,
+                                    );
+                                    if (itemIndex != -1) {
+                                      marketingItems[itemIndex] = updatedItem;
+                                    }
+                                  });
+                                }
+                              }
+                            },
+                          );
+                        } else {
+                          // Visual items (Step 2 - placeholder)
+                          return ProfileListItem(
+                            key: ValueKey(index),
+                            title: currentItems[index],
+                            showCheckmark: false,
+                            onTap: () {
+                              // TODO: Implement Visual step navigation
+                            },
+                          );
                         }
-                      }
-                    },
-                  );
-                },
-              ),
+                      },
+                    ),
             ),
             Column(
               children: [
                 Button(
-                  onPressed: () {},
-                  text: 'Next Visual',
+                  onPressed: () {
+                    if (currentStep < stepData.length) {
+                      setState(() {
+                        currentStep++;
+                      });
+                    }
+                  },
+                  text: currentStep == stepData.length
+                      ? 'Complete'
+                      : 'Next ${stepData[currentStep].title}',
                   height: 54.h,
                   borderRadius: BorderRadius.circular(32.r),
                   fontSize: 15.sp,
                   fontWeight: FontWeight.w600,
                   textColor: Colors.white,
-                  backgroundColor: AppColors.brand500.withOpacity(0.1),
+                  backgroundColor: currentStep == stepData.length
+                      ? AppColors.brand500
+                      : AppColors.brand500.withOpacity(0.1),
                 ),
                 SizedBox(height: 12.h),
                 SizedBox(
@@ -210,6 +278,52 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                   ),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlanningButton() {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 40.h),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.calendar_today_rounded,
+              size: 64.sp,
+              color: AppColors.brand500.withOpacity(0.3),
+            ),
+            SizedBox(height: 24.h),
+            Text(
+              'Create Your 90-Day Plan',
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: 12.h),
+            Text(
+              'Plan your brand launch journey',
+              style: TextStyle(
+                fontSize: 14.sp,
+                color: AppColors.textPrimary.withOpacity(0.6),
+              ),
+            ),
+            SizedBox(height: 32.h),
+            Button(
+              onPressed: _navigateToPlanning,
+              text: 'Start Planning',
+              height: 54.h,
+              borderRadius: BorderRadius.circular(32.r),
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w600,
+              textColor: Colors.white,
+              backgroundColor: AppColors.brand500,
             ),
           ],
         ),
