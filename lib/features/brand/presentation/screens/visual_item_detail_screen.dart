@@ -61,6 +61,10 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
     super.dispose();
   }
 
+  void _handleBack() {
+    context.pop(widget.item); // Always pass back the updated item
+  }
+
   Future<void> _handleColorSelection(
     VisualSection section,
     int sectionIndex,
@@ -525,110 +529,118 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: CustomAppBar(title: widget.stepTitle),
-      backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(16.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.item.title,
-                    style: TextStyle(
-                      fontSize: 24.sp,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+    return PopScope(
+      canPop: false, // Prevent default pop behavior
+      onPopInvoked: (didPop) {
+        if (!didPop) {
+          _handleBack();
+        }
+      },
+      child: Scaffold(
+        appBar: CustomAppBar(title: widget.stepTitle, onBack: _handleBack),
+        backgroundColor: Colors.white,
+        body: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(16.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.item.title,
+                      style: TextStyle(
+                        fontSize: 24.sp,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
+                    SizedBox(height: 24.h),
+                    ...widget.item.sections.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final section = entry.value;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            section.subtitle,
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          SizedBox(height: 12.h),
+                          _buildSectionContent(section, index),
+                          SizedBox(height: 24.h),
+                        ],
+                      );
+                    }).toList(),
+                  ],
+                ),
+              ),
+            ),
+            Container(
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: Offset(0, -5),
                   ),
-                  SizedBox(height: 24.h),
-                  ...widget.item.sections.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final section = entry.value;
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          section.subtitle,
+                ],
+              ),
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    Button(
+                      onPressed: _isCompleteButtonEnabled() && !_isSaving
+                          ? _markAsComplete
+                          : null,
+                      text: _isSaving
+                          ? 'Saving...'
+                          : widget.item.isCompleted
+                          ? 'Completed ✓'
+                          : 'Mark as Complete',
+                      height: 54.h,
+                      borderRadius: BorderRadius.circular(32.r),
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                      textColor: Colors.white,
+                      backgroundColor: _isCompleteButtonEnabled() && !_isSaving
+                          ? AppColors.brand500
+                          : AppColors.brand500.withOpacity(0.3),
+                    ),
+                    SizedBox(height: 12.h),
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton(
+                        onPressed: () => context.pop(widget.item),
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(32.r),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 14.h),
+                        ),
+                        child: Text(
+                          'Go Back',
                           style: TextStyle(
-                            fontSize: 16.sp,
+                            color: AppColors.textPrimary.withOpacity(0.5),
+                            fontSize: 15.sp,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
                           ),
                         ),
-                        SizedBox(height: 12.h),
-                        _buildSectionContent(section, index),
-                        SizedBox(height: 24.h),
-                      ],
-                    );
-                  }).toList(),
-                ],
-              ),
-            ),
-          ),
-          Container(
-            padding: EdgeInsets.all(16.w),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: Offset(0, -5),
-                ),
-              ],
-            ),
-            child: SafeArea(
-              child: Column(
-                children: [
-                  Button(
-                    onPressed: _isCompleteButtonEnabled() && !_isSaving
-                        ? _markAsComplete
-                        : null,
-                    text: _isSaving
-                        ? 'Saving...'
-                        : widget.item.isCompleted
-                        ? 'Completed ✓'
-                        : 'Mark as Complete',
-                    height: 54.h,
-                    borderRadius: BorderRadius.circular(32.r),
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w600,
-                    textColor: Colors.white,
-                    backgroundColor: _isCompleteButtonEnabled() && !_isSaving
-                        ? AppColors.brand500
-                        : AppColors.brand500.withOpacity(0.3),
-                  ),
-                  SizedBox(height: 12.h),
-                  SizedBox(
-                    width: double.infinity,
-                    child: TextButton(
-                      onPressed: () => context.pop(),
-                      style: TextButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(32.r),
-                        ),
-                        padding: EdgeInsets.symmetric(vertical: 14.h),
-                      ),
-                      child: Text(
-                        'Go Back',
-                        style: TextStyle(
-                          color: AppColors.textPrimary.withOpacity(0.5),
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
