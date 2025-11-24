@@ -1,10 +1,13 @@
 // lib/features/clients/screens/total_clients_screen.dart
 import 'dart:convert';
 
+import 'package:blue_leaf_guide/shared/widgets/custom_appbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/button.dart';
@@ -16,15 +19,8 @@ class TotalClientsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Total Clients'),
-        actions: [
-          IconButton(
-            onPressed: () => context.push('/add-client'),
-            icon: Icon(Icons.add, size: 24.r),
-          ),
-        ],
-      ),
+      backgroundColor: Colors.white,
+      appBar: CustomAppBar(title: 'Clients'),
       body: StreamBuilder<QuerySnapshot>(
         stream: ClientService().getClientsStream(),
         builder: (context, snapshot) {
@@ -44,6 +40,7 @@ class TotalClientsScreen extends StatelessWidget {
           }
 
           final clients = snapshot.data?.docs ?? [];
+          final totalClients = clients.length;
 
           if (clients.isEmpty) {
             return Center(
@@ -77,17 +74,87 @@ class TotalClientsScreen extends StatelessWidget {
             );
           }
 
-          return Padding(
-            padding: EdgeInsets.all(16.w),
-            child: ListView.builder(
-              itemCount: clients.length,
-              itemBuilder: (context, index) {
-                final doc = clients[index];
-                final client = doc.data() as Map<String, dynamic>;
-                final clientId = doc.id;
-                return _buildClientCard(context, client, clientId);
-              },
-            ),
+          return Column(
+            children: [
+              /// TOP BAR SHOWING COUNT
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'All Clients',
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary.withOpacity(0.9),
+                          ),
+                        ),
+                        SizedBox(width: 6.w),
+                        Text(
+                          '(${clients.length})',
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary.withOpacity(0.5),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    /// Add Client Button
+                    GestureDetector(
+                      onTap: () => context.push('/add-client'),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          vertical: 10.h,
+                          horizontal: 16.w,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.brand500,
+                          borderRadius: BorderRadius.circular(32.r),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              "Add Client",
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(width: 8.w),
+                            Icon(Icons.add, size: 18.r, color: Colors.white),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 10.h),
+
+              Expanded(
+                child: clients.isEmpty
+                    ? Center(child: Text("No clients added yet"))
+                    : Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        child: ListView.builder(
+                          itemCount: totalClients,
+                          itemBuilder: (context, index) {
+                            final doc = clients[index];
+                            final client = doc.data() as Map<String, dynamic>;
+                            final clientId = doc.id;
+                            return _buildClientCard(context, client, clientId);
+                          },
+                        ),
+                      ),
+              ),
+            ],
           );
         },
       ),
@@ -99,104 +166,188 @@ class TotalClientsScreen extends StatelessWidget {
     Map<String, dynamic> client,
     String clientId,
   ) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-      margin: EdgeInsets.only(bottom: 16.h),
-      child: Padding(
-        padding: EdgeInsets.all(16.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                _buildProfileImage(client['profileImage']),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${client['firstName']} ${client['lastName']}',
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        client['clientType'] ?? 'Regular',
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                PopupMenuButton<String>(
-                  onSelected: (value) {
-                    if (value == 'edit') {
-                      context.push(
-                        '/add-client',
-                        extra: {'clientId': clientId, 'clientData': client},
-                      );
-                    } else if (value == 'delete') {
-                      _showDeleteDialog(context, clientId);
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      value: 'edit',
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.edit,
-                            size: 20.r,
-                            color: AppColors.primary,
-                          ),
-                          SizedBox(width: 8.w),
-                          const Text('Edit'),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.delete,
-                            size: 20.r,
-                            color: AppColors.danger,
-                          ),
-                          SizedBox(width: 8.w),
-                          const Text('Delete'),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            SizedBox(height: 12.h),
-            _buildSocialIcons(client),
-            SizedBox(height: 12.h),
-            _buildInfoRow(Icons.email, client['email'] ?? 'N/A'),
-            SizedBox(height: 8.h),
-            _buildInfoRow(Icons.phone, client['phone'] ?? 'N/A'),
-            SizedBox(height: 8.h),
-            _buildInfoRow(Icons.calendar_today, client['joinDate'] ?? 'N/A'),
-          ],
+    return Container(
+      margin: EdgeInsets.only(bottom: 20.h),
+      padding: EdgeInsets.symmetric(vertical: 16.h),
+      decoration: BoxDecoration(
+        color: AppColors.lightGrey,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: Color(0xFFF6F3F6), // 2px border color
+          width: 2,
         ),
       ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Profile image with popup button overlaid
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              _buildProfileImage(client['profileImage']),
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: EdgeInsets.only(right: 8.w),
+                  child: Transform.translate(
+                    offset: Offset(0, -10.h),
+                    child: Theme(
+                      data: Theme.of(
+                        context,
+                      ).copyWith(canvasColor: Colors.white),
+                      child: PopupMenuButton<String>(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16.r),
+                        padding: EdgeInsets.zero,
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            context.push(
+                              '/add-client',
+                              extra: {
+                                'clientId': clientId,
+                                'clientData': client,
+                              },
+                            );
+                          } else if (value == 'delete') {
+                            _showDeleteDialog(context, clientId);
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Text(
+                                  'Edit',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 14.sp,
+                                    color: AppColors.textPrimary.withOpacity(
+                                      0.8,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Text(
+                                  'Delete',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 14.sp,
+                                    color: AppColors.errorRed,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          SizedBox(height: 12.h),
+
+          // NAME centered
+          Text(
+            '${client['firstName']} ${client['lastName']}',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary.withOpacity(0.8),
+            ),
+          ),
+
+          SizedBox(height: 4.h),
+
+          SizedBox(height: 4.h),
+
+          // SOCIAL ICONS Centered
+          _buildSocialIcons(client),
+
+          SizedBox(height: 12.h),
+
+          // INFO ROWS CENTERED
+          _buildCenteredInfoRow(Icons.email, client['email'] ?? 'N/A'),
+          SizedBox(height: 8.h),
+          _buildCenteredInfoRow(Icons.phone, client['phone'] ?? 'N/A'),
+          SizedBox(height: 12.h),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Client Type Badge
+              Container(
+                padding: EdgeInsets.symmetric(vertical: 4.h, horizontal: 8.w),
+                decoration: BoxDecoration(
+                  color: Color(0xFFEBEDE5), // #EBEDE5
+                  borderRadius: BorderRadius.circular(100.r),
+                ),
+                child: Text(
+                  client['clientType'] ?? 'Regular',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+
+              SizedBox(width: 8.w),
+
+              // Join Date Badge
+              Container(
+                padding: EdgeInsets.symmetric(vertical: 4.h, horizontal: 8.w),
+                decoration: BoxDecoration(
+                  color: Color(0xFFEFE5FA), // #EFE5FA
+                  borderRadius: BorderRadius.circular(100.r),
+                ),
+                child: Text(
+                  // Format date as 'Since Nov 21, 2025'
+                  'Since ${DateFormat('MMM d, yyyy').format(DateTime.tryParse(client['joinDate'] ?? '') ?? DateTime.now())}',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCenteredInfoRow(IconData icon, String text) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 14.sp,
+            color: AppColors.textPrimary.withOpacity(0.8),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildProfileImage(String? base64Image) {
     return Container(
-      width: 60.w,
-      height: 60.w,
+      width: 48.w,
+      height: 48.w,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: AppColors.neutral10.withOpacity(0.1),
@@ -222,53 +373,38 @@ class TotalClientsScreen extends StatelessWidget {
   Widget _buildSocialIcons(Map<String, dynamic> client) {
     final socials = <String, String>{};
     if (client['instagram']?.isNotEmpty ?? false) {
-      socials['Instagram'] = 'assets/icons/instagram.png';
+      socials['Instagram'] = 'assets/icons/svg/insta.svg';
     }
     if (client['tiktok']?.isNotEmpty ?? false) {
-      socials['TikTok'] = 'assets/icons/tiktok.png';
+      socials['TikTok'] = 'assets/icons/svg/tik.svg';
     }
     if (client['linkedin']?.isNotEmpty ?? false) {
-      socials['LinkedIn'] = 'assets/icons/linkedin.png';
+      socials['LinkedIn'] = 'assets/icons/svg/link.svg';
     }
     if (client['twitter']?.isNotEmpty ?? false) {
-      socials['Twitter'] = 'assets/icons/twitter.png';
+      socials['Twitter'] = 'assets/icons/svg/twitter.svg';
     }
 
     if (socials.isEmpty) return const SizedBox.shrink();
 
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: socials.values.map((path) {
         return Padding(
-          padding: EdgeInsets.only(right: 8.w),
-          child: Image.asset(
-            path,
-            width: 24.w,
-            height: 24.h,
-            errorBuilder: (context, error, stackTrace) {
-              return Icon(
-                Icons.link,
-                size: 24.r,
-                color: AppColors.textSecondary,
-              );
-            },
+          padding: EdgeInsets.only(right: 12.w),
+          child: Container(
+            width: 35.w,
+            height: 35.h,
+            decoration: BoxDecoration(
+              color: Colors.white, // background color
+              borderRadius: BorderRadius.circular(100.r),
+            ),
+            child: Center(
+              child: SvgPicture.asset(path, width: 20.w, height: 20.h),
+            ),
           ),
         );
       }).toList(),
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, size: 16.r, color: AppColors.textSecondary),
-        SizedBox(width: 8.w),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(fontSize: 14.sp, color: AppColors.textPrimary),
-          ),
-        ),
-      ],
     );
   }
 
