@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../auth/providers/auth_provider.dart';
+import '../../../brand/data/visual_template_upload.dart';
 import '../../../roadmap/presentation/screens/roadmap_screen.dart';
 import '../../data/client_service.dart';
 
@@ -191,13 +192,20 @@ class HomeScreen extends StatelessWidget {
                       const Color(0xFF6628EA).withOpacity(0.4),
                       const Color(0xFF6628EA),
                     ],
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Coming soon!'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
+                    onTap: () async {
+                      // ScaffoldMessenger.of(context).showSnackBar(
+                      //   SnackBar(
+                      //     content: Text('Coming soon!'),
+                      //     behavior: SnackBarBehavior.floating,
+                      //   ),
+                      // );
+
+                      final success = await uploadVisualTemplateToFirestore();
+                      if (success) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Visual template uploaded!')),
+                        );
+                      }
                     },
                   ),
                 ],

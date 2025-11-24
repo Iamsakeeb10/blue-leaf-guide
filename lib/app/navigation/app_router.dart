@@ -18,10 +18,14 @@ import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/brand/models/marketing_item.dart';
 import '../../features/brand/models/strategy_item.dart';
+import '../../features/brand/models/visual_item.dart';
 import '../../features/brand/presentation/screens/build_brand_screen.dart';
+import '../../features/brand/presentation/screens/color_palette_picker_screen.dart';
+import '../../features/brand/presentation/screens/color_picker_screen.dart';
 import '../../features/brand/presentation/screens/marketing_item_detail_screen.dart';
 import '../../features/brand/presentation/screens/planning_screen.dart';
 import '../../features/brand/presentation/screens/strategy_items_details_screen.dart';
+import '../../features/brand/presentation/screens/visual_item_detail_screen.dart';
 import '../../features/home/presentation/screens/main_navigation_screen.dart';
 import '../../features/home/presentation/widgets/total_clients_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
@@ -191,6 +195,37 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/profile',
       builder: (context, state) => const ProfileScreen(),
+    ),
+
+    GoRoute(
+      path: '/visual_item/:id',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return VisualItemDetailScreen(
+          item: extra['item'] as VisualItem,
+          stepTitle: extra['stepTitle'] as String,
+        );
+      },
+    ),
+
+    GoRoute(
+      path: '/color-picker',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        return ColorPickerScreen(
+          existingColors: extra?['existingColors'] as List<String>? ?? [],
+        );
+      },
+    ),
+
+    GoRoute(
+      path: '/color-palette-picker',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        return ColorPalettePickerScreen(
+          existingColors: extra?['existingColors'] as List<String>? ?? [],
+        );
+      },
     ),
   ],
 );

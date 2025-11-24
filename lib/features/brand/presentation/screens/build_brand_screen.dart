@@ -9,8 +9,10 @@ import '../../../../shared/widgets/button.dart';
 import '../../../../shared/widgets/profile_list_item.dart';
 import '../../data/marketing_service.dart';
 import '../../data/strategy_service.dart';
+import '../../data/visual_service.dart';
 import '../../models/marketing_item.dart';
 import '../../models/strategy_item.dart';
+import '../../models/visual_item.dart';
 import '../widgets/custom_stepper.dart';
 
 class StepData {
@@ -34,6 +36,9 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
 
   List<StrategyItem> strategyItems = [];
   List<MarketingItem> marketingItems = [];
+  final VisualService _visualService = VisualService();
+  List<VisualItem> visualItems = [];
+
   bool _isLoading = true;
 
   final List<StepData> stepData = [
@@ -81,10 +86,12 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
     try {
       final strategy = await _strategyService.getUserStrategyItems(userId);
       final marketing = await _marketingService.getUserMarketingItems(userId);
+      final visual = await _visualService.getUserVisualItems(userId);
 
       setState(() {
         strategyItems = strategy;
         marketingItems = marketing;
+        visualItems = visual;
         _isLoading = false;
       });
     } catch (e) {
@@ -183,6 +190,42 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                               }
                             },
                           );
+                        } else if (currentStep == 2) {
+                          // Visual items
+                          VisualItem? item;
+                          if (index < visualItems.length) {
+                            item = visualItems[index];
+                          }
+
+                          return ProfileListItem(
+                            key: ValueKey(item?.id ?? index),
+                            title: currentItems[index],
+                            showCheckmark: item?.isCompleted ?? false,
+                            onTap: () async {
+                              if (item != null) {
+                                final updatedItem = await context
+                                    .push<VisualItem>(
+                                      '/visual_item/${item.id}',
+                                      extra: {
+                                        'item': item,
+                                        'stepTitle':
+                                            stepData[currentStep - 1].title,
+                                      },
+                                    );
+
+                                if (updatedItem != null) {
+                                  setState(() {
+                                    final itemIndex = visualItems.indexWhere(
+                                      (e) => e.id == updatedItem.id,
+                                    );
+                                    if (itemIndex != -1) {
+                                      visualItems[itemIndex] = updatedItem;
+                                    }
+                                  });
+                                }
+                              }
+                            },
+                          );
                         } else if (currentStep == 3) {
                           // Marketing items
                           MarketingItem? item;
@@ -220,14 +263,12 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                             },
                           );
                         } else {
-                          // Visual items (Step 2 - placeholder)
+                          // Placeholder for other steps
                           return ProfileListItem(
                             key: ValueKey(index),
                             title: currentItems[index],
                             showCheckmark: false,
-                            onTap: () {
-                              // TODO: Implement Visual step navigation
-                            },
+                            onTap: () {},
                           );
                         }
                       },
