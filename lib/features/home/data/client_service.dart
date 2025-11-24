@@ -70,11 +70,12 @@ class ClientService {
         return {'success': false, 'message': 'User not authenticated'};
       }
 
-      // Add timestamp
-      clientData['createdAt'] = FieldValue.serverTimestamp();
-      clientData['updatedAt'] = FieldValue.serverTimestamp();
+      // Create a new map with timestamps to avoid modifying the original
+      final dataToSave = Map<String, dynamic>.from(clientData);
+      dataToSave['createdAt'] = FieldValue.serverTimestamp();
+      dataToSave['updatedAt'] = FieldValue.serverTimestamp();
 
-      final docRef = await _clientsCollection.add(clientData);
+      final docRef = await _clientsCollection.add(dataToSave);
 
       return {
         'success': true,
@@ -97,9 +98,11 @@ class ClientService {
         return {'success': false, 'message': 'User not authenticated'};
       }
 
-      clientData['updatedAt'] = FieldValue.serverTimestamp();
+      // Create a new map with timestamp to avoid modifying the original
+      final dataToUpdate = Map<String, dynamic>.from(clientData);
+      dataToUpdate['updatedAt'] = FieldValue.serverTimestamp();
 
-      await _clientsCollection.doc(clientId).update(clientData);
+      await _clientsCollection.doc(clientId).update(dataToUpdate);
 
       return {'success': true, 'message': 'Client updated successfully'};
     } catch (e) {

@@ -295,6 +295,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
         _showSnackBar(result['message'], isError: true);
       }
     } catch (e) {
+      print('🟨 Error --- $e');
       setState(() => _isLoading = false);
       _showSnackBar('An error occurred: $e', isError: true);
     }
