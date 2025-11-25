@@ -39,7 +39,6 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
   void initState() {
     super.initState();
 
-    // Create a deep copy of the item to work with
     _editableItem = VisualItem(
       id: widget.item.id,
       title: widget.item.title,
@@ -67,7 +66,6 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
       );
     }).toList();
 
-    // Check if colors already exist and set source
     for (var section in _editableItem.sections) {
       if (section.fieldType == 'color' && section.userInputs.isNotEmpty) {
         _colorSelectionSource = section.selectedOptions?.isNotEmpty == true
@@ -87,7 +85,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
   }
 
   void _handleBack() {
-    context.pop(_editableItem); // Pass back the editable item
+    context.pop(widget.item); // Return original item without changes
   }
 
   Future<void> _handleColorSelection(
@@ -186,6 +184,21 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return;
 
+    // Update userInputs from controllers before saving
+    for (int i = 0; i < _editableItem.sections.length; i++) {
+      final section = _editableItem.sections[i];
+      if (section.isTextField && section.fieldType == 'text') {
+        section.userInputs = [_controllers[i].text];
+      }
+    }
+
+    // Mark as complete if all sections are filled
+    if (_isCompleteButtonEnabled()) {
+      _editableItem.isCompleted = true;
+    } else {
+      _editableItem.isCompleted = false;
+    }
+
     setState(() => _isSaving = true);
 
     try {
@@ -201,6 +214,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
             duration: Duration(seconds: 2),
           ),
         );
+        context.pop(_editableItem);
       }
     } catch (e) {
       if (mounted) {
@@ -219,13 +233,19 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
   }
 
   bool _isCompleteButtonEnabled() {
-    for (var section in _editableItem.sections) {
+    for (int i = 0; i < _editableItem.sections.length; i++) {
+      final section = _editableItem.sections[i];
+
       if (section.fieldType == 'color') {
         if (section.userInputs.isEmpty) return false;
-      } else if (section.isTextField) {
-        if (section.userInputs.isEmpty) return false;
+      } else if (section.isTextField && section.fieldType == 'text') {
+        if (_controllers[i].text.trim().isEmpty) return false;
       } else if (section.fieldType == 'chips') {
-        if (section.userInputs.isEmpty) return false;
+        // Check selectedOptions for chips
+        if (section.selectedOptions == null ||
+            section.selectedOptions!.isEmpty) {
+          return false;
+        }
       }
     }
     return true;
@@ -244,6 +264,14 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
 
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return;
+
+    // Update userInputs from controllers before saving
+    for (int i = 0; i < _editableItem.sections.length; i++) {
+      final section = _editableItem.sections[i];
+      if (section.isTextField && section.fieldType == 'text') {
+        section.userInputs = [_controllers[i].text];
+      }
+    }
 
     setState(() {
       _editableItem.isCompleted = true;
@@ -284,16 +312,19 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
   }
 
   bool _isSaveEnabled() {
-    for (var section in _editableItem.sections) {
+    for (int i = 0; i < _editableItem.sections.length; i++) {
+      final section = _editableItem.sections[i];
+
       if (section.isTextField && section.fieldType == 'text') {
-        if (section.userInputs.isNotEmpty &&
-            section.userInputs.first.trim().isNotEmpty) {
+        if (_controllers[i].text.trim().isNotEmpty) {
           return true;
         }
       }
 
       if (section.fieldType == 'chips') {
-        if (section.userInputs.isNotEmpty) {
+        // Check selectedOptions for chips
+        if (section.selectedOptions != null &&
+            section.selectedOptions!.isNotEmpty) {
           return true;
         }
       }
@@ -327,7 +358,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
         SizedBox(
           width: double.infinity,
           child: TextButton(
-            onPressed: () => context.pop(_editableItem),
+            onPressed: () => context.pop(widget.item), // Return original item
             style: TextButton.styleFrom(
               backgroundColor: Colors.transparent,
               shape: RoundedRectangleBorder(
@@ -368,7 +399,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
         SizedBox(
           width: double.infinity,
           child: TextButton(
-            onPressed: () => context.pop(_editableItem),
+            onPressed: () => context.pop(widget.item), // Return original item
             style: TextButton.styleFrom(
               backgroundColor: Colors.transparent,
               shape: RoundedRectangleBorder(
@@ -426,9 +457,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
           contentPadding: EdgeInsets.all(14.w),
         ),
         onChanged: (value) {
-          setState(() {
-            section.userInputs = [value];
-          });
+          setState(() {});
         },
       );
     } else if (section.fieldType == 'chips') {
@@ -438,14 +467,17 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
           spacing: 8.w,
           runSpacing: 8.h,
           children: section.options.map((option) {
-            final isSelected = section.userInputs.contains(option);
+            // Check selectedOptions for chips
+            final isSelected =
+                section.selectedOptions?.contains(option) ?? false;
             return GestureDetector(
               onTap: () {
                 setState(() {
+                  section.selectedOptions ??= [];
                   if (isSelected) {
-                    section.userInputs.remove(option);
+                    section.selectedOptions!.remove(option);
                   } else {
-                    section.userInputs.add(option);
+                    section.selectedOptions!.add(option);
                   }
                 });
               },
