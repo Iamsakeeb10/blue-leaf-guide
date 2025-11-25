@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/button.dart';
 import '../../../../shared/widgets/custom_appbar.dart';
+import '../../../../shared/widgets/custom_dialog.dart';
 import '../../data/visual_service.dart';
 import '../../models/visual_item.dart';
 import 'color_palette_picker_screen.dart';
@@ -137,25 +138,17 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
   Future<void> _deleteColors(VisualSection section) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Delete Colors'),
-        content: Text('Are you sure you want to delete all selected colors?'),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.r),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.textPrimary.withOpacity(0.6)),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
+      builder: (context) => CustomDialog(
+        title: 'Delete Colors',
+        subtitle: 'Are you sure you want to delete all selected colors?',
+        primaryButtonText: 'Yes, Delete',
+        primaryButtonOnPressed: () {
+          Navigator.of(context).pop(true);
+        },
+        secondaryButtonText: 'Cancel',
+        secondaryButtonOnPressed: () {
+          Navigator.of(context).pop(false);
+        },
       ),
     );
 
@@ -643,15 +636,15 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
 
   Widget _buildColorResultScreen(VisualSection section, int sectionIndex) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // Display selected colors
         Text(
-          'Selected Colors (${section.userInputs.length})',
+          'Your brand color',
           style: TextStyle(
-            fontSize: 14.sp,
+            fontSize: 20.sp,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary.withOpacity(0.7),
+            color: AppColors.textPrimary,
           ),
         ),
         SizedBox(height: 12.h),
@@ -660,79 +653,54 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
           runSpacing: 12.h,
           children: section.userInputs.map((colorHex) {
             return Container(
-              width: 60.w,
-              height: 60.w,
+              width: 45.w,
+              height: 45.w,
               decoration: BoxDecoration(
                 color: Color(int.parse('0xff$colorHex')),
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.neutral50.withOpacity(0.3),
-                  width: 2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                  ),
-                ],
               ),
             );
           }).toList(),
         ),
-        SizedBox(height: 20.h),
-        // Edit and Delete buttons
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  final source = section.selectedOptions?.isNotEmpty == true
-                      ? section.selectedOptions!.first
-                      : 'custom';
-                  _handleColorSelection(section, sectionIndex, source);
-                },
-                icon: Icon(Icons.edit, size: 20.sp),
-                label: Text(
-                  'Edit Colors',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.brand500,
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
-                  side: BorderSide(color: AppColors.brand500, width: 1.5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                ),
-              ),
+        SizedBox(height: 28.h),
+
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Button(
+            onPressed: () {
+              final source = section.selectedOptions?.isNotEmpty == true
+                  ? section.selectedOptions!.first
+                  : 'custom';
+              _handleColorSelection(section, sectionIndex, source);
+            },
+            text: 'Edit your color',
+            height: 54.h,
+            borderRadius: BorderRadius.circular(32.r),
+            fontSize: 15.sp,
+            fontWeight: FontWeight.w600,
+            textColor: Colors.white,
+            backgroundColor: AppColors.brand500,
+          ),
+        ),
+        SizedBox(height: 12.h),
+
+        TextButton(
+          onPressed: () => _deleteColors(section),
+          style: TextButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(32.r),
             ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => _deleteColors(section),
-                icon: Icon(Icons.delete_outline, size: 20.sp),
-                label: Text(
-                  'Delete',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.red,
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
-                  side: BorderSide(color: Colors.red, width: 1.5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                ),
-              ),
+            padding: EdgeInsets.symmetric(vertical: 14.h),
+          ),
+          child: Text(
+            'Delete color',
+            style: TextStyle(
+              color: AppColors.textPrimary.withOpacity(0.5),
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w600,
             ),
-          ],
+          ),
         ),
       ],
     );
