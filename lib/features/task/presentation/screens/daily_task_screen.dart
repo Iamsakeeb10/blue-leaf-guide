@@ -120,6 +120,17 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
     }
   }
 
+  bool get _isCurrentDateEditable {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selected = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+    );
+    return selected.isAtSameMomentAs(today); // Only today is editable
+  }
+
   String _formatDate(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
@@ -166,12 +177,18 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
               ),
               GestureDetector(
                 onTap: () async {
+                  final todayNormalized = DateTime(
+                    DateTime.now().year,
+                    DateTime.now().month,
+                    DateTime.now().day,
+                  );
+
                   final selected = await showDialog<DateTime>(
                     context: context,
                     builder: (_) => CustomDatePickerDialog(
                       initialDate: _selectedDate,
                       firstDate: DateTime(2020),
-                      lastDate: DateTime(2030),
+                      lastDate: todayNormalized, // ← normalized today
                     ),
                   );
 
@@ -223,6 +240,7 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
                 value: _switchValues[index],
                 onChanged: (val) => _saveToggle(index, val),
                 showDivider: index != _tasks.length - 1,
+                isEditable: _isCurrentDateEditable,
               );
             },
           ),

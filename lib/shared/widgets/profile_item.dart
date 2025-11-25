@@ -9,8 +9,9 @@ class ProfileItem extends StatelessWidget {
   final Color iconBackgroundColor;
   final String title;
   final bool value;
-  final ValueChanged<bool> onChanged;
+  final ValueChanged<bool>? onChanged;
   final bool showDivider;
+  final bool isEditable;
 
   const ProfileItem({
     super.key,
@@ -18,32 +19,40 @@ class ProfileItem extends StatelessWidget {
     required this.iconBackgroundColor,
     required this.title,
     required this.value,
-    required this.onChanged,
+    this.onChanged,
     this.showDivider = true,
+    this.isEditable = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    final item = Padding(
-      padding: EdgeInsets.symmetric(vertical: 12.h),
-      child: Row(
-        children: [
-          SvgPicture.asset(svgIconPath, width: 32.sp, height: 32.sp),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Text(
-              title,
-              style: TextStyle(
-                color: AppColors.textPrimary.withOpacity(0.8),
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
-                height: 1.4,
-                letterSpacing: -0.01 * 14,
+    final item = Opacity(
+      opacity: isEditable ? 1 : 0.4,
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 12.h),
+        child: Row(
+          children: [
+            SvgPicture.asset(svgIconPath, width: 32.sp, height: 32.sp),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  color: AppColors.textPrimary.withOpacity(0.8),
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  height: 1.4,
+                  letterSpacing: -0.01 * 14,
+                ),
               ),
             ),
-          ),
-          CustomSwitch(value: value, onChanged: onChanged),
-        ],
+            CustomSwitch(
+              value: value,
+              onChanged: onChanged,
+              isEnabled: isEditable,
+            ),
+          ],
+        ),
       ),
     );
 
@@ -62,14 +71,22 @@ class ProfileItem extends StatelessWidget {
 
 class CustomSwitch extends StatelessWidget {
   final bool value;
-  final ValueChanged<bool> onChanged;
+  final ValueChanged<bool>? onChanged; // nullable
+  final bool isEnabled; // new
 
-  const CustomSwitch({super.key, required this.value, required this.onChanged});
+  const CustomSwitch({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    this.isEnabled = true,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => onChanged(!value),
+      onTap: isEnabled && onChanged != null
+          ? () => onChanged!(!value)
+          : null, // disable tap
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         width: 44.w,
