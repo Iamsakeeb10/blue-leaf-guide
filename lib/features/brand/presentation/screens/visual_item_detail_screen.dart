@@ -32,20 +32,44 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
   // ignore: unused_field
   String? _colorSelectionSource; // 'palette' or 'custom'
 
+  // Create a working copy of the item
+  late VisualItem _editableItem;
+
   @override
   void initState() {
     super.initState();
-    _controllers = widget.item.sections.map((section) {
+
+    // Create a deep copy of the item to work with
+    _editableItem = VisualItem(
+      id: widget.item.id,
+      title: widget.item.title,
+      isCompleted: widget.item.isCompleted,
+      sections: widget.item.sections
+          .map(
+            (section) => VisualSection(
+              subtitle: section.subtitle,
+              options: List<String>.from(section.options),
+              isTextField: section.isTextField,
+              fieldType: section.fieldType,
+              hintText: section.hintText,
+              userInputs: List<String>.from(section.userInputs),
+              selectedOptions: section.selectedOptions != null
+                  ? List<String>.from(section.selectedOptions!)
+                  : null,
+            ),
+          )
+          .toList(),
+    );
+
+    _controllers = _editableItem.sections.map((section) {
       return TextEditingController(
         text: section.userInputs.isNotEmpty ? section.userInputs.first : '',
       );
     }).toList();
 
     // Check if colors already exist and set source
-    for (var section in widget.item.sections) {
+    for (var section in _editableItem.sections) {
       if (section.fieldType == 'color' && section.userInputs.isNotEmpty) {
-        // Try to get the source from metadata if you stored it
-        // For now, we'll default to 'custom' if colors exist
         _colorSelectionSource = section.selectedOptions?.isNotEmpty == true
             ? section.selectedOptions!.first
             : 'custom';
@@ -63,7 +87,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
   }
 
   void _handleBack() {
-    context.pop(widget.item); // Always pass back the updated item
+    context.pop(_editableItem); // Pass back the editable item
   }
 
   Future<void> _handleColorSelection(
@@ -94,16 +118,12 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
     if (selectedColors != null && selectedColors.isNotEmpty) {
       setState(() {
         section.userInputs = selectedColors!;
-        // Store the source in selectedOptions for tracking
         section.selectedOptions = [source];
         _colorSelectionSource = source;
-
-        // Mark item as complete when colors are saved
-        widget.item.isCompleted = true;
+        _editableItem.isCompleted = true;
       });
       await _saveItem();
 
-      // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -146,9 +166,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
         section.userInputs = [];
         section.selectedOptions = [];
         _colorSelectionSource = null;
-
-        // Unmark as complete when colors are deleted
-        widget.item.isCompleted = false;
+        _editableItem.isCompleted = false;
       });
       await _saveItem();
 
@@ -171,7 +189,10 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
     setState(() => _isSaving = true);
 
     try {
-      final success = await _visualService.saveVisualItem(userId, widget.item);
+      final success = await _visualService.saveVisualItem(
+        userId,
+        _editableItem,
+      );
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -198,13 +219,13 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
   }
 
   bool _isCompleteButtonEnabled() {
-    for (var section in widget.item.sections) {
+    for (var section in _editableItem.sections) {
       if (section.fieldType == 'color') {
         if (section.userInputs.isEmpty) return false;
       } else if (section.isTextField) {
         if (section.userInputs.isEmpty) return false;
       } else if (section.fieldType == 'chips') {
-        if (section.selectedOptions?.isEmpty ?? true) return false;
+        if (section.userInputs.isEmpty) return false;
       }
     }
     return true;
@@ -225,12 +246,15 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
     if (userId == null) return;
 
     setState(() {
-      widget.item.isCompleted = true;
+      _editableItem.isCompleted = true;
       _isSaving = true;
     });
 
     try {
-      final success = await _visualService.saveVisualItem(userId, widget.item);
+      final success = await _visualService.saveVisualItem(
+        userId,
+        _editableItem,
+      );
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -238,7 +262,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        context.pop(widget.item);
+        context.pop(_editableItem);
       }
     } catch (e) {
       if (mounted) {
@@ -253,23 +277,28 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
     }
   }
 
-  // returns true when any section requires color picking
   bool get hasColorFeature {
-    return widget.item.sections.any((section) => section.fieldType == 'color');
+    return _editableItem.sections.any(
+      (section) => section.fieldType == 'color',
+    );
   }
 
   bool _isSaveEnabled() {
-    // Example: require at least one non-empty user input across sections
-    for (var section in widget.item.sections) {
-      if (section.fieldType == 'color') continue;
-      if (section.isTextField &&
-          (section.userInputs.isNotEmpty &&
-              section.userInputs.first.isNotEmpty))
-        return true;
-      if (section.fieldType == 'chips' &&
-          (section.selectedOptions?.isNotEmpty ?? false))
-        return true;
+    for (var section in _editableItem.sections) {
+      if (section.isTextField && section.fieldType == 'text') {
+        if (section.userInputs.isNotEmpty &&
+            section.userInputs.first.trim().isNotEmpty) {
+          return true;
+        }
+      }
+
+      if (section.fieldType == 'chips') {
+        if (section.userInputs.isNotEmpty) {
+          return true;
+        }
+      }
     }
+
     return false;
   }
 
@@ -282,7 +311,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
               : null,
           text: _isSaving
               ? 'Saving...'
-              : widget.item.isCompleted
+              : _editableItem.isCompleted
               ? 'Completed ✓'
               : 'Mark as Complete',
           height: 54.h,
@@ -298,7 +327,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
         SizedBox(
           width: double.infinity,
           child: TextButton(
-            onPressed: () => context.pop(widget.item),
+            onPressed: () => context.pop(_editableItem),
             style: TextButton.styleFrom(
               backgroundColor: Colors.transparent,
               shape: RoundedRectangleBorder(
@@ -328,7 +357,6 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
           backgroundColor: _isSaveEnabled() && !_isSaving
               ? AppColors.brand500
               : AppColors.brand500.withOpacity(0.3),
-
           text: _isSaving ? "Saving..." : "Save",
           height: 54.h,
           borderRadius: BorderRadius.circular(32.r),
@@ -340,7 +368,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
         SizedBox(
           width: double.infinity,
           child: TextButton(
-            onPressed: () => context.pop(widget.item),
+            onPressed: () => context.pop(_editableItem),
             style: TextButton.styleFrom(
               backgroundColor: Colors.transparent,
               shape: RoundedRectangleBorder(
@@ -364,11 +392,9 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
 
   Widget _buildSectionContent(VisualSection section, int sectionIndex) {
     if (section.fieldType == 'color') {
-      // Show result screen if colors are selected
       if (section.userInputs.isNotEmpty) {
         return _buildColorResultScreen(section, sectionIndex);
       }
-      // Show initial selection screen
       return _buildColorInitialScreen(section, sectionIndex);
     } else if (section.isTextField && section.fieldType == 'text') {
       return TextField(
@@ -639,7 +665,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false, // Prevent default pop behavior
+      canPop: false,
       onPopInvoked: (didPop) {
         if (!didPop) {
           _handleBack();
@@ -657,7 +683,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.item.title,
+                      _editableItem.title,
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
@@ -665,7 +691,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
                       ),
                     ),
                     SizedBox(height: 24.h),
-                    ...widget.item.sections.asMap().entries.map((entry) {
+                    ..._editableItem.sections.asMap().entries.map((entry) {
                       final index = entry.key;
                       final section = entry.value;
                       return Column(
