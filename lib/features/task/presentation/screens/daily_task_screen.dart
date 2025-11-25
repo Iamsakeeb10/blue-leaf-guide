@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -14,24 +16,139 @@ class DailyTaskScreen extends StatefulWidget {
 }
 
 class _DailyTaskScreenState extends State<DailyTaskScreen> {
-  // Keep state for 6 switches
-  final List<bool> switchValues = List.generate(6, (_) => false);
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  late String _userId;
   DateTime _selectedDate = DateTime.now();
+  List<Map<String, dynamic>> _tasks = [];
+  List<bool> _switchValues = [];
+
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = _auth.currentUser;
+    if (user == null) {
+      // Handle unauthenticated state if needed
+      Navigator.of(context).pop(); // or show error
+      return;
+    }
+    _userId = user.uid;
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    // 1. Load task definitions from 'standalone/default'
+    final standaloneDoc = await _firestore
+        .collection('standalone')
+        .doc('default')
+        .get();
+    if (!standaloneDoc.exists) {
+      // Fallback to hardcoded tasks (for testing or first run)
+      _tasks = [
+        {"icon": "assets/icons/svg/fb.svg", "title": "Review project plan"},
+        {"icon": "assets/icons/svg/insta.svg", "title": "Check emails"},
+        {"icon": "assets/icons/svg/tik.svg", "title": "Team standup meeting"},
+        {"icon": "assets/icons/svg/gallery.svg", "title": "Code review"},
+        {"icon": "assets/icons/svg/add.svg", "title": "Update documentation"},
+        {
+          "icon": "assets/icons/svg/user-gradient.svg",
+          "title": "Deploy updates",
+        },
+      ];
+    } else {
+      final data = standaloneDoc.data()!;
+      _tasks = List<Map<String, dynamic>>.from(data['items'] ?? []);
+    }
+
+    // Initialize switch values
+    _switchValues = List.generate(_tasks.length, (_) => false);
+
+    // 2. Load user toggle state for selected date
+    await _loadUserTogglesForDate(_selectedDate);
+
+    if (mounted) {
+      setState(() {
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _loadUserTogglesForDate(DateTime date) async {
+    final formattedDate = _formatDate(date);
+    final doc = await _firestore
+        .collection('daily_tasks')
+        .doc(_userId)
+        .collection('dates')
+        .doc(formattedDate)
+        .get();
+
+    if (doc.exists) {
+      final toggles = List<dynamic>.from(doc.data()?['toggles'] ?? []);
+      // Ensure correct length and deep copy
+      _switchValues = List.generate(_tasks.length, (i) {
+        if (i < toggles.length) return toggles[i] as bool;
+        return false;
+      });
+    } else {
+      _switchValues = List.generate(_tasks.length, (_) => false);
+    }
+  }
+
+  Future<void> _saveToggle(int index, bool value) async {
+    // Update the state with a new list reference
+    setState(() {
+      _switchValues = List.from(_switchValues)..[index] = value;
+    });
+
+    final formattedDate = _formatDate(_selectedDate);
+
+    try {
+      await _firestore
+          .collection('daily_tasks')
+          .doc(_userId)
+          .collection('dates')
+          .doc(formattedDate)
+          .set({
+            'toggles': List.from(_switchValues), // new list for Firestore
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+    } catch (e) {
+      print('❌ Error saving toggle: $e');
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  String _formattedDateString(DateTime date) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]}, ${date.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
-    final profileItems = [
-      {"icon": "assets/icons/svg/fb.svg", "title": "Review project plan"},
-      {"icon": "assets/icons/svg/insta.svg", "title": "Check emails"},
-      {"icon": "assets/icons/svg/tik.svg", "title": "Team standup meeting"},
-      {"icon": "assets/icons/svg/gallery.svg", "title": "Code review"},
-      {"icon": "assets/icons/svg/add.svg", "title": "Update documentation"},
-      {"icon": "assets/icons/svg/user-gradient.svg", "title": "Deploy updates"},
-    ];
+    String formattedDate = _formattedDateString(_selectedDate);
 
-    String formattedDate =
-        "${_selectedDate.day.toString().padLeft(2, '0')} "
-        "${_monthString(_selectedDate.month)}, ${_selectedDate.year}";
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     return Column(
       children: [
@@ -47,7 +164,6 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
                   color: AppColors.textPrimary,
                 ),
               ),
-
               GestureDetector(
                 onTap: () async {
                   final selected = await showDialog<DateTime>(
@@ -59,11 +175,19 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
                     ),
                   );
 
-                  if (selected != null) {
-                    print("Selected date: $selected");
+                  if (selected != null && selected != _selectedDate) {
                     setState(() {
                       _selectedDate = selected;
+                      _loading = true;
                     });
+
+                    await _loadUserTogglesForDate(selected);
+
+                    if (mounted) {
+                      setState(() {
+                        _loading = false;
+                      });
+                    }
                   }
                 },
                 child: Container(
@@ -73,15 +197,12 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
                     color: AppColors.textPrimary.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(100.r),
                   ),
-                  padding: EdgeInsets.all(
-                    8.w,
-                  ), // <-- add padding inside container
+                  padding: EdgeInsets.all(8.w),
                   child: SvgPicture.asset(
                     'assets/icons/svg/calendar.svg',
-                    fit: BoxFit.contain, // <-- scale down to fit container
+                    fit: BoxFit.contain,
                     width: 24.w,
                     height: 24.h,
-                    // remove width/height here, let padding control size
                   ),
                 ),
               ),
@@ -91,20 +212,17 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
         Expanded(
           child: ListView.separated(
             padding: EdgeInsets.symmetric(vertical: 4.h),
-            itemCount: profileItems.length,
+            itemCount: _tasks.length,
             separatorBuilder: (_, __) => SizedBox(height: 4.h),
             itemBuilder: (context, index) {
               return ProfileItem(
-                svgIconPath: profileItems[index]["icon"]!,
+                key: ValueKey('${_formatDate(_selectedDate)}-$index'),
+                svgIconPath: _tasks[index]["icon"]!,
                 iconBackgroundColor: Colors.blue.shade100,
-                title: profileItems[index]["title"]!,
-                value: switchValues[index],
-                onChanged: (val) {
-                  setState(() {
-                    switchValues[index] = val;
-                  });
-                },
-                showDivider: index != profileItems.length - 1,
+                title: _tasks[index]["title"]!,
+                value: _switchValues[index],
+                onChanged: (val) => _saveToggle(index, val),
+                showDivider: index != _tasks.length - 1,
               );
             },
           ),
@@ -112,22 +230,33 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
       ],
     );
   }
+}
 
-  String _monthString(int month) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return months[month - 1];
+// ===== Helper Function (Call Once During Setup/Debug) =====
+Future<bool> uploadStandaloneTemplateToFirestore() async {
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+  final List<Map<String, String>> templateItems = [
+    {"icon": "assets/icons/svg/fb.svg", "title": "Review project plan"},
+    {"icon": "assets/icons/svg/insta.svg", "title": "Check emails"},
+    {"icon": "assets/icons/svg/tik.svg", "title": "Team standup meeting"},
+    {"icon": "assets/icons/svg/gallery.svg", "title": "Code review"},
+    {"icon": "assets/icons/svg/add.svg", "title": "Update documentation"},
+    {"icon": "assets/icons/svg/user-gradient.svg", "title": "Deploy updates"},
+  ];
+
+  try {
+    await firestore.collection('standalone').doc('default').set({
+      'items': templateItems,
+      'version': 1,
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    print('✅ Standalone task template uploaded successfully!');
+    return true;
+  } catch (e) {
+    print('❌ Error uploading standalone template: $e');
+    return false;
   }
 }

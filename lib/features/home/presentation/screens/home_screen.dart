@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../roadmap/presentation/screens/roadmap_screen.dart';
+import '../../../task/presentation/screens/daily_task_screen.dart';
 import '../../data/client_service.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -205,6 +206,8 @@ class HomeScreen extends StatelessWidget {
                       //     SnackBar(content: Text('Visual template uploaded!')),
                       //   );
                       // }
+
+                      await uploadStandaloneTemplateToFirestore();
                     },
                   ),
                 ],
