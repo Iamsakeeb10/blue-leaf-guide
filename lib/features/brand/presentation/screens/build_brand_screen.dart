@@ -100,10 +100,6 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
     }
   }
 
-  void _navigateToPlanning() {
-    context.push('/planning');
-  }
-
   @override
   Widget build(BuildContext context) {
     final List<String> currentItems = stepData[currentStep - 1].items;
@@ -149,131 +145,123 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
             ),
             SizedBox(height: 32.h),
             Expanded(
-              child: currentStep == 4
-                  ? _buildPlanningButton()
-                  : ListView.builder(
-                      itemCount: currentItems.length,
-                      itemBuilder: (context, index) {
-                        if (currentStep == 1) {
-                          // Strategy items
-                          StrategyItem? item;
-                          if (index < strategyItems.length) {
-                            item = strategyItems[index];
-                          }
+              child: ListView.builder(
+                itemCount: currentItems.length,
+                itemBuilder: (context, index) {
+                  if (currentStep == 1) {
+                    // Strategy items
+                    StrategyItem? item;
+                    if (index < strategyItems.length) {
+                      item = strategyItems[index];
+                    }
 
-                          return ProfileListItem(
-                            key: ValueKey(item?.id ?? index),
-                            title: currentItems[index],
-                            showCheckmark: item?.isCompleted ?? false,
-                            onTap: () async {
-                              if (item != null) {
-                                final updatedItem = await context
-                                    .push<StrategyItem>(
-                                      '/strategy_item/${item.id}',
-                                      extra: {
-                                        'item': item,
-                                        'stepTitle':
-                                            stepData[currentStep - 1].title,
-                                      },
-                                    );
-
-                                if (updatedItem != null) {
-                                  setState(() {
-                                    final itemIndex = strategyItems.indexWhere(
-                                      (e) => e.id == updatedItem.id,
-                                    );
-                                    if (itemIndex != -1) {
-                                      strategyItems[itemIndex] = updatedItem;
-                                    }
-                                  });
-                                }
-                              }
+                    return ProfileListItem(
+                      key: ValueKey(item?.id ?? index),
+                      title: currentItems[index],
+                      showCheckmark: item?.isCompleted ?? false,
+                      onTap: () async {
+                        if (item != null) {
+                          final updatedItem = await context.push<StrategyItem>(
+                            '/strategy_item/${item.id}',
+                            extra: {
+                              'item': item,
+                              'stepTitle': stepData[currentStep - 1].title,
                             },
                           );
-                        } else if (currentStep == 2) {
-                          // Visual items
-                          VisualItem? item;
-                          if (index < visualItems.length) {
-                            item = visualItems[index];
-                          }
 
-                          return ProfileListItem(
-                            key: ValueKey(item?.id ?? index),
-                            title: currentItems[index],
-                            showCheckmark: item?.isCompleted ?? false,
-                            onTap: () async {
-                              if (item != null) {
-                                final updatedItem = await context
-                                    .push<VisualItem>(
-                                      '/visual_item/${item.id}',
-                                      extra: {
-                                        'item': item,
-                                        'stepTitle':
-                                            stepData[currentStep - 1].title,
-                                      },
-                                    );
-
-                                // ✅ Update the item in the list immediately
-                                if (updatedItem != null && mounted) {
-                                  setState(() {
-                                    final itemIndex = visualItems.indexWhere(
-                                      (e) => e.id == updatedItem.id,
-                                    );
-                                    if (itemIndex != -1) {
-                                      visualItems[itemIndex] = updatedItem;
-                                    }
-                                  });
-                                }
+                          if (updatedItem != null) {
+                            setState(() {
+                              final itemIndex = strategyItems.indexWhere(
+                                (e) => e.id == updatedItem.id,
+                              );
+                              if (itemIndex != -1) {
+                                strategyItems[itemIndex] = updatedItem;
                               }
-                            },
-                          );
-                        } else if (currentStep == 3) {
-                          // Marketing items
-                          MarketingItem? item;
-                          if (index < marketingItems.length) {
-                            item = marketingItems[index];
+                            });
                           }
-
-                          return ProfileListItem(
-                            key: ValueKey(item?.id ?? index),
-                            title: currentItems[index],
-                            showCheckmark: item?.isCompleted ?? false,
-                            onTap: () async {
-                              if (item != null) {
-                                final updatedItem = await context
-                                    .push<MarketingItem>(
-                                      '/marketing_item/${item.id}',
-                                      extra: {
-                                        'item': item,
-                                        'stepTitle':
-                                            stepData[currentStep - 1].title,
-                                      },
-                                    );
-
-                                if (updatedItem != null) {
-                                  setState(() {
-                                    final itemIndex = marketingItems.indexWhere(
-                                      (e) => e.id == updatedItem.id,
-                                    );
-                                    if (itemIndex != -1) {
-                                      marketingItems[itemIndex] = updatedItem;
-                                    }
-                                  });
-                                }
-                              }
-                            },
-                          );
-                        } else {
-                          // Placeholder for other steps
-                          return ProfileListItem(
-                            key: ValueKey(index),
-                            title: currentItems[index],
-                            showCheckmark: false,
-                            onTap: () {},
-                          );
                         }
                       },
-                    ),
+                    );
+                  } else if (currentStep == 2) {
+                    // Visual items
+                    VisualItem? item;
+                    if (index < visualItems.length) {
+                      item = visualItems[index];
+                    }
+
+                    return ProfileListItem(
+                      key: ValueKey(item?.id ?? index),
+                      title: currentItems[index],
+                      showCheckmark: item?.isCompleted ?? false,
+                      onTap: () async {
+                        if (item != null) {
+                          final updatedItem = await context.push<VisualItem>(
+                            '/visual_item/${item.id}',
+                            extra: {
+                              'item': item,
+                              'stepTitle': stepData[currentStep - 1].title,
+                            },
+                          );
+
+                          // ✅ Update the item in the list immediately
+                          if (updatedItem != null && mounted) {
+                            setState(() {
+                              final itemIndex = visualItems.indexWhere(
+                                (e) => e.id == updatedItem.id,
+                              );
+                              if (itemIndex != -1) {
+                                visualItems[itemIndex] = updatedItem;
+                              }
+                            });
+                          }
+                        }
+                      },
+                    );
+                  } else if (currentStep == 3) {
+                    // Marketing items
+                    MarketingItem? item;
+                    if (index < marketingItems.length) {
+                      item = marketingItems[index];
+                    }
+
+                    return ProfileListItem(
+                      key: ValueKey(item?.id ?? index),
+                      title: currentItems[index],
+                      showCheckmark: item?.isCompleted ?? false,
+                      onTap: () async {
+                        if (item != null) {
+                          final updatedItem = await context.push<MarketingItem>(
+                            '/marketing_item/${item.id}',
+                            extra: {
+                              'item': item,
+                              'stepTitle': stepData[currentStep - 1].title,
+                            },
+                          );
+
+                          if (updatedItem != null) {
+                            setState(() {
+                              final itemIndex = marketingItems.indexWhere(
+                                (e) => e.id == updatedItem.id,
+                              );
+                              if (itemIndex != -1) {
+                                marketingItems[itemIndex] = updatedItem;
+                              }
+                            });
+                          }
+                        }
+                      },
+                    );
+                  } else {
+                    // Placeholder for other steps
+                    return ProfileListItem(
+                      key: ValueKey(index),
+                      title: currentItems[index],
+                      showCheckmark: false,
+                      onTap: () {},
+                    );
+                  }
+                },
+              ),
             ),
             Column(
               children: [
@@ -281,7 +269,6 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                   onPressed: () {
                     if (currentStep < stepData.length) {
                       if (currentStep == 3) {
-                        // Navigate to planning when moving from step 3 to step 4
                         context.push('/planning');
                       } else {
                         setState(() {
@@ -306,7 +293,18 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () {
+                      if (currentStep < stepData.length) {
+                        if (currentStep == 3) {
+                          // Navigate to planning when moving from step 3 to step 4
+                          context.push('/planning');
+                        } else {
+                          setState(() {
+                            currentStep++;
+                          });
+                        }
+                      }
+                    },
                     style: TextButton.styleFrom(
                       backgroundColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
@@ -315,7 +313,7 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                       padding: EdgeInsets.symmetric(vertical: 14.h),
                     ),
                     child: Text(
-                      'Cancel',
+                      'Skip',
                       style: TextStyle(
                         color: AppColors.textPrimary.withOpacity(0.5),
                         fontSize: 15.sp,
@@ -325,52 +323,6 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                   ),
                 ),
               ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPlanningButton() {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 40.h),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.calendar_today_rounded,
-              size: 64.sp,
-              color: AppColors.brand500.withOpacity(0.3),
-            ),
-            SizedBox(height: 24.h),
-            Text(
-              'Create Your 90-Day Plan',
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            SizedBox(height: 12.h),
-            Text(
-              'Plan your brand launch journey',
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: AppColors.textPrimary.withOpacity(0.6),
-              ),
-            ),
-            SizedBox(height: 32.h),
-            Button(
-              onPressed: _navigateToPlanning,
-              text: 'Start Planning',
-              height: 54.h,
-              borderRadius: BorderRadius.circular(32.r),
-              fontSize: 15.sp,
-              fontWeight: FontWeight.w600,
-              textColor: Colors.white,
-              backgroundColor: AppColors.brand500,
             ),
           ],
         ),
