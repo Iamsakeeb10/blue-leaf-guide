@@ -102,14 +102,12 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
               itemBuilder: (context, index) {
                 final item = roadmaps[index];
                 final roadmapId = item['id'] as String;
-                final isFirst = index == 0;
                 final isLast = index == roadmaps.length - 1;
 
                 final progress = userProgress[roadmapId];
                 final completed = progress?['completed'] ?? false;
 
-                return TimelineItem(
-                  isFirst: isFirst,
+                return RoadmapItem(
                   isLast: isLast,
                   title: item["title"] ?? '',
                   subtitle: item["subtitle"] ?? '',
@@ -124,8 +122,7 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
   }
 }
 
-class TimelineItem extends StatelessWidget {
-  final bool isFirst;
+class RoadmapItem extends StatelessWidget {
   final bool isLast;
   final bool completed;
   final String title;
@@ -134,9 +131,8 @@ class TimelineItem extends StatelessWidget {
   final int index;
   final String roadmapId;
 
-  const TimelineItem({
+  const RoadmapItem({
     super.key,
-    required this.isFirst,
     required this.isLast,
     required this.title,
     required this.subtitle,
@@ -149,8 +145,6 @@ class TimelineItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dotSize = 20.r;
-    final lineWidth = 2.w;
 
     return Material(
       color: Colors.transparent,
@@ -159,125 +153,76 @@ class TimelineItem extends StatelessWidget {
         onTap: () {
           context.push('/roadmapDetails', extra: roadmapId);
         },
-        child: Stack(
-          children: [
-            // Connector line
-            if (!isLast)
-              Positioned(
-                left: (dotSize - lineWidth) / 2,
-                top: dotSize,
-                bottom: 0,
-                child: Container(
-                  width: lineWidth,
-                  color: completed
-                      ? AppColors.timelinePrimary
-                      : AppColors.timelineBorder,
-                ),
-              ),
-
-            // Main content
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Dot indicator
-                Container(
-                  width: dotSize,
-                  height: dotSize,
-                  decoration: BoxDecoration(
-                    color: completed
-                        ? AppColors.timelinePrimary
-                        : Colors.transparent,
-                    shape: BoxShape.circle,
-                    border: completed
-                        ? null
-                        : Border.all(
-                            color: AppColors.timelineBorder,
-                            width: 2.w,
-                          ),
-                  ),
-                  child: completed
-                      ? Icon(Icons.check, size: 12.sp, color: Colors.white)
-                      : null,
-                ),
-
-                SizedBox(width: 16.w),
-
-                // Content area
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(bottom: isLast ? 0 : 32.h),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Title row
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                title,
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
-                                  height: 1.3,
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: 8.w),
-                            Icon(
-                              Icons.arrow_forward_ios,
-                              size: 16.sp,
-                              color: AppColors.textPrimary.withOpacity(0.8),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 15.h),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 12.w,
-                            vertical: 6.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: index.isOdd
-                                ? const Color(0xFFEFE5FA)
-                                : AppColors.lightGrey,
-                            borderRadius: BorderRadius.circular(100.r),
-                          ),
-                          child: Text(
-                            buttonLabel,
-                            style: TextStyle(
-                              color: AppColors.textPrimary.withOpacity(0.8),
-                              fontSize: 10.sp,
-                              fontWeight: FontWeight.w600,
-                              height: 1.3,
-                              letterSpacing: -0.01 * 10,
-                            ),
-                          ),
-                        ),
-
-                        SizedBox(height: 8.h),
-
-                        // Subtitle
-                        ConstrainedBox(
-                          constraints: BoxConstraints(maxWidth: 200.w),
-                          child: Text(
-                            subtitle,
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              color: theme.textTheme.bodyMedium?.color
-                                  ?.withOpacity(0.7),
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                      ],
+        child: Padding(
+          padding: EdgeInsets.only(bottom: isLast ? 0 : 32.h),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title row
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                        height: 1.3,
+                      ),
                     ),
                   ),
+                  SizedBox(width: 8.w),
+                  if (completed)
+                    Icon(
+                      Icons.check, // no background
+                      size: 18.sp,
+                      color: AppColors.timelinePrimary,
+                    ),
+                  if (completed) SizedBox(width: 20.w),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16.sp,
+                    color: AppColors.textPrimary.withOpacity(0.8),
+                  ),
+                ],
+              ),
+              SizedBox(height: 15.h),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  color: index.isOdd
+                      ? const Color(0xFFEFE5FA)
+                      : AppColors.lightGrey,
+                  borderRadius: BorderRadius.circular(100.r),
                 ),
-              ],
-            ),
-          ],
+                child: Text(
+                  buttonLabel,
+                  style: TextStyle(
+                    color: AppColors.textPrimary.withOpacity(0.8),
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w600,
+                    height: 1.3,
+                    letterSpacing: -0.01 * 10,
+                  ),
+                ),
+              ),
+              SizedBox(height: 8.h),
+              // Subtitle
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: 200.w),
+                child: Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
