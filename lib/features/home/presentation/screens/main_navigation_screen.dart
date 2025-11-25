@@ -1,4 +1,5 @@
 import 'package:blue_leaf_guide/features/roadmap/presentation/screens/roadmap_screen.dart';
+import 'package:blue_leaf_guide/features/task/presentation/screens/task_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -21,7 +22,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     const HomeScreen(),
     const PlaceholderScreen(title: 'Explore'),
     RoadmapScreen(),
-    const PlaceholderScreen(title: 'Messages'),
+    TaskScreen(),
     // const PlaceholderScreen(title: 'Profile'),
     const PlaceholderScreen(title: 'AI Tutor'),
   ];
