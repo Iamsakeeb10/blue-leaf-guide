@@ -399,6 +399,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
     return false;
   }
 
+  // ignore: unused_element
   Widget _buildColorButtons() {
     return Column(
       children: [
@@ -573,93 +574,70 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
   }
 
   Widget _buildColorInitialScreen(VisualSection section, int sectionIndex) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Choose how you want to add your brand colors',
-          style: TextStyle(
-            fontSize: 14.sp,
-            color: AppColors.textPrimary.withOpacity(0.6),
-          ),
-        ),
-        SizedBox(height: 16.h),
-        // Color Palette Button
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: () =>
-                _handleColorSelection(section, sectionIndex, 'palette'),
-            icon: Icon(Icons.palette, size: 24.sp),
-            label: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Choose from Palette',
-                  style: TextStyle(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  'Select from curated color palettes',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
+    return Center(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Create your brand color',
+            style: TextStyle(
+              fontSize: 20.sp,
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
             ),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.brand500,
-              padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
-              side: BorderSide(color: AppColors.brand500, width: 2),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.r),
+          ),
+          SizedBox(height: 8.h),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 200.w,
+            ), // adjust max width as needed
+            child: Text(
+              'You can choose a color from the default palette. or create your own custom shade.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: AppColors.textPrimary.withOpacity(0.7),
+                fontWeight: FontWeight.w500,
               ),
-              alignment: Alignment.centerLeft,
             ),
           ),
-        ),
-        SizedBox(height: 12.h),
-        // Custom Color Button
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: () =>
-                _handleColorSelection(section, sectionIndex, 'custom'),
-            icon: Icon(Icons.color_lens, size: 24.sp),
-            label: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Custom Color',
-                  style: TextStyle(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  'Create your own color combination',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.brand500,
-              padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
-              side: BorderSide(color: AppColors.brand500, width: 2),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              alignment: Alignment.centerLeft,
+
+          SizedBox(height: 45.h),
+
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 34.w),
+            child: Button(
+              onPressed: () =>
+                  _handleColorSelection(section, sectionIndex, 'custom'),
+              text: 'Generate custom color',
+              height: 54.h,
+              borderRadius: BorderRadius.circular(32.r),
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w600,
+              textColor: Colors.white,
+              backgroundColor: AppColors.brand500,
             ),
           ),
-        ),
-      ],
+
+          SizedBox(height: 12.h),
+
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 34.w),
+            child: Button(
+              onPressed: () =>
+                  _handleColorSelection(section, sectionIndex, 'palette'),
+              text: 'Select form pallete',
+              height: 54.h,
+              borderRadius: BorderRadius.circular(32.r),
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w600,
+              textColor: AppColors.textPrimary,
+              backgroundColor: AppColors.textPrimary.withOpacity(0.05),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -772,60 +750,86 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
       child: Scaffold(
         appBar: CustomAppBar(title: widget.stepTitle, onBack: _handleBack),
         backgroundColor: Colors.white,
-        body: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(16.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _editableItem.title,
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    SizedBox(height: 24.h),
-                    ..._editableItem.sections.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final section = entry.value;
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            section.subtitle,
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary.withOpacity(0.7),
-                              height: 1.4,
-                            ),
-                          ),
-                          SizedBox(height: 12.h),
-                          _buildSectionContent(section, index),
-                          SizedBox(height: 24.h),
-                        ],
-                      );
-                    }).toList(),
-                  ],
-                ),
-              ),
-            ),
-            Container(
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(),
-              child: SafeArea(
+        body: Padding(
+          padding: EdgeInsets.all(16.w),
+          child: Column(
+            crossAxisAlignment: hasColorFeature
+                ? CrossAxisAlignment.center
+                : CrossAxisAlignment.start,
+            mainAxisAlignment: hasColorFeature
+                ? MainAxisAlignment.spaceBetween
+                : MainAxisAlignment.start,
+            children: [
+              // Scrollable content
+              Expanded(
                 child: hasColorFeature
-                    ? _buildColorButtons()
-                    : _buildTextOnlyButtons(),
+                    ? Center(
+                        child: SingleChildScrollView(
+                          child: _buildContentColumn(),
+                        ),
+                      )
+                    : SingleChildScrollView(child: _buildContentColumn()),
               ),
-            ),
-          ],
+
+              // Buttons
+              hasColorFeature ? SizedBox.shrink() : _buildTextOnlyButtons(),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  /// Extracted content column
+  Widget _buildContentColumn() {
+    return Column(
+      crossAxisAlignment: hasColorFeature
+          ? CrossAxisAlignment.center
+          : CrossAxisAlignment.start,
+      children: [
+        // Title
+        if (_editableItem.title != "Color Palette")
+          Text(
+            _editableItem.title,
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+            textAlign: hasColorFeature ? TextAlign.center : TextAlign.start,
+          ),
+
+        SizedBox(height: 24.h),
+
+        // Sections
+        ..._editableItem.sections.asMap().entries.map((entry) {
+          final index = entry.key;
+          final section = entry.value;
+          return Column(
+            crossAxisAlignment: hasColorFeature
+                ? CrossAxisAlignment.center
+                : CrossAxisAlignment.start,
+            children: [
+              if (_editableItem.title != "Color Palette")
+                Text(
+                  section.subtitle,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary.withOpacity(0.7),
+                    height: 1.4,
+                  ),
+                  textAlign: hasColorFeature
+                      ? TextAlign.center
+                      : TextAlign.start,
+                ),
+              SizedBox(height: 12.h),
+              _buildSectionContent(section, index),
+              SizedBox(height: 24.h),
+            ],
+          );
+        }).toList(),
+      ],
     );
   }
 }
