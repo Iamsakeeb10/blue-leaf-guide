@@ -404,46 +404,44 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
             section.userInputs = [value];
           });
         },
-        onEditingComplete: _saveItem,
       );
     } else if (section.fieldType == 'chips') {
-      return Wrap(
-        spacing: 8.w,
-        runSpacing: 8.h,
-        children: section.options.map((option) {
-          final isSelected = section.selectedOptions?.contains(option) ?? false;
-          return ChoiceChip(
-            label: Text(option),
-            selected: isSelected,
-            onSelected: (selected) {
-              setState(() {
-                if (selected) {
-                  section.selectedOptions ??= [];
-                  section.selectedOptions!.add(option);
-                } else {
-                  section.selectedOptions?.remove(option);
-                }
-              });
-              _saveItem();
-            },
-            selectedColor: AppColors.brand500,
-            backgroundColor: AppColors.neutral50.withOpacity(0.1),
-            labelStyle: TextStyle(
-              color: isSelected ? Colors.white : AppColors.textPrimary,
-              fontSize: 14.sp,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            ),
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20.r),
-              side: BorderSide(
-                color: isSelected
-                    ? AppColors.brand500
-                    : AppColors.neutral50.withOpacity(0.2),
+      return Container(
+        width: double.infinity,
+        child: Wrap(
+          spacing: 8.w,
+          runSpacing: 8.h,
+          children: section.options.map((option) {
+            final isSelected = section.userInputs.contains(option);
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  if (isSelected) {
+                    section.userInputs.remove(option);
+                  } else {
+                    section.userInputs.add(option);
+                  }
+                });
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xFFEFE5FA)
+                      : const Color(0xFF090F05).withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(100.r),
+                ),
+                child: Text(
+                  option,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: AppColors.textPrimary.withOpacity(0.7),
+                  ),
+                ),
               ),
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       );
     }
 
