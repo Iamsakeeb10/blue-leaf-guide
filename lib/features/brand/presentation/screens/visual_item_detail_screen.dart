@@ -241,9 +241,9 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
       } else if (section.isTextField && section.fieldType == 'text') {
         if (_controllers[i].text.trim().isEmpty) return false;
       } else if (section.fieldType == 'chips') {
-        // Check selectedOptions for chips
+        // Check if ALL options are selected
         if (section.selectedOptions == null ||
-            section.selectedOptions!.isEmpty) {
+            section.selectedOptions!.length != section.options.length) {
           return false;
         }
       }
@@ -322,7 +322,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
       }
 
       if (section.fieldType == 'chips') {
-        // Check selectedOptions for chips
+        // Allow saving with at least one selection
         if (section.selectedOptions != null &&
             section.selectedOptions!.isNotEmpty) {
           return true;
