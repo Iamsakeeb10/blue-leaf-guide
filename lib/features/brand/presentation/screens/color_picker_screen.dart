@@ -83,8 +83,8 @@ class _ColorPickerScreenState extends State<ColorPickerScreen> {
                       children: [
                         // Current color preview
                         Container(
-                          width: 60.w,
-                          height: 60.w,
+                          width: 45.w,
+                          height: 45.w,
                           decoration: BoxDecoration(
                             color: currentColor,
                             shape: BoxShape.circle,
@@ -97,8 +97,8 @@ class _ColorPickerScreenState extends State<ColorPickerScreen> {
                             clipBehavior: Clip.none,
                             children: [
                               Container(
-                                width: 60.w,
-                                height: 60.w,
+                                width: 45.w,
+                                height: 45.w,
                                 decoration: BoxDecoration(
                                   color: Color(int.parse('0xff$colorHex')),
                                   shape: BoxShape.circle,
@@ -137,8 +137,8 @@ class _ColorPickerScreenState extends State<ColorPickerScreen> {
                           GestureDetector(
                             onTap: _addColor,
                             child: Container(
-                              width: 60.w,
-                              height: 60.w,
+                              width: 45.w,
+                              height: 45.w,
                               decoration: BoxDecoration(
                                 color: AppColors.textPrimary.withOpacity(0.05),
                                 shape: BoxShape.circle,
