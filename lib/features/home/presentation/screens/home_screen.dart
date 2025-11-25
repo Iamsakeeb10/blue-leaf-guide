@@ -8,7 +8,7 @@ import 'package:provider/provider.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../roadmap/presentation/screens/roadmap_screen.dart';
-import '../../../task/presentation/screens/daily_task_screen.dart';
+import '../../../task/presentation/screens/firestore_data_uploader.dart';
 import '../../data/client_service.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -207,7 +207,12 @@ class HomeScreen extends StatelessWidget {
                       //   );
                       // }
 
-                      await uploadStandaloneTemplateToFirestore();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const FirestoreDataUploader(),
+                        ),
+                      );
                     },
                   ),
                 ],
