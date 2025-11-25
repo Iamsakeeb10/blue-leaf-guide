@@ -47,6 +47,8 @@ class _ColorPickerScreenState extends State<ColorPickerScreen> {
     });
   }
 
+  Color currentColors = Colors.red;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,19 +63,19 @@ class _ColorPickerScreenState extends State<ColorPickerScreen> {
                 child: Column(
                   children: [
                     SizedBox(height: 24.h),
-                    ColorPicker(
-                      pickerColor: currentColor,
-                      onColorChanged: (color) {
+                    SizedBox(
+                      width: 254.w, // or double.infinity
+                      height: 254.w, // controls the wheel size
+                      child: ColorPickerArea(HSVColor.fromColor(currentColor), (
+                        HSVColor hsvColor,
+                      ) {
                         setState(() {
-                          currentColor = color;
+                          currentColor = hsvColor.toColor();
                         });
-                      },
-                      paletteType: PaletteType.hueWheel,
-                      enableAlpha: false,
-                      labelTypes: [],
-                      pickerAreaHeightPercent: 0.8,
+                      }, PaletteType.hueWheel),
                     ),
-                    SizedBox(height: 32.h),
+
+                    SizedBox(height: 48.h),
 
                     // Color preview section with selected colors
                     Wrap(
@@ -102,10 +104,6 @@ class _ColorPickerScreenState extends State<ColorPickerScreen> {
                                 decoration: BoxDecoration(
                                   color: Color(int.parse('0xff$colorHex')),
                                   shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: AppColors.neutral50.withOpacity(0.3),
-                                    width: 2,
-                                  ),
                                 ),
                               ),
                               Positioned(
