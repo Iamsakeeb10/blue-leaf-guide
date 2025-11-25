@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../shared/widgets/custom_segment_tab.dart';
 import '../../../../shared/widgets/custom_title_subtitle_appbar.dart';
@@ -27,18 +28,35 @@ class _TaskScreenState extends State<TaskScreen>
     "Track your monthly goals",
   ];
 
+  // Update your initState and listener:
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: tabs.length, vsync: this);
     _tabController.addListener(() {
-      if (_tabController.indexIsChanging)
-        return; // wait for animation to finish
+      if (_tabController.indexIsChanging) return;
       setState(() {
-        title = tabs[_tabController.index];
-        subtitle = subtitles[_tabController.index];
+        _updateTitleSubtitle(_tabController.index);
       });
     });
+  }
+
+  // Add this method:
+  void _updateTitleSubtitle(int index) {
+    switch (index) {
+      case 0: // Daily Task
+        title = "Tasks & Goals";
+        subtitle = "Track your daily activities and monthly goals";
+        break;
+      case 1: // Check-in
+        title = "Daily Check-in";
+        subtitle = DateFormat('EEEE, MMMM dd, yyyy').format(DateTime.now());
+        break;
+      case 2: // Monthly Goal
+        title = "Tasks & Goals";
+        subtitle = "Track your daily activities and monthly goals";
+        break;
+    }
   }
 
   @override

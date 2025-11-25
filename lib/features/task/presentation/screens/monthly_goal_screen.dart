@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
@@ -69,25 +70,48 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
     await showDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(
-            'Add New Goal',
-            style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
+        builder: (context, setDialogState) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.symmetric(horizontal: 20.w),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(36.r),
           ),
-          content: SingleChildScrollView(
+          child: Container(
+            padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20.r),
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                /// Title
                 Text(
-                  'Goal Name',
+                  'Add New Goal',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary.withOpacity(0.7),
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 20.h),
+
+                /// Goal Name Label
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Goal Name',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary.withOpacity(0.7),
+                    ),
                   ),
                 ),
                 SizedBox(height: 8.h),
+
+                /// Dropdown
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -130,54 +154,74 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
                   ),
                 ),
                 SizedBox(height: 16.h),
+
+                /// Target Number Field
                 CustomTextField.TextField(
                   controller: targetController,
                   label: 'Target Number',
                   hint: 'Enter target',
                   keyboardType: TextInputType.number,
                 ),
+                SizedBox(height: 20.h),
+
+                /// Save Button
+                Button(
+                  onPressed: () async {
+                    if (selectedTemplateId == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please select a goal')),
+                      );
+                      return;
+                    }
+
+                    final target = int.tryParse(targetController.text);
+                    if (target == null || target <= 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please enter a valid target number'),
+                        ),
+                      );
+                      return;
+                    }
+
+                    Navigator.pop(context, true);
+                    await _addGoal(selectedTemplateId!, target);
+                  },
+                  text: 'Save',
+                  height: 54.h,
+                  borderRadius: BorderRadius.circular(32.r),
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w600,
+                  textColor: Colors.white,
+                  backgroundColor: AppColors.brand500,
+                ),
+                SizedBox(height: 12.h),
+
+                /// Cancel Button
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(32.r),
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                    ),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                        color: AppColors.textPrimary.withOpacity(0.5),
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(
-                'Cancel',
-                style: TextStyle(color: AppColors.textPrimary.withOpacity(0.6)),
-              ),
-            ),
-            Button(
-              onPressed: () async {
-                if (selectedTemplateId == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please select a goal')),
-                  );
-                  return;
-                }
-
-                final target = int.tryParse(targetController.text);
-                if (target == null || target <= 0) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please enter a valid target number'),
-                    ),
-                  );
-                  return;
-                }
-
-                Navigator.pop(context, true);
-                await _addGoal(selectedTemplateId!, target);
-              },
-              text: 'Save',
-              height: 44.h,
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              textColor: Colors.white,
-              backgroundColor: AppColors.brand500,
-              borderRadius: BorderRadius.circular(24.r),
-            ),
-          ],
         ),
       ),
     );
@@ -230,64 +274,108 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
 
     await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'Edit Goal',
-          style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.symmetric(horizontal: 20.w),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(36.r),
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Goal: $currentTitle',
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary.withOpacity(0.7),
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20.r),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              /// Title
+              Text(
+                'Edit Goal',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
               ),
-            ),
-            SizedBox(height: 16.h),
-            CustomTextField.TextField(
-              controller: targetController,
-              label: 'Target Number',
-              hint: 'Enter target',
-              keyboardType: TextInputType.number,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.textPrimary.withOpacity(0.6)),
-            ),
-          ),
-          Button(
-            onPressed: () async {
-              final target = int.tryParse(targetController.text);
-              if (target == null || target <= 0) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Please enter a valid target number'),
-                  ),
-                );
-                return;
-              }
+              SizedBox(height: 12.h),
 
-              Navigator.pop(context, true);
-              await _updateGoal(goalId, target);
-            },
-            text: 'Save',
-            height: 44.h,
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w600,
-            textColor: Colors.white,
-            backgroundColor: AppColors.brand500,
-            borderRadius: BorderRadius.circular(24.r),
+              /// Subtitle (Goal Name)
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: 280.w),
+                child: Text(
+                  'Goal: $currentTitle',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textPrimary.withOpacity(0.7),
+                  ),
+                ),
+              ),
+              SizedBox(height: 20.h),
+
+              /// Target Number Field
+              CustomTextField.TextField(
+                controller: targetController,
+                label: 'Target Number',
+                hint: 'Enter target',
+                keyboardType: TextInputType.number,
+              ),
+              SizedBox(height: 20.h),
+
+              /// Save Button
+              Button(
+                onPressed: () async {
+                  final target = int.tryParse(targetController.text);
+                  if (target == null || target <= 0) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please enter a valid target number'),
+                      ),
+                    );
+                    return;
+                  }
+
+                  Navigator.pop(context, true);
+                  await _updateGoal(goalId, target);
+                },
+                text: 'Save',
+                height: 54.h,
+                borderRadius: BorderRadius.circular(32.r),
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w600,
+                textColor: Colors.white,
+                backgroundColor: AppColors.brand500,
+              ),
+              SizedBox(height: 12.h),
+
+              /// Cancel Button
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(32.r),
+                    ),
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                  ),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: AppColors.textPrimary.withOpacity(0.5),
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -714,78 +802,152 @@ class _MonthYearPickerDialogState extends State<_MonthYearPickerDialog> {
       'December',
     ];
 
-    return AlertDialog(
-      title: Text(
-        'Select Month & Year',
-        style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          DropdownButtonFormField<int>(
-            value: selectedYear,
-            decoration: InputDecoration(
-              labelText: 'Year',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.r),
+    return Dialog(
+      backgroundColor: Colors.white,
+      insetPadding: EdgeInsets.symmetric(horizontal: 20.w),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+      child: Container(
+        height: 320.h,
+        padding: EdgeInsets.symmetric(vertical: 16.h),
+        child: Column(
+          children: [
+            Text(
+              "Select Month & Year",
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
               ),
             ),
-            items: years.map((year) {
-              return DropdownMenuItem(
-                value: year,
-                child: Text(year.toString()),
-              );
-            }).toList(),
-            onChanged: (value) {
-              setState(() {
-                selectedYear = value!;
-              });
-            },
-          ),
-          SizedBox(height: 16.h),
-          DropdownButtonFormField<int>(
-            value: selectedMonth,
-            decoration: InputDecoration(
-              labelText: 'Month',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.r),
+            SizedBox(height: 12.h),
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                margin: EdgeInsets.symmetric(horizontal: 12.w),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14.r),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    /// MONTH PICKER
+                    SizedBox(
+                      width: 120.w,
+                      child: CupertinoPicker(
+                        itemExtent: 32.h,
+                        scrollController: FixedExtentScrollController(
+                          initialItem: selectedMonth - 1,
+                        ),
+                        onSelectedItemChanged: (index) {
+                          setState(() {
+                            selectedMonth = index + 1;
+                          });
+                        },
+                        children: months.map((month) {
+                          return Center(
+                            child: Text(
+                              month,
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    Text(
+                      ":",
+                      style: TextStyle(
+                        fontSize: 22.sp,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+
+                    /// YEAR PICKER
+                    SizedBox(
+                      width: 80.w,
+                      child: CupertinoPicker(
+                        itemExtent: 32.h,
+                        scrollController: FixedExtentScrollController(
+                          initialItem: years.indexOf(selectedYear),
+                        ),
+                        onSelectedItemChanged: (index) {
+                          setState(() {
+                            selectedYear = years[index];
+                          });
+                        },
+                        children: years.map((year) {
+                          return Center(
+                            child: Text(
+                              year.toString(),
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            items: List.generate(12, (index) {
-              return DropdownMenuItem(
-                value: index + 1,
-                child: Text(months[index]),
-              );
-            }).toList(),
-            onChanged: (value) {
-              setState(() {
-                selectedMonth = value!;
-              });
-            },
-          ),
-        ],
+            SizedBox(height: 10.h),
+            Padding(
+              padding: EdgeInsets.only(left: 16.w, right: 16.w, top: 12.h),
+              child: Column(
+                children: [
+                  Button(
+                    onPressed: () {
+                      Navigator.pop(
+                        context,
+                        DateTime(selectedYear, selectedMonth),
+                      );
+                    },
+                    text: 'View Month Goal',
+                    height: 54.h,
+                    borderRadius: BorderRadius.circular(32.r),
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                    textColor: Colors.white,
+                    backgroundColor: AppColors.brand500,
+                  ),
+                  SizedBox(height: 12.h),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(32.r),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 14.h),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: AppColors.textPrimary.withOpacity(0.5),
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(
-            'Cancel',
-            style: TextStyle(color: AppColors.textPrimary.withOpacity(0.6)),
-          ),
-        ),
-        Button(
-          onPressed: () {
-            Navigator.pop(context, DateTime(selectedYear, selectedMonth));
-          },
-          text: 'Apply',
-          height: 44.h,
-          fontSize: 14.sp,
-          fontWeight: FontWeight.w600,
-          textColor: Colors.white,
-          backgroundColor: AppColors.brand500,
-          borderRadius: BorderRadius.circular(24.r),
-        ),
-      ],
     );
   }
 }
