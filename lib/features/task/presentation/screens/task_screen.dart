@@ -3,6 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../shared/widgets/custom_segment_tab.dart';
 import '../../../../shared/widgets/custom_title_subtitle_appbar.dart';
+import 'check_in_screen.dart';
+import 'daily_task_screen.dart';
+import 'monthly_goal_screen.dart';
 
 class TaskScreen extends StatefulWidget {
   const TaskScreen({super.key});
@@ -14,8 +17,8 @@ class TaskScreen extends StatefulWidget {
 class _TaskScreenState extends State<TaskScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  String title = "Daily Task";
-  String subtitle = "Manage your daily tasks";
+  String title = "Tasks & Goals";
+  String subtitle = "Track your daily activities and monthly goals";
 
   final List<String> tabs = ["Daily Task", "Check-in", "Monthly Goal"];
   final List<String> subtitles = [
@@ -58,9 +61,9 @@ class _TaskScreenState extends State<TaskScreen>
               child: CustomSegmentTab(
                 tabs: tabs,
                 tabViews: [
-                  Center(child: Text("Daily Task Content")),
-                  Center(child: Text("Check-in Content")),
-                  Center(child: Text("Monthly Goal Content")),
+                  DailyTaskScreen(),
+                  CheckInScreen(),
+                  MonthlyGoalScreen(),
                 ],
                 // Pass the same TabController so we can listen for index changes
                 controller: _tabController,
