@@ -29,6 +29,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
   final VisualService _visualService = VisualService();
   bool _isSaving = false;
   late List<TextEditingController> _controllers;
+  // ignore: unused_field
   String? _colorSelectionSource; // 'palette' or 'custom'
 
   @override
@@ -252,6 +253,115 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
     }
   }
 
+  // returns true when any section requires color picking
+  bool get hasColorFeature {
+    return widget.item.sections.any((section) => section.fieldType == 'color');
+  }
+
+  bool _isSaveEnabled() {
+    // Example: require at least one non-empty user input across sections
+    for (var section in widget.item.sections) {
+      if (section.fieldType == 'color') continue;
+      if (section.isTextField &&
+          (section.userInputs.isNotEmpty &&
+              section.userInputs.first.isNotEmpty))
+        return true;
+      if (section.fieldType == 'chips' &&
+          (section.selectedOptions?.isNotEmpty ?? false))
+        return true;
+    }
+    return false;
+  }
+
+  Widget _buildColorButtons() {
+    return Column(
+      children: [
+        Button(
+          onPressed: _isCompleteButtonEnabled() && !_isSaving
+              ? _markAsComplete
+              : null,
+          text: _isSaving
+              ? 'Saving...'
+              : widget.item.isCompleted
+              ? 'Completed ✓'
+              : 'Mark as Complete',
+          height: 54.h,
+          borderRadius: BorderRadius.circular(32.r),
+          fontSize: 15.sp,
+          fontWeight: FontWeight.w600,
+          textColor: Colors.white,
+          backgroundColor: _isCompleteButtonEnabled() && !_isSaving
+              ? AppColors.brand500
+              : AppColors.brand500.withOpacity(0.3),
+        ),
+        SizedBox(height: 12.h),
+        SizedBox(
+          width: double.infinity,
+          child: TextButton(
+            onPressed: () => context.pop(widget.item),
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(32.r),
+              ),
+              padding: EdgeInsets.symmetric(vertical: 14.h),
+            ),
+            child: Text(
+              'Go Back',
+              style: TextStyle(
+                color: AppColors.textPrimary.withOpacity(0.5),
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextOnlyButtons() {
+    return Column(
+      children: [
+        Button(
+          onPressed: !_isSaving && _isSaveEnabled() ? _saveItem : null,
+          backgroundColor: _isSaveEnabled() && !_isSaving
+              ? AppColors.brand500
+              : AppColors.brand500.withOpacity(0.3),
+
+          text: _isSaving ? "Saving..." : "Save",
+          height: 54.h,
+          borderRadius: BorderRadius.circular(32.r),
+          fontSize: 15.sp,
+          fontWeight: FontWeight.w600,
+          textColor: Colors.white,
+        ),
+        SizedBox(height: 12.h),
+        SizedBox(
+          width: double.infinity,
+          child: TextButton(
+            onPressed: () => context.pop(widget.item),
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(32.r),
+              ),
+              padding: EdgeInsets.symmetric(vertical: 14.h),
+            ),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: AppColors.textPrimary.withOpacity(0.5),
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildSectionContent(VisualSection section, int sectionIndex) {
     if (section.fieldType == 'color') {
       // Show result screen if colors are selected
@@ -266,27 +376,28 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
         decoration: InputDecoration(
           hintText: section.hintText ?? 'Enter ${section.subtitle}',
           hintStyle: TextStyle(
-            color: AppColors.textPrimary.withOpacity(0.4),
-            fontSize: 14.sp,
+            fontSize: 12.sp,
+            color: AppColors.textPrimary.withOpacity(0.3),
+            fontWeight: FontWeight.w500,
           ),
           filled: true,
-          fillColor: AppColors.neutral50.withOpacity(0.1),
+          fillColor: Colors.white,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),
             borderSide: BorderSide(color: AppColors.neutral50.withOpacity(0.2)),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12.r),
-            borderSide: BorderSide(color: AppColors.neutral50.withOpacity(0.2)),
+            borderRadius: BorderRadius.circular(100.r),
+            borderSide: BorderSide(
+              color: AppColors.neutral50.withOpacity(0.05),
+              width: 1,
+            ),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12.r),
-            borderSide: BorderSide(color: AppColors.brand500, width: 2),
+            borderRadius: BorderRadius.circular(100.r),
+            borderSide: BorderSide(color: AppColors.brand500, width: 1.5),
           ),
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 16.w,
-            vertical: 14.h,
-          ),
+          contentPadding: EdgeInsets.all(14.w),
         ),
         onChanged: (value) {
           setState(() {
@@ -550,8 +661,8 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
                     Text(
                       widget.item.title,
                       style: TextStyle(
-                        fontSize: 24.sp,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
                     ),
@@ -565,9 +676,10 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
                           Text(
                             section.subtitle,
                             style: TextStyle(
-                              fontSize: 16.sp,
+                              fontSize: 14.sp,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                              color: AppColors.textPrimary.withOpacity(0.7),
+                              height: 1.4,
                             ),
                           ),
                           SizedBox(height: 12.h),
@@ -582,61 +694,11 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
             ),
             Container(
               padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: Offset(0, -5),
-                  ),
-                ],
-              ),
+              decoration: BoxDecoration(),
               child: SafeArea(
-                child: Column(
-                  children: [
-                    Button(
-                      onPressed: _isCompleteButtonEnabled() && !_isSaving
-                          ? _markAsComplete
-                          : null,
-                      text: _isSaving
-                          ? 'Saving...'
-                          : widget.item.isCompleted
-                          ? 'Completed ✓'
-                          : 'Mark as Complete',
-                      height: 54.h,
-                      borderRadius: BorderRadius.circular(32.r),
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w600,
-                      textColor: Colors.white,
-                      backgroundColor: _isCompleteButtonEnabled() && !_isSaving
-                          ? AppColors.brand500
-                          : AppColors.brand500.withOpacity(0.3),
-                    ),
-                    SizedBox(height: 12.h),
-                    SizedBox(
-                      width: double.infinity,
-                      child: TextButton(
-                        onPressed: () => context.pop(widget.item),
-                        style: TextButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(32.r),
-                          ),
-                          padding: EdgeInsets.symmetric(vertical: 14.h),
-                        ),
-                        child: Text(
-                          'Go Back',
-                          style: TextStyle(
-                            color: AppColors.textPrimary.withOpacity(0.5),
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                child: hasColorFeature
+                    ? _buildColorButtons()
+                    : _buildTextOnlyButtons(),
               ),
             ),
           ],
