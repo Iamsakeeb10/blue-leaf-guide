@@ -56,7 +56,7 @@ class _ColorPickerScreenState extends State<ColorPickerScreen> {
         padding: EdgeInsets.all(16.w),
         child: Column(
           children: [
-            Expanded(
+            Center(
               child: SingleChildScrollView(
                 child: Column(
                   children: [
@@ -75,67 +75,24 @@ class _ColorPickerScreenState extends State<ColorPickerScreen> {
                     ),
                     SizedBox(height: 32.h),
 
-                    // Color preview section
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    // Color preview section with selected colors
+                    Wrap(
+                      spacing: 12.w,
+                      runSpacing: 12.h,
+                      alignment: WrapAlignment.center,
                       children: [
                         // Current color preview
                         Container(
-                          width: 70.w,
-                          height: 70.w,
+                          width: 60.w,
+                          height: 60.w,
                           decoration: BoxDecoration(
                             color: currentColor,
                             shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.neutral50.withOpacity(0.3),
-                              width: 2,
-                            ),
                           ),
                         ),
 
-                        if (selectedColors.length < 4) ...[
-                          SizedBox(width: 16.w),
-                          GestureDetector(
-                            onTap: _addColor,
-                            child: Container(
-                              width: 50.w,
-                              height: 50.w,
-                              decoration: BoxDecoration(
-                                color: AppColors.brand500.withOpacity(0.1),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: AppColors.brand500,
-                                  width: 2,
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.add,
-                                color: AppColors.brand500,
-                                size: 24.sp,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-
-                    SizedBox(height: 24.h),
-
-                    // Selected colors
-                    if (selectedColors.isNotEmpty) ...[
-                      Text(
-                        'Selected Colors (${selectedColors.length}/4)',
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary.withOpacity(0.7),
-                        ),
-                      ),
-                      SizedBox(height: 12.h),
-                      Wrap(
-                        spacing: 12.w,
-                        runSpacing: 12.h,
-                        children: selectedColors.map((colorHex) {
+                        // Selected colors with remove button
+                        ...selectedColors.map((colorHex) {
                           return Stack(
                             clipBehavior: Clip.none,
                             children: [
@@ -174,9 +131,29 @@ class _ColorPickerScreenState extends State<ColorPickerScreen> {
                             ],
                           );
                         }).toList(),
-                      ),
-                      SizedBox(height: 24.h),
-                    ],
+
+                        // Add button
+                        if (selectedColors.length < 4)
+                          GestureDetector(
+                            onTap: _addColor,
+                            child: Container(
+                              width: 60.w,
+                              height: 60.w,
+                              decoration: BoxDecoration(
+                                color: AppColors.textPrimary.withOpacity(0.05),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.add,
+                                color: AppColors.textPrimary,
+                                size: 24.sp,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+
+                    SizedBox(height: 24.h),
                   ],
                 ),
               ),
