@@ -85,7 +85,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
   }
 
   void _handleBack() {
-    context.pop(widget.item); // Return original item without changes
+    context.pop(_editableItem); // Return updated item instead of original
   }
 
   Future<void> _handleColorSelection(
@@ -120,7 +120,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
         _colorSelectionSource = source;
         _editableItem.isCompleted = true;
       });
-      await _saveItem();
+      await _saveItem(shouldPop: false);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -166,7 +166,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
         _colorSelectionSource = null;
         _editableItem.isCompleted = false;
       });
-      await _saveItem();
+      await _saveItem(shouldPop: false);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -180,7 +180,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
     }
   }
 
-  Future<void> _saveItem() async {
+  Future<void> _saveItem({bool shouldPop = true}) async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return;
 
@@ -207,6 +207,11 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
         _editableItem,
       );
       if (success && mounted) {
+        // Reload fresh data from Firestore if not popping
+        if (!shouldPop) {
+          await _reloadItemFromFirestore();
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Saved successfully'),
@@ -214,7 +219,9 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
             duration: Duration(seconds: 2),
           ),
         );
-        context.pop(_editableItem);
+        if (shouldPop) {
+          context.pop(_editableItem);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -229,6 +236,65 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
       if (mounted) {
         setState(() => _isSaving = false);
       }
+    }
+  }
+
+  Future<void> _reloadItemFromFirestore() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+
+    try {
+      final freshItem = await _visualService.getVisualItem(
+        userId,
+        _editableItem.id,
+      );
+      if (freshItem != null && mounted) {
+        setState(() {
+          _editableItem = VisualItem(
+            id: freshItem.id,
+            title: freshItem.title,
+            isCompleted: freshItem.isCompleted,
+            sections: freshItem.sections
+                .map(
+                  (section) => VisualSection(
+                    subtitle: section.subtitle,
+                    options: List<String>.from(section.options),
+                    isTextField: section.isTextField,
+                    fieldType: section.fieldType,
+                    hintText: section.hintText,
+                    userInputs: List<String>.from(section.userInputs),
+                    selectedOptions: section.selectedOptions != null
+                        ? List<String>.from(section.selectedOptions!)
+                        : null,
+                  ),
+                )
+                .toList(),
+          );
+
+          // Update controllers with fresh data
+          for (int i = 0; i < _editableItem.sections.length; i++) {
+            final section = _editableItem.sections[i];
+            if (section.isTextField && i < _controllers.length) {
+              _controllers[i].text = section.userInputs.isNotEmpty
+                  ? section.userInputs.first
+                  : '';
+            }
+          }
+
+          // Update color selection source
+          for (var section in _editableItem.sections) {
+            if (section.fieldType == 'color' && section.userInputs.isNotEmpty) {
+              _colorSelectionSource =
+                  section.selectedOptions?.isNotEmpty == true
+                  ? section.selectedOptions!.first
+                  : 'custom';
+              break;
+            }
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error reloading item: $e');
     }
   }
 
@@ -358,7 +424,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
         SizedBox(
           width: double.infinity,
           child: TextButton(
-            onPressed: () => context.pop(widget.item), // Return original item
+            onPressed: () => context.pop(_editableItem), // Return original item
             style: TextButton.styleFrom(
               backgroundColor: Colors.transparent,
               shape: RoundedRectangleBorder(
@@ -399,7 +465,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
         SizedBox(
           width: double.infinity,
           child: TextButton(
-            onPressed: () => context.pop(widget.item), // Return original item
+            onPressed: () => context.pop(_editableItem), // Return original item
             style: TextButton.styleFrom(
               backgroundColor: Colors.transparent,
               shape: RoundedRectangleBorder(
@@ -700,7 +766,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
       canPop: false,
       onPopInvoked: (didPop) {
         if (!didPop) {
-          _handleBack();
+          context.pop(_editableItem);
         }
       },
       child: Scaffold(
