@@ -92,6 +92,27 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
     return true;
   }
 
+  bool _isStepCompleted(StrategyItem item) {
+    // Branding Basics step is optional (always considered completed)
+    if (item.id == "branding_basics") return true;
+
+    for (var section in item.sections) {
+      if (section.isTextField) {
+        if (section.fieldType == 'chips') {
+          // Chip sections require at least one selected option
+          if (section.userInputs.isEmpty) return false;
+        } else {
+          // TextFields: must not be empty or contain empty element
+          if (section.userInputs.isEmpty ||
+              section.userInputs.any((value) => value.trim().isEmpty)) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
+
   Future<void> _saveItem() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) {
@@ -103,7 +124,8 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
 
     setState(() => _isSaving = true);
 
-    editableItem.isCompleted = canSave();
+    // editableItem.isCompleted = canSave();
+    editableItem.isCompleted = _isStepCompleted(editableItem);
 
     final success = await _strategyService.saveStrategyItem(
       userId,

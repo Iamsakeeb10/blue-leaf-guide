@@ -300,9 +300,9 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
       } else if (section.isTextField && section.fieldType == 'text') {
         if (_controllers[i].text.trim().isEmpty) return false;
       } else if (section.fieldType == 'chips') {
-        // Check if ALL options are selected
+        // ✅ At least one chip must be selected
         if (section.selectedOptions == null ||
-            section.selectedOptions!.length != section.options.length) {
+            section.selectedOptions!.isEmpty) {
           return false;
         }
       }

@@ -8,6 +8,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/button.dart';
 import '../../../../shared/widgets/profile_list_item.dart';
 import '../../data/marketing_service.dart';
+import '../../data/planning_service.dart';
 import '../../data/strategy_service.dart';
 import '../../data/visual_service.dart';
 import '../../models/marketing_item.dart';
@@ -33,11 +34,17 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
   int currentStep = 1;
   final StrategyService _strategyService = StrategyService();
   final MarketingService _marketingService = MarketingService();
+  final PlanningService _planningService = PlanningService();
 
   List<StrategyItem> strategyItems = [];
   List<MarketingItem> marketingItems = [];
   final VisualService _visualService = VisualService();
   List<VisualItem> visualItems = [];
+
+  // Planning data
+  List<bool> planningMonth1 = [false, false, false];
+  List<bool> planningMonth2 = [false, false, false];
+  List<bool> planningMonth3 = [false, false, false, false];
 
   bool _isLoading = true;
 
@@ -76,6 +83,33 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
     _loadData();
   }
 
+  /// Call after updating lists to auto-advance when the current step is fully completed.
+  void _maybeAdvanceStep() {
+    if (!mounted) return;
+
+    if (currentStep == 1) {
+      final allDone =
+          strategyItems.isNotEmpty && strategyItems.every((s) => s.isCompleted);
+      if (allDone && currentStep < stepData.length) {
+        setState(() => currentStep = 2);
+      }
+    } else if (currentStep == 2) {
+      final allDone =
+          visualItems.isNotEmpty && visualItems.every((v) => v.isCompleted);
+      if (allDone && currentStep < stepData.length) {
+        setState(() => currentStep = 3);
+      }
+    } else if (currentStep == 3) {
+      final allDone =
+          marketingItems.isNotEmpty &&
+          marketingItems.every((m) => m.isCompleted);
+      if (allDone) {
+        // go to Planning (step 4)
+        context.push('/planning');
+      }
+    }
+  }
+
   Future<void> _loadData() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) {
@@ -87,16 +121,57 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
       final strategy = await _strategyService.getUserStrategyItems(userId);
       final marketing = await _marketingService.getUserMarketingItems(userId);
       final visual = await _visualService.getUserVisualItems(userId);
+      final planning = await _planningService.getPlanningData(userId);
 
       setState(() {
         strategyItems = strategy;
         marketingItems = marketing;
         visualItems = visual;
+        planningMonth1 = planning['month1'] ?? [false, false, false];
+        planningMonth2 = planning['month2'] ?? [false, false, false];
+        planningMonth3 = planning['month3'] ?? [false, false, false, false];
         _isLoading = false;
       });
     } catch (e) {
       print('Error loading data: $e');
       setState(() => _isLoading = false);
+    }
+  }
+
+  bool _isStepCompleted(int stepNumber) {
+    // Step numbers are 1-based
+    switch (stepNumber) {
+      case 1: // Strategy
+        return strategyItems.isNotEmpty &&
+            strategyItems.every((item) => item.isCompleted);
+      case 2: // Visual
+        return visualItems.isNotEmpty &&
+            visualItems.every((item) => item.isCompleted);
+      case 3: // Marketing
+        return marketingItems.isNotEmpty &&
+            marketingItems.every((item) => item.isCompleted);
+      case 4: // Planning - check if all checkboxes are completed
+        return _planningService.isAllCheckboxesCompleted(
+          planningMonth1,
+          planningMonth2,
+          planningMonth3,
+        );
+      default:
+        return false;
+    }
+  }
+
+  /// Navigate to planning screen and handle the returned data
+  Future<void> _navigateToPlanning() async {
+    final result = await context.push<Map<String, List<bool>>>('/planning');
+
+    // If planning data was returned, update local state and refresh stepper
+    if (result != null && mounted) {
+      setState(() {
+        planningMonth1 = result['month1'] ?? planningMonth1;
+        planningMonth2 = result['month2'] ?? planningMonth2;
+        planningMonth3 = result['month3'] ?? planningMonth3;
+      });
     }
   }
 
@@ -131,14 +206,41 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                 currentStep: currentStep,
                 totalSteps: stepData.length,
                 titles: stepData.map((d) => d.title).toList(),
-                onStepTap: (index) {
-                  if (index == 4) {
-                    // Navigate to PlanningScreen when step 4 is tapped
-                    context.push('/planning');
-                  } else {
+                completedSteps: [
+                  _isStepCompleted(1),
+                  _isStepCompleted(2),
+                  _isStepCompleted(3),
+                  _isStepCompleted(4),
+                ],
+                onStepTap: (stepNumber) {
+                  // Allow going back to any previous step
+                  if (stepNumber < currentStep) {
                     setState(() {
-                      currentStep = index;
+                      currentStep = stepNumber;
                     });
+                  } else if (stepNumber == currentStep) {
+                    // Already on this step, do nothing
+                    return;
+                  } else {
+                    // Going forward: check if current step is completed
+                    if (_isStepCompleted(currentStep)) {
+                      if (stepNumber == 4) {
+                        _navigateToPlanning();
+                      } else {
+                        setState(() {
+                          currentStep = stepNumber;
+                        });
+                      }
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Please complete all items in the current step first.',
+                          ),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
                   }
                 },
               ),
@@ -160,25 +262,29 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                       title: currentItems[index],
                       showCheckmark: item?.isCompleted ?? false,
                       onTap: () async {
-                        if (item != null) {
-                          final updatedItem = await context.push<StrategyItem>(
-                            '/strategy_item/${item.id}',
-                            extra: {
-                              'item': item,
-                              'stepTitle': stepData[currentStep - 1].title,
-                            },
-                          );
+                        if (item == null) return;
 
-                          if (updatedItem != null) {
-                            setState(() {
-                              final itemIndex = strategyItems.indexWhere(
-                                (e) => e.id == updatedItem.id,
-                              );
-                              if (itemIndex != -1) {
-                                strategyItems[itemIndex] = updatedItem;
-                              }
-                            });
-                          }
+                        final updatedItem = await context.push<StrategyItem>(
+                          '/strategy_item/${item.id}',
+                          extra: {
+                            'item': item,
+                            'stepTitle': stepData[currentStep - 1].title,
+                          },
+                        );
+
+                        // If the detail screen returned an updated item (user saved / popped with updated model)
+                        if (updatedItem != null && mounted) {
+                          setState(() {
+                            final itemIndex = strategyItems.indexWhere(
+                              (e) => e.id == updatedItem.id,
+                            );
+                            if (itemIndex != -1) {
+                              strategyItems[itemIndex] = updatedItem;
+                            }
+                          });
+
+                          // Try to advance step if all items are completed now
+                          _maybeAdvanceStep();
                         }
                       },
                     );
@@ -268,8 +374,20 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                 Button(
                   onPressed: () {
                     if (currentStep < stepData.length) {
+                      if (!_isStepCompleted(currentStep)) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Please complete all items in the current step first.',
+                            ),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                        return;
+                      }
+
                       if (currentStep == 3) {
-                        context.push('/planning');
+                        _navigateToPlanning();
                       } else {
                         setState(() {
                           currentStep++;
@@ -285,9 +403,9 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                   fontSize: 15.sp,
                   fontWeight: FontWeight.w600,
                   textColor: Colors.white,
-                  backgroundColor: currentStep == stepData.length
+                  backgroundColor: _isStepCompleted(currentStep)
                       ? AppColors.brand500
-                      : AppColors.brand500.withOpacity(0.1),
+                      : AppColors.brand500.withOpacity(0.3),
                 ),
                 SizedBox(height: 12.h),
                 SizedBox(
@@ -297,7 +415,7 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                       if (currentStep < stepData.length) {
                         if (currentStep == 3) {
                           // Navigate to planning when moving from step 3 to step 4
-                          context.push('/planning');
+                          _navigateToPlanning();
                         } else {
                           setState(() {
                             currentStep++;

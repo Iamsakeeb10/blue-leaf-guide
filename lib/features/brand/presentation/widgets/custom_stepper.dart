@@ -110,8 +110,17 @@ class CustomStepper extends StatelessWidget {
                           child = null;
                         }
 
+                        // Determine if step is clickable
+                        final canClickStep =
+                            stepNumber < currentStep ||
+                            stepNumber == currentStep ||
+                            (stepNumber == currentStep + 1 &&
+                                isCompleted(currentStep - 1));
+
                         return GestureDetector(
-                          onTap: () => onStepTap?.call(stepNumber),
+                          onTap: canClickStep
+                              ? () => onStepTap?.call(stepNumber)
+                              : null,
                           child: Container(
                             width: stepSize,
                             height: stepSize,
@@ -139,9 +148,18 @@ class CustomStepper extends StatelessWidget {
                 final isSelected = currentStep == stepNumber;
                 final isComp = isCompleted(index);
 
+                // Determine if step is clickable
+                final canClickStep =
+                    stepNumber < currentStep ||
+                    stepNumber == currentStep ||
+                    (stepNumber == currentStep + 1 &&
+                        isCompleted(currentStep - 1));
+
                 return GestureDetector(
                   behavior: HitTestBehavior.translucent,
-                  onTap: () => onStepTap?.call(stepNumber),
+                  onTap: canClickStep
+                      ? () => onStepTap?.call(stepNumber)
+                      : null,
                   child: Column(
                     children: [
                       SizedBox(height: 12.h),

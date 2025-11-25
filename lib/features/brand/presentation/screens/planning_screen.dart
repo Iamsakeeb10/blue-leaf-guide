@@ -17,7 +17,6 @@ class PlanningScreen extends StatefulWidget {
 
 class _PlanningScreenState extends State<PlanningScreen> {
   bool _isLoading = true;
-  bool _isSaving = false;
 
   List<bool> month1Checkboxes = [false, false, false];
   List<bool> month2Checkboxes = [false, false, false];
@@ -52,6 +51,13 @@ class _PlanningScreenState extends State<PlanningScreen> {
     return month1Checkboxes.any((e) => e) ||
         month2Checkboxes.any((e) => e) ||
         month3Checkboxes.any((e) => e);
+  }
+
+  /// Check if all checkboxes in all months are completed
+  bool get areAllCheckboxesCompleted {
+    return month1Checkboxes.every((e) => e) &&
+        month2Checkboxes.every((e) => e) &&
+        month3Checkboxes.every((e) => e);
   }
 
   Future<void> _loadPlanningData() async {
@@ -101,8 +107,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
       return;
     }
 
-    setState(() => _isSaving = true);
-
     try {
       await FirebaseFirestore.instance
           .collection('users')
@@ -124,8 +128,6 @@ class _PlanningScreenState extends State<PlanningScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to save. Please try again.')),
       );
-    } finally {
-      setState(() => _isSaving = false);
     }
   }
 
@@ -245,39 +247,34 @@ class _PlanningScreenState extends State<PlanningScreen> {
                 ],
               ),
             ),
-            Button(
-              onPressed: hasAnyCheckboxSelected ? _savePlanningData : null,
-              text: _isSaving ? 'Saving...' : 'Save',
-              height: 54.h,
-              borderRadius: BorderRadius.circular(32.r),
-              fontSize: 15.sp,
-              fontWeight: FontWeight.w600,
-              textColor: Colors.white,
-              backgroundColor: hasAnyCheckboxSelected
-                  ? AppColors.brand500
-                  : AppColors.brand500.withOpacity(0.3),
-            ),
-            SizedBox(height: 12.h),
-            SizedBox(
-              width: double.infinity,
-              child: TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(32.r),
-                  ),
-                  padding: EdgeInsets.symmetric(vertical: 14.h),
+            Column(
+              children: [
+                Button(
+                  onPressed: areAllCheckboxesCompleted
+                      ? () async {
+                          // All checkboxes completed - save and navigate back
+                          await _savePlanningData();
+                          if (mounted) {
+                            Navigator.of(context).pop({
+                              'month1': month1Checkboxes,
+                              'month2': month2Checkboxes,
+                              'month3': month3Checkboxes,
+                            });
+                          }
+                        }
+                      : null,
+                  text: 'Save',
+                  height: 54.h,
+                  borderRadius: BorderRadius.circular(32.r),
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w600,
+                  textColor: Colors.white,
+                  backgroundColor: areAllCheckboxesCompleted
+                      ? AppColors.brand500
+                      : AppColors.brand500.withOpacity(0.3),
                 ),
-                child: Text(
-                  'Cancel',
-                  style: TextStyle(
-                    color: AppColors.textPrimary.withOpacity(0.5),
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
+                SizedBox(height: 12.h),
+              ],
             ),
           ],
         ),
