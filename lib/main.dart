@@ -11,6 +11,7 @@ import 'app/utils/firebase_helper.dart';
 import 'core/services/local_storage.dart';
 import 'core/services/notification_service.dart';
 import 'features/auth/providers/auth_provider.dart';
+import 'features/task/providers/subtitle_provider.dart';
 
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
     GlobalKey<ScaffoldMessengerState>();
@@ -117,7 +118,10 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => AuthProvider())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => SubtitleProvider()),
+      ],
       child: ScreenUtilInit(
         designSize: const Size(375, 812),
         minTextAdapt: true,

@@ -170,9 +170,9 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
               Text(
                 formattedDate,
                 style: TextStyle(
-                  fontSize: 16.sp,
+                  fontSize: 18.sp,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: AppColors.textPrimary.withOpacity(0.8),
                 ),
               ),
               GestureDetector(
@@ -214,12 +214,16 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
                     color: AppColors.textPrimary.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(100.r),
                   ),
-                  padding: EdgeInsets.all(8.w),
+                  padding: EdgeInsets.all(10.w),
                   child: SvgPicture.asset(
                     'assets/icons/svg/calendar.svg',
                     fit: BoxFit.contain,
                     width: 24.w,
                     height: 24.h,
+                    colorFilter: ColorFilter.mode(
+                      AppColors.textPrimary,
+                      BlendMode.srcIn,
+                    ),
                   ),
                 ),
               ),
