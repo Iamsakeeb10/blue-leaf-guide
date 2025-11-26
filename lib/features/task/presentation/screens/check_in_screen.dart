@@ -87,8 +87,8 @@ class _CheckInScreenState extends State<CheckInScreen> {
       final userId = _auth.currentUser!.uid;
       final dateKey = _getDateKey(_selectedDate);
 
-      // Load user's active goals for current month
       final currentMonth = DateFormat('yyyy-MM').format(_selectedDate);
+
       final goalsSnapshot = await _firestore
           .collection('users')
           .doc(userId)
@@ -105,13 +105,11 @@ class _CheckInScreenState extends State<CheckInScreen> {
         };
       }).toList();
 
-      // Initialize dynamic controllers
       dynamicControllers.clear();
       for (var goal in _dynamicGoals) {
         dynamicControllers[goal['id']] = TextEditingController();
       }
 
-      // Load check-in data for selected date
       final checkInDoc = await _firestore
           .collection('users')
           .doc(userId)
@@ -122,14 +120,12 @@ class _CheckInScreenState extends State<CheckInScreen> {
       if (checkInDoc.exists) {
         final data = checkInDoc.data()!;
 
-        // Load static fields
         reflectionControllers['todaysWin']?.text = data['todaysWin'] ?? '';
         reflectionControllers['challengesAndLessons']?.text =
             data['challengesAndLessons'] ?? '';
         reflectionControllers['additionalNotes']?.text =
             data['additionalNotes'] ?? '';
 
-        // Load dynamic fields
         final dynamicData =
             data['dynamicFields'] as Map<String, dynamic>? ?? {};
         for (var entry in dynamicData.entries) {
@@ -138,7 +134,6 @@ class _CheckInScreenState extends State<CheckInScreen> {
           }
         }
       } else {
-        // Clear all fields for new date
         for (var controller in reflectionControllers.values) {
           controller.clear();
         }
@@ -165,14 +160,12 @@ class _CheckInScreenState extends State<CheckInScreen> {
       final userId = _auth.currentUser!.uid;
       final dateKey = _getDateKey(_selectedDate);
 
-      // Prepare dynamic fields data
       Map<String, dynamic> dynamicFieldsData = {};
       for (var entry in dynamicControllers.entries) {
         final value = int.tryParse(entry.value.text) ?? 0;
         dynamicFieldsData[entry.key] = value;
       }
 
-      // Save check-in data
       await _firestore
           .collection('users')
           .doc(userId)
@@ -189,7 +182,6 @@ class _CheckInScreenState extends State<CheckInScreen> {
             'createdAt': FieldValue.serverTimestamp(),
           });
 
-      // Update monthly goal progress
       for (var entry in dynamicFieldsData.entries) {
         final goalId = entry.key;
         final value = entry.value as int;
@@ -229,7 +221,6 @@ class _CheckInScreenState extends State<CheckInScreen> {
 
     for (int i = 0; i < _dynamicGoals.length; i += 2) {
       if (i + 1 < _dynamicGoals.length) {
-        // Two fields in a row
         rows.add(
           Row(
             children: [
@@ -256,7 +247,6 @@ class _CheckInScreenState extends State<CheckInScreen> {
           ),
         );
       } else {
-        // Single field (odd one)
         rows.add(
           CustomTextField.TextField(
             controller: dynamicControllers[_dynamicGoals[i]['id']]!,
@@ -264,7 +254,6 @@ class _CheckInScreenState extends State<CheckInScreen> {
             hint: '0',
             enabled: _isToday(),
             keyboardType: TextInputType.number,
-            disabledBorderColor: AppColors.textPrimary.withOpacity(0.05),
           ),
         );
       }
@@ -275,6 +264,39 @@ class _CheckInScreenState extends State<CheckInScreen> {
     }
 
     return Column(children: rows);
+  }
+
+  // 🔥 NEW — Shared decoration helper for multiline TextField
+  InputDecoration _reflectionDecoration() {
+    return InputDecoration(
+      hintStyle: TextStyle(
+        fontSize: 12.sp,
+        color: AppColors.textPrimary.withOpacity(0.3),
+        fontWeight: FontWeight.w500,
+      ),
+      filled: true,
+      fillColor: Colors.white,
+      alignLabelWithHint: true,
+      contentPadding: EdgeInsets.all(14.w),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16.r),
+        borderSide: BorderSide(
+          color: AppColors.neutral50.withOpacity(0.05),
+          width: 1,
+        ),
+      ),
+      disabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16.r),
+        borderSide: BorderSide(
+          color: AppColors.textPrimary.withOpacity(0.05),
+          width: 1,
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16.r),
+        borderSide: BorderSide(color: AppColors.brand500, width: 1.5),
+      ),
+    );
   }
 
   @override
@@ -305,6 +327,8 @@ class _CheckInScreenState extends State<CheckInScreen> {
               ),
               GestureDetector(
                 onTap: () async {
+                  FocusScope.of(context).requestFocus(FocusNode());
+
                   final todayNormalized = DateTime(
                     DateTime.now().year,
                     DateTime.now().month,
@@ -351,11 +375,12 @@ class _CheckInScreenState extends State<CheckInScreen> {
           ),
           SizedBox(height: 20.h),
 
-          // Dynamic fields based on user goals
           _buildDynamicFields(),
           if (_dynamicGoals.isNotEmpty) SizedBox(height: 12.h),
 
-          // Static reflection fields
+          // --------------------------------------------------------
+          // 🔥 STATIC REFLECTION FIELDS (FULLY UPDATED)
+          // --------------------------------------------------------
           for (var entry in reflectionControllers.entries)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -370,45 +395,44 @@ class _CheckInScreenState extends State<CheckInScreen> {
                   ),
                 ),
                 SizedBox(height: 8.h),
-                TextField(
-                  controller: entry.value,
-                  maxLines: 5,
-                  minLines: 4,
-                  enabled: _isToday(),
-                  decoration: InputDecoration(
-                    hintText: reflectionHints[entry.key],
-                    hintStyle: TextStyle(
-                      fontSize: 12.sp,
-                      color: AppColors.textPrimary.withOpacity(0.3),
-                      fontWeight: FontWeight.w500,
-                    ),
-                    filled: true,
-                    fillColor: _isToday() ? Colors.white : AppColors.lightGrey,
-                    alignLabelWithHint: true,
-                    contentPadding: EdgeInsets.all(14.w),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16.r),
-                      borderSide: BorderSide(
-                        color: AppColors.neutral50.withOpacity(0.05),
-                        width: 1,
+
+                // --------------------------------------
+                // 🔥 NEW LOGIC: Today = multiline TextField
+                //              Past date = auto-height container
+                // --------------------------------------
+                _isToday()
+                    ? TextField(
+                        controller: entry.value,
+                        maxLines: 5,
+                        minLines: 4,
+                        enabled: true,
+                        decoration: _reflectionDecoration().copyWith(
+                          hintText: reflectionHints[entry.key],
+                        ),
+                      )
+                    : Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(14.w),
+                        decoration: BoxDecoration(
+                          color: AppColors.lightGrey,
+                          borderRadius: BorderRadius.circular(16.r),
+                          border: Border.all(
+                            color: AppColors.textPrimary.withOpacity(0.05),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          entry.value.text.isEmpty
+                              ? "No data"
+                              : entry.value.text,
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            height: 1.4,
+                            color: AppColors.textPrimary.withOpacity(0.7),
+                          ),
+                        ),
                       ),
-                    ),
-                    disabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16.r),
-                      borderSide: BorderSide(
-                        color: AppColors.textPrimary.withOpacity(0.05),
-                        width: 1,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16.r),
-                      borderSide: BorderSide(
-                        color: AppColors.brand500,
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
+
                 SizedBox(height: 16.h),
               ],
             ),

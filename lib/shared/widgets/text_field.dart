@@ -82,7 +82,7 @@ class _TextFieldState extends State<TextField> {
               widget.label,
               style: TextStyle(
                 fontFamily: 'Family/Font',
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w400,
                 fontStyle: FontStyle.normal,
                 fontSize: 14.sp,
                 height: 1.4,
