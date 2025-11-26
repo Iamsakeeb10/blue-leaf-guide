@@ -28,7 +28,7 @@ class CustomSegmentTab extends StatefulWidget {
     this.fontSize = 13,
     this.fontWeight = FontWeight.w600,
     this.borderRadius = 100,
-    this.padding = const EdgeInsets.all(4),
+    this.padding = const EdgeInsets.symmetric(horizontal: 2.0),
     this.controller,
   }) : assert(
          tabs.length == tabViews.length,
@@ -72,7 +72,7 @@ class _CustomSegmentTabState extends State<CustomSegmentTab>
             borderRadius: BorderRadius.circular(widget.borderRadius),
           ),
           child: TabBar(
-            indicatorPadding: EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+            indicatorPadding: EdgeInsets.symmetric(vertical: 6, horizontal: 2),
             controller: _controller,
             // isScrollable: true,
             indicator: BoxDecoration(
