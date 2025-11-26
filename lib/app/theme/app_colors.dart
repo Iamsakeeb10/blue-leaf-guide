@@ -18,12 +18,15 @@ class AppColors {
 
   // 🌿 New Colors
   static const Color brand500 = Color(0xFF155DFC); // Active indicator
+  static const Color brand400 = Color(0xFF447DFD);
+
   static const Color brand50 = Color(0xFFE8EFFF); // Brand 50
   static const Color iceBlue = Color(0xFFE8EFFF);
   static const Color timelineBorder = Color(0xFFDFF6E7);
   static const Color timelinePrimary = Color(
     0xFF24AC69,
   ); // your new green color
+  static const Color amber = Color(0xFFF87F15); // your new green color
 
   // new colors with opacity
   static const Color lightBlue40 = Color(0x40BDEBFE); // #BDEBFE40

@@ -31,6 +31,14 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
     _loadGoalTemplates();
   }
 
+  final Map<int, String> orderSuffixMap = {
+    1: 'distributed',
+    2: 'acquired',
+    3: 'earned',
+    4: 'posted',
+    5: 'attended',
+  };
+
   String _getMonthKey(DateTime date) {
     return DateFormat('yyyy-MM').format(date);
   }
@@ -47,6 +55,7 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
           'id': doc.id,
           'fullTitle': doc.data()['fullTitle'] ?? '',
           'shortTitle': doc.data()['shortTitle'] ?? '',
+          'order': doc.data()['order'] ?? 0, // ADD THIS LINE
         };
       }).toList();
 
@@ -262,6 +271,7 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
             'templateId': templateId,
             'fullTitle': template['fullTitle'],
             'shortTitle': template['shortTitle'],
+            'order': template['order'], // ADD THIS LINE
             'targetNumber': target,
             'currentProgress': 0,
             'month': monthKey,
@@ -604,7 +614,20 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
 
               return ListView.separated(
                 itemCount: goals.length,
-                separatorBuilder: (context, index) => SizedBox(height: 12.h),
+                // separatorBuilder: (context, index) => SizedBox(height: 12.h),
+                separatorBuilder: (context, index) {
+                  if (index == goals.length - 1) return SizedBox(height: 0);
+
+                  return Column(
+                    children: [
+                      SizedBox(height: 12.h), // top spacing
+                      Divider(
+                        color: AppColors.textPrimary.withOpacity(0.05),
+                        thickness: 1.h,
+                      ),
+                    ],
+                  );
+                },
                 itemBuilder: (context, index) {
                   final goal = goals[index].data() as Map<String, dynamic>;
                   final goalId = goals[index].id;
@@ -615,21 +638,17 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
                       ? (progress / target).clamp(0.0, 1.0)
                       : 0.0;
 
+                  print('🟨 Goal $goal');
+
+                  final order =
+                      goal['order'] ??
+                      0; // make sure you save 'order' in Firestore
+                  final suffix = orderSuffixMap[order] ?? '';
+
                   return Container(
-                    padding: EdgeInsets.all(16.w),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16.r),
-                      border: Border.all(
-                        color: AppColors.neutral50.withOpacity(0.1),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -641,12 +660,49 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
                               child: Text(
                                 fullTitle,
                                 style: TextStyle(
-                                  fontSize: 15.sp,
+                                  fontSize: 14.sp,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
+                                  color: AppColors.textPrimary.withOpacity(0.8),
                                 ),
                               ),
                             ),
+
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 4.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: index.isEven
+                                    ? AppColors
+                                          .amber // color for even items
+                                    : AppColors
+                                          .timelinePrimary, // color for odd items
+                                borderRadius: BorderRadius.circular(100.r),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Target ',
+                                    style: TextStyle(
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  Text(
+                                    target.toString(),
+                                    style: TextStyle(
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
                             PopupMenuButton<String>(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(16.r),
@@ -690,56 +746,34 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
                             ),
                           ],
                         ),
-                        SizedBox(height: 12.h),
+
                         Row(
                           children: [
-                            Text(
-                              'Target: ',
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.textPrimary.withOpacity(0.6),
-                              ),
-                            ),
-                            Text(
-                              target.toString(),
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.brand500,
+                            Expanded(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(30.r),
+                                child: LinearProgressIndicator(
+                                  value: progressPercentage,
+                                  minHeight: 8.h,
+                                  backgroundColor: AppColors.brand50,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    progressPercentage >= 1.0
+                                        ? Colors.green
+                                        : AppColors.brand400,
+                                  ),
+                                ),
                               ),
                             ),
                           ],
                         ),
                         SizedBox(height: 8.h),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(8.r),
-                                child: LinearProgressIndicator(
-                                  value: progressPercentage,
-                                  minHeight: 10.h,
-                                  backgroundColor: AppColors.neutral50
-                                      .withOpacity(0.1),
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    progressPercentage >= 1.0
-                                        ? Colors.green
-                                        : AppColors.brand500,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: 12.w),
-                            Text(
-                              '$progress / $target',
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary.withOpacity(0.7),
-                              ),
-                            ),
-                          ],
+                        Text(
+                          '$progress $suffix',
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary.withOpacity(0.7),
+                          ),
                         ),
                       ],
                     ),
@@ -749,8 +783,6 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
             },
           ),
         ),
-
-        SizedBox(height: 16.h),
 
         // Add Goal Button
         Padding(
