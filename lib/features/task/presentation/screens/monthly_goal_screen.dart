@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../app/theme/app_colors.dart';
@@ -72,12 +73,12 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: EdgeInsets.symmetric(horizontal: 20.w),
+          insetPadding: EdgeInsets.symmetric(horizontal: 16.w),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(36.r),
+            borderRadius: BorderRadius.circular(20.r),
           ),
           child: Container(
-            padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
+            padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20.r),
@@ -90,32 +91,28 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
                   'Add New Goal',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 18.sp,
+                    fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
                 ),
                 SizedBox(height: 20.h),
-
-                /// Goal Name Label
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Goal Name',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textPrimary.withOpacity(0.7),
-                    ),
+                Text(
+                  'Type Goal Name and Number of Target',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textPrimary.withOpacity(0.7),
                   ),
                 ),
-                SizedBox(height: 8.h),
 
-                /// Dropdown
+                SizedBox(height: 12.h),
+
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16.r),
+                    borderRadius: BorderRadius.circular(100.r),
                     border: Border.all(
                       color: AppColors.neutral50.withOpacity(0.05),
                     ),
@@ -124,16 +121,35 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
                     child: DropdownButton<String>(
                       value: selectedTemplateId,
                       isExpanded: true,
-                      hint: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 14.w),
-                        child: Text(
-                          'Select a goal',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            color: AppColors.textPrimary.withOpacity(0.3),
+                      hint: Row(
+                        children: [
+                          SvgPicture.asset(
+                            'assets/icons/svg/goal-picker.svg',
+                            width: 20.w,
+                            height: 20.h,
                           ),
-                        ),
+                          SizedBox(width: 12.w),
+                          Text(
+                            'Goal Name',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: AppColors.textPrimary.withOpacity(0.3),
+                            ),
+                          ),
+                        ],
                       ),
+                      selectedItemBuilder: (context) {
+                        return _goalTemplates.map((template) {
+                          return Row(
+                            children: [
+                              Text(
+                                template['fullTitle'],
+                                style: TextStyle(fontSize: 14.sp),
+                              ),
+                            ],
+                          );
+                        }).toList();
+                      },
                       padding: EdgeInsets.symmetric(horizontal: 14.w),
                       borderRadius: BorderRadius.circular(16.r),
                       items: _goalTemplates.map((template) {
@@ -153,16 +169,18 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: 16.h),
+
+                SizedBox(height: 4.h),
 
                 /// Target Number Field
                 CustomTextField.TextField(
                   controller: targetController,
-                  label: 'Target Number',
-                  hint: 'Enter target',
+                  label: '',
+                  hint: 'Monthly target',
                   keyboardType: TextInputType.number,
+                  prefixIconSvg: 'assets/icons/svg/target.svg',
                 ),
-                SizedBox(height: 20.h),
+                SizedBox(height: 24.h),
 
                 /// Save Button
                 Button(
@@ -276,12 +294,12 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
       context: context,
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
-        insetPadding: EdgeInsets.symmetric(horizontal: 20.w),
+        insetPadding: EdgeInsets.symmetric(horizontal: 16.w),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(36.r),
+          borderRadius: BorderRadius.circular(20.r),
         ),
         child: Container(
-          padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
+          padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20.r),
@@ -291,21 +309,21 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
             children: [
               /// Title
               Text(
-                'Edit Goal',
+                'Edit Monthly Goal',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 18.sp,
+                  fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
               ),
-              SizedBox(height: 12.h),
+              SizedBox(height: 20.h),
 
               /// Subtitle (Goal Name)
               ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: 280.w),
                 child: Text(
-                  'Goal: $currentTitle',
+                  '$currentTitle',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14.sp,
@@ -314,16 +332,17 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
                   ),
                 ),
               ),
-              SizedBox(height: 20.h),
+              SizedBox(height: 4.h),
 
               /// Target Number Field
               CustomTextField.TextField(
                 controller: targetController,
-                label: 'Target Number',
+                label: '',
                 hint: 'Enter target',
                 keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
               ),
-              SizedBox(height: 20.h),
+              SizedBox(height: 24.h),
 
               /// Save Button
               Button(
@@ -485,20 +504,11 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    DateFormat('MMMM yyyy').format(_selectedDate),
+                    DateFormat('MMMM, yyyy').format(_selectedDate),
                     style: TextStyle(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary.withOpacity(0.8),
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    'Track your monthly goals',
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textPrimary.withOpacity(0.5),
                     ),
                   ),
                 ],
@@ -513,10 +523,14 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
                     borderRadius: BorderRadius.circular(100.r),
                   ),
                   padding: EdgeInsets.all(10.w),
-                  child: Icon(
-                    Icons.filter_list,
-                    size: 24.w,
-                    color: AppColors.textPrimary,
+                  child: SvgPicture.asset(
+                    'assets/icons/svg/filter.svg',
+                    width: 24.w,
+                    height: 24.w,
+                    colorFilter: ColorFilter.mode(
+                      AppColors.textPrimary,
+                      BlendMode.srcIn,
+                    ),
                   ),
                 ),
               ),
@@ -634,6 +648,9 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
                               ),
                             ),
                             PopupMenuButton<String>(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16.r),
+                              padding: EdgeInsets.zero,
                               icon: Icon(
                                 Icons.more_vert,
                                 size: 20.w,
@@ -656,24 +673,12 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
                               itemBuilder: (context) => [
                                 PopupMenuItem(
                                   value: 'edit',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.edit, size: 18.w),
-                                      SizedBox(width: 8.w),
-                                      const Text('Edit'),
-                                    ],
-                                  ),
+                                  child: Row(children: [const Text('Edit')]),
                                 ),
                                 PopupMenuItem(
                                   value: 'delete',
                                   child: Row(
                                     children: [
-                                      Icon(
-                                        Icons.delete,
-                                        size: 18.w,
-                                        color: Colors.red,
-                                      ),
-                                      SizedBox(width: 8.w),
                                       const Text(
                                         'Delete',
                                         style: TextStyle(color: Colors.red),
@@ -748,15 +753,20 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
         SizedBox(height: 16.h),
 
         // Add Goal Button
-        Button(
-          onPressed: _showAddGoalDialog,
-          text: 'Add New Goal',
-          height: 54.h,
-          borderRadius: BorderRadius.circular(32.r),
-          fontSize: 15.sp,
-          fontWeight: FontWeight.w600,
-          textColor: Colors.white,
-          backgroundColor: AppColors.brand500,
+        Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).padding.bottom + 16.h,
+          ),
+          child: Button(
+            onPressed: _showAddGoalDialog,
+            text: 'Add New Goal',
+            height: 54.h,
+            borderRadius: BorderRadius.circular(32.r),
+            fontSize: 15.sp,
+            fontWeight: FontWeight.w600,
+            textColor: Colors.white,
+            backgroundColor: AppColors.brand500,
+          ),
         ),
       ],
     );

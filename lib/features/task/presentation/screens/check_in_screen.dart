@@ -439,30 +439,39 @@ class _CheckInScreenState extends State<CheckInScreen> {
           SizedBox(height: 12.h),
 
           if (_isToday())
-            Button(
-              onPressed: _isSaving ? null : _saveCheckIn,
-              text: 'Save',
-              height: 54.h,
-              borderRadius: BorderRadius.circular(32.r),
-              fontSize: 15.sp,
-              fontWeight: FontWeight.w600,
-              textColor: Colors.white,
-              backgroundColor: AppColors.brand500,
-              isLoading: _isSaving,
+            Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).padding.bottom + 16,
+              ),
+              child: Button(
+                onPressed: _isSaving ? null : _saveCheckIn,
+                text: 'Save',
+                height: 54.h,
+                borderRadius: BorderRadius.circular(32.r),
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w600,
+                textColor: Colors.white,
+                backgroundColor: AppColors.brand500,
+                isLoading: _isSaving,
+              ),
             )
           else
-            Button(
-              onPressed: _isSaving ? null : _saveCheckIn,
-              text: 'Save',
-              height: 54.h,
-              borderRadius: BorderRadius.circular(32.r),
-              fontSize: 15.sp,
-              fontWeight: FontWeight.w600,
-              textColor: Colors.white,
-              backgroundColor: AppColors.brand500.withOpacity(0.1),
-              isLoading: _isSaving,
+            Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).padding.bottom + 16,
+              ),
+              child: Button(
+                onPressed: _isSaving ? null : _saveCheckIn,
+                text: 'Save',
+                height: 54.h,
+                borderRadius: BorderRadius.circular(32.r),
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w600,
+                textColor: Colors.white,
+                backgroundColor: AppColors.brand500.withOpacity(0.1),
+                isLoading: _isSaving,
+              ),
             ),
-          SizedBox(height: 32.h),
         ],
       ),
     );

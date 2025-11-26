@@ -31,6 +31,7 @@ class TextField extends StatefulWidget {
   final Color? labelBackgroundColor;
   final double? borderRadius;
   final Color? disabledBorderColor;
+  final TextAlign? textAlign; // Add this to your TextField class
 
   const TextField({
     super.key,
@@ -58,6 +59,7 @@ class TextField extends StatefulWidget {
     this.labelBackgroundColor,
     this.borderRadius,
     this.disabledBorderColor,
+    this.textAlign,
   });
 
   @override
@@ -110,6 +112,8 @@ class _TextFieldState extends State<TextField> {
             minLines: widget.minLines,
             textInputAction: widget.textInputAction,
             textCapitalization: widget.textCapitalization,
+            textAlignVertical: TextAlignVertical.center,
+            textAlign: widget.textAlign ?? TextAlign.start,
             onChanged: widget.onChanged != null
                 ? (_) => widget.onChanged!()
                 : null,
