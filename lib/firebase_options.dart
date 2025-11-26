@@ -63,8 +63,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1022593340174',
     projectId: 'blue-leaf-guide',
     storageBucket: 'blue-leaf-guide.firebasestorage.app',
-    androidClientId: '1022593340174-4bjitvft0dn1uppjq5i49nmqrcujfvd9.apps.googleusercontent.com',
-    iosClientId: '1022593340174-nktal6ccj75jor1fvvubgk8m7h7c9hld.apps.googleusercontent.com',
+    androidClientId:
+        '1022593340174-4bjitvft0dn1uppjq5i49nmqrcujfvd9.apps.googleusercontent.com',
+    iosClientId:
+        '1022593340174-nktal6ccj75jor1fvvubgk8m7h7c9hld.apps.googleusercontent.com',
     iosBundleId: 'com.example.blueLeafGuide',
   );
 
@@ -74,8 +76,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1022593340174',
     projectId: 'blue-leaf-guide',
     storageBucket: 'blue-leaf-guide.firebasestorage.app',
-    androidClientId: '1022593340174-4bjitvft0dn1uppjq5i49nmqrcujfvd9.apps.googleusercontent.com',
-    iosClientId: '1022593340174-nktal6ccj75jor1fvvubgk8m7h7c9hld.apps.googleusercontent.com',
+    androidClientId:
+        '1022593340174-4bjitvft0dn1uppjq5i49nmqrcujfvd9.apps.googleusercontent.com',
+    iosClientId:
+        '1022593340174-nktal6ccj75jor1fvvubgk8m7h7c9hld.apps.googleusercontent.com',
     iosBundleId: 'com.example.blueLeafGuide',
   );
 

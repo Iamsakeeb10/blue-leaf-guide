@@ -89,21 +89,24 @@ class _MyAppState extends State<MyApp> {
       print('   Scheme: $scheme');
       print('   Host: $host');
       print('   Mode: $mode');
-      print('   OobCode: ${oobCode?.substring(0, 10)}...');
+      print(
+        '   OobCode: ${oobCode != null ? oobCode.substring(0, oobCode.length.clamp(0, 10)) : 'null'}',
+      );
 
-      // Handle both custom scheme AND Firebase domain
       if ((scheme == 'blueleafguide' && host == 'auth') ||
           (scheme == 'https' && host == 'blue-leaf-guide.firebaseapp.com')) {
         if (mode == 'resetPassword' && oobCode != null && oobCode.isNotEmpty) {
           print('✅ Valid password reset link detected');
 
-          // Navigate to reset password screen
+          // Encode Firebase code to avoid route parsing errors
+          final safeCode = Uri.encodeComponent(oobCode);
+
           Future.delayed(const Duration(milliseconds: 300), () {
-            router.go('/reset-password/$oobCode');
+            router.go('/reset-password/$safeCode');
           });
         } else if (mode == 'verifyEmail' && oobCode != null) {
           print('✅ Email verification link detected');
-          // Handle email verification if needed
+          // TODO: Handle email verification if required
         } else {
           print('⚠️ Missing mode or oobCode parameter');
         }

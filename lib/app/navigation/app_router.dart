@@ -5,6 +5,7 @@ import 'package:blue_leaf_guide/features/profile/presentation/screens/notificati
 import 'package:blue_leaf_guide/features/profile/presentation/screens/privacy_policy_screen.dart';
 import 'package:blue_leaf_guide/features/profile/presentation/screens/profile_information_screen.dart';
 import 'package:blue_leaf_guide/features/profile/presentation/screens/terms_of_service_screen.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -33,23 +34,27 @@ import '../../features/profile/presentation/screens/my_account_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/roadmap/presentation/screens/roadmap_details_screen.dart';
 
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final GoRouter router = GoRouter(
+  navigatorKey: rootNavigatorKey,
   initialLocation: '/',
   redirect: (context, state) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final isLoggedIn = authProvider.currentUser != null;
 
-    final isGoingToSplash = state.matchedLocation == '/';
-    final isGoingToAuth =
-        state.matchedLocation == '/sign-in' ||
-        state.matchedLocation == '/sign-up' ||
-        state.matchedLocation == '/onboarding' ||
-        state.matchedLocation == '/otp' ||
-        state.matchedLocation == '/setup-account' ||
-        state.matchedLocation == '/forgot-password' ||
-        state.matchedLocation == '/reset-password';
+    final loc = state.matchedLocation;
 
-    final isGoingToHome = state.matchedLocation == '/home';
+    final isGoingToAuth =
+        loc == '/sign-in' ||
+        loc == '/sign-up' ||
+        loc == '/onboarding' ||
+        loc == '/otp' ||
+        loc == '/setup-account' ||
+        loc == '/forgot-password' ||
+        loc.startsWith('/reset-password');
+
+    final isGoingToHome = loc == '/home';
 
     // If logged in and trying to access auth screens, redirect to home
     if (isLoggedIn && isGoingToAuth) {
@@ -61,13 +66,9 @@ final GoRouter router = GoRouter(
       return '/sign-in';
     }
 
-    // Allow splash screen
-    if (isGoingToSplash) {
-      return null;
-    }
-
     return null;
   },
+
   routes: [
     GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
     GoRoute(
