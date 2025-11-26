@@ -30,6 +30,7 @@ class TextField extends StatefulWidget {
   final VoidCallback? onTap;
   final Color? labelBackgroundColor;
   final double? borderRadius;
+  final Color? disabledBorderColor;
 
   const TextField({
     super.key,
@@ -56,6 +57,7 @@ class TextField extends StatefulWidget {
     this.onTap,
     this.labelBackgroundColor,
     this.borderRadius,
+    this.disabledBorderColor,
   });
 
   @override
@@ -163,7 +165,7 @@ class _TextFieldState extends State<TextField> {
               filled: true,
               fillColor: widget.enabled
                   ? AppColors.background.withOpacity(0.5)
-                  : AppColors.background.withOpacity(0.3),
+                  : AppColors.lightGrey,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(100.r),
                 borderSide: BorderSide.none,
@@ -187,13 +189,17 @@ class _TextFieldState extends State<TextField> {
                 borderRadius: BorderRadius.circular(100.r),
                 borderSide: BorderSide(color: AppColors.danger, width: 1.25.w),
               ),
+
               disabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(100.r),
                 borderSide: BorderSide(
-                  color: AppColors.tint.withOpacity(0.2),
+                  color:
+                      widget.disabledBorderColor ??
+                      AppColors.tint.withOpacity(0.2),
                   width: 1.25.w,
                 ),
               ),
+
               contentPadding: EdgeInsets.symmetric(
                 horizontal: AppPadding.p16,
                 vertical: 16.h,

@@ -264,6 +264,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
             hint: '0',
             enabled: _isToday(),
             keyboardType: TextInputType.number,
+            disabledBorderColor: AppColors.textPrimary.withOpacity(0.05),
           ),
         );
       }
@@ -298,15 +299,6 @@ class _CheckInScreenState extends State<CheckInScreen> {
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary.withOpacity(0.8),
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    DateFormat('MMMM dd, yyyy').format(_selectedDate),
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textPrimary.withOpacity(0.5),
                     ),
                   ),
                 ],
@@ -391,7 +383,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
                       fontWeight: FontWeight.w500,
                     ),
                     filled: true,
-                    fillColor: _isToday() ? Colors.white : Colors.grey[100],
+                    fillColor: _isToday() ? Colors.white : AppColors.lightGrey,
                     alignLabelWithHint: true,
                     contentPadding: EdgeInsets.all(14.w),
                     enabledBorder: OutlineInputBorder(
@@ -404,7 +396,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
                     disabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16.r),
                       borderSide: BorderSide(
-                        color: AppColors.neutral50.withOpacity(0.05),
+                        color: AppColors.textPrimary.withOpacity(0.05),
                         width: 1,
                       ),
                     ),
@@ -435,22 +427,18 @@ class _CheckInScreenState extends State<CheckInScreen> {
               isLoading: _isSaving,
             )
           else
-            Container(
+            Button(
+              onPressed: _isSaving ? null : _saveCheckIn,
+              text: 'Save',
               height: 54.h,
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(32.r),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                'View Only - Past Date',
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey[600],
-                ),
-              ),
+              borderRadius: BorderRadius.circular(32.r),
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w600,
+              textColor: Colors.white,
+              backgroundColor: AppColors.brand500.withOpacity(0.1),
+              isLoading: _isSaving,
             ),
+          SizedBox(height: 32.h),
         ],
       ),
     );
