@@ -470,7 +470,9 @@ class TotalClientsScreen extends StatelessWidget {
                   SnackBar(
                     content: Text(
                       'CThe link seems incorrect. Please check and try again.',
+                      style: TextStyle(color: Colors.white),
                     ),
+                    backgroundColor: AppColors.danger,
                   ),
                 );
               }

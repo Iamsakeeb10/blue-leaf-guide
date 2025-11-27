@@ -27,9 +27,15 @@ class _ColorPickerScreenState extends State<ColorPickerScreen> {
 
   void _addColor() {
     if (selectedColors.length >= 4) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Maximum 4 colors allowed')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Maximum 4 colors allowed',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: AppColors.danger,
+        ),
+      );
       return;
     }
 

@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/button.dart';
 import '../../../../shared/widgets/text_field.dart' as CustomTextField;
+import '../widgets/edit_goal_dialog.dart';
 import '../widgets/monthly_goals_list.dart';
 
 class MonthlyGoalScreen extends StatefulWidget {
@@ -197,7 +198,13 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
                   onPressed: () async {
                     if (selectedTemplateId == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please select a goal')),
+                        const SnackBar(
+                          content: Text(
+                            'Please select a goal',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          backgroundColor: AppColors.danger,
+                        ),
                       );
                       return;
                     }
@@ -206,7 +213,11 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
                     if (target == null || target <= 0) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Please enter a valid target number'),
+                          content: Text(
+                            'Please enter a valid target number',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          backgroundColor: AppColors.danger,
                         ),
                       );
                       return;
@@ -281,14 +292,26 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
             'updatedAt': FieldValue.serverTimestamp(),
           });
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Goal added successfully!')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Goal added successfully!',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: AppColors.danger,
+        ),
+      );
     } catch (e) {
       print('Error adding goal: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to add goal: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to add goal: $e',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: AppColors.danger,
+        ),
+      );
     }
   }
 
@@ -297,116 +320,13 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
     String currentTitle,
     int currentTarget,
   ) async {
-    final targetController = TextEditingController(
-      text: currentTarget.toString(),
-    );
-
-    await showDialog<bool>(
+    await EditGoalDialog.show(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: EdgeInsets.symmetric(horizontal: 16.w),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20.r),
-        ),
-        child: Container(
-          padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20.r),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              /// Title
-              Text(
-                'Edit Monthly Goal',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              SizedBox(height: 20.h),
-
-              /// Subtitle (Goal Name)
-              ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: 280.w),
-                child: Text(
-                  '$currentTitle',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary.withOpacity(0.7),
-                  ),
-                ),
-              ),
-              SizedBox(height: 4.h),
-
-              /// Target Number Field
-              CustomTextField.TextField(
-                controller: targetController,
-                label: '',
-                hint: 'Enter target',
-                keyboardType: TextInputType.number,
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 24.h),
-
-              /// Save Button
-              Button(
-                onPressed: () async {
-                  final target = int.tryParse(targetController.text);
-                  if (target == null || target <= 0) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please enter a valid target number'),
-                      ),
-                    );
-                    return;
-                  }
-
-                  Navigator.pop(context, true);
-                  await _updateGoal(goalId, target);
-                },
-                text: 'Save',
-                height: 54.h,
-                borderRadius: BorderRadius.circular(32.r),
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w600,
-                textColor: Colors.white,
-                backgroundColor: AppColors.brand500,
-              ),
-              SizedBox(height: 12.h),
-
-              /// Cancel Button
-              SizedBox(
-                width: double.infinity,
-                child: TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  style: TextButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(32.r),
-                    ),
-                    padding: EdgeInsets.symmetric(vertical: 14.h),
-                  ),
-                  child: Text(
-                    'Cancel',
-                    style: TextStyle(
-                      color: AppColors.textPrimary.withOpacity(0.5),
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      currentTitle: currentTitle,
+      currentTarget: currentTarget,
+      onSave: (newTarget) async {
+        await _updateGoal(goalId, newTarget);
+      },
     );
   }
 
@@ -427,13 +347,25 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
           });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Goal updated successfully!')),
+        const SnackBar(
+          content: Text(
+            'Goal updated successfully!',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: AppColors.timelinePrimary,
+        ),
       );
     } catch (e) {
       print('Error updating goal: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to update goal: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to update goal: $e',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: AppColors.danger,
+        ),
+      );
     }
   }
 
@@ -471,13 +403,25 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
           .delete();
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Goal deleted successfully!')),
+        const SnackBar(
+          content: Text(
+            'Goal deleted successfully!',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: AppColors.danger,
+        ),
       );
     } catch (e) {
       print('Error deleting goal: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to delete goal: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to delete goal: $e',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: AppColors.danger,
+        ),
+      );
     }
   }
 
@@ -554,7 +498,9 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
           userId: userId,
           monthKey: monthKey,
           onAddGoal: _showAddGoalDialog,
-          onEditGoal: _showEditGoalDialog,
+          onEditGoal: (goalId, title, target) async {
+            await _showEditGoalDialog(goalId, title, target);
+          },
           onDeleteGoal: _deleteGoal,
           orderSuffixMap: orderSuffixMap,
         ),

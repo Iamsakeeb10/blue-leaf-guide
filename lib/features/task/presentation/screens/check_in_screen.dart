@@ -200,13 +200,25 @@ class _CheckInScreenState extends State<CheckInScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Check-in saved successfully!')),
+        const SnackBar(
+          content: Text(
+            'Check-in saved successfully!',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: AppColors.timelinePrimary,
+        ),
       );
     } catch (e) {
       print('Error saving check-in: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to save: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to save: $e',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: AppColors.danger,
+        ),
+      );
     } finally {
       setState(() => _isSaving = false);
     }

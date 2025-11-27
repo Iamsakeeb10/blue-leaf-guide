@@ -132,12 +132,24 @@ class _MarketingItemDetailScreenState extends State<MarketingItemDetailScreen> {
 
     if (success) {
       Navigator.of(context).pop(editableItem);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Saved successfully!')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Saved successfully!',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: AppColors.timelinePrimary,
+        ),
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save. Please try again.')),
+        SnackBar(
+          content: Text(
+            'Failed to save. Please try again.',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: AppColors.danger,
+        ),
       );
     }
   }

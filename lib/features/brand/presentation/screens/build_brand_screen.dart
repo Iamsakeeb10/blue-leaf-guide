@@ -236,8 +236,10 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                         const SnackBar(
                           content: Text(
                             'Please complete all items in the current step first.',
+                            style: TextStyle(color: Colors.white),
                           ),
                           duration: Duration(seconds: 2),
+                          backgroundColor: AppColors.danger,
                         ),
                       );
                     }
@@ -379,8 +381,10 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                           const SnackBar(
                             content: Text(
                               'Please complete all items in the current step first.',
+                              style: TextStyle(color: Colors.white),
                             ),
                             duration: Duration(seconds: 2),
+                            backgroundColor: AppColors.danger,
                           ),
                         );
                         return;

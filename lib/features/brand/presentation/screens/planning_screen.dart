@@ -120,13 +120,25 @@ class _PlanningScreenState extends State<PlanningScreen> {
             'updatedAt': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Saved successfully!')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Saved successfully!',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: AppColors.timelinePrimary,
+        ),
+      );
     } catch (e) {
       print('Error saving planning data: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save. Please try again.')),
+        SnackBar(
+          content: Text(
+            'Failed to save. Please try again.',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: AppColors.danger,
+        ),
       );
     }
   }
