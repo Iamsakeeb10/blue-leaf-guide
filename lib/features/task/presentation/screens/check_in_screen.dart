@@ -188,6 +188,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
 
       // 🔥 NEW: Calculate total "earned" from today's input
       int totalEarnedToday = 0;
+      int totalAcquiredToday = 0;
 
       // Update monthly goal progress AND check for "earned"
       for (var entry in dynamicFieldsData.entries) {
@@ -213,6 +214,8 @@ class _CheckInScreenState extends State<CheckInScreen> {
 
           if (goal['order'] == 3) {
             totalEarnedToday += value;
+          } else if (goal['order'] == 2) {
+            totalAcquiredToday += value;
           }
         }
       }
@@ -220,6 +223,12 @@ class _CheckInScreenState extends State<CheckInScreen> {
       if (totalEarnedToday > 0) {
         await _firestore.collection('users').doc(userId).update({
           'stats.totalEarned': FieldValue.increment(totalEarnedToday),
+        });
+      }
+
+      if (totalAcquiredToday > 0) {
+        await _firestore.collection('users').doc(userId).update({
+          'stats.totalAcquired': FieldValue.increment(totalAcquiredToday),
         });
       }
 

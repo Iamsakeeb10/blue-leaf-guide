@@ -414,11 +414,34 @@ class _RewardsScreenState extends State<RewardsScreen> {
                   ),
                   SizedBox(width: 12.w),
                   Expanded(
-                    child: _buildStatCard(
-                      icon: '👥',
-                      title: 'Client Served',
-                      value: '15',
-                      backgroundColor: AppColors.backgroundPurpleLight,
+                    child: StreamBuilder<DocumentSnapshot>(
+                      stream: FirebaseAuth.instance.currentUser != null
+                          ? FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(FirebaseAuth.instance.currentUser!.uid)
+                                .snapshots()
+                          : const Stream.empty(),
+                      builder: (context, snapshot) {
+                        String clientServed = '0';
+
+                        if (snapshot.hasData && snapshot.data!.exists) {
+                          final data =
+                              snapshot.data!.data() as Map<String, dynamic>?;
+                          final numValue =
+                              data?['stats']?['totalAcquired'] as num?;
+                          clientServed = numValue?.toString() ?? '0';
+                        } else if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          clientServed = '--';
+                        }
+
+                        return _buildStatCard(
+                          icon: '👥',
+                          title: 'Client Served',
+                          value: clientServed,
+                          backgroundColor: AppColors.backgroundPurpleLight,
+                        );
+                      },
                     ),
                   ),
                 ],
