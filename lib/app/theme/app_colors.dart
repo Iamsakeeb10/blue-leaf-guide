@@ -27,6 +27,7 @@ class AppColors {
     0xFF24AC69,
   ); // your new green color
   static const Color amber = Color(0xFFF87F15); // your new green color
+  static const Color primaryDark = Color(0xFF09276A);
 
   // new colors with opacity
   static const Color lightBlue40 = Color(0x40BDEBFE); // #BDEBFE40

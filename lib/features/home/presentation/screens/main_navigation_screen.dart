@@ -1,11 +1,12 @@
-import 'package:blue_leaf_guide/features/roadmap/presentation/screens/roadmap_screen.dart';
-import 'package:blue_leaf_guide/features/task/presentation/screens/task_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../growth/presentation/screens/growth_screen.dart';
 import '../../../home/presentation/screens/home_screen.dart';
+import '../../../roadmap/presentation/screens/roadmap_screen.dart';
+import '../../../task/presentation/screens/task_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -20,7 +21,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   // Placeholder screens for other tabs
   final List<Widget> _screens = [
     const HomeScreen(),
-    const PlaceholderScreen(title: 'Explore'),
+    GrowthScreen(),
     RoadmapScreen(),
     TaskScreen(),
     // const PlaceholderScreen(title: 'Profile'),
