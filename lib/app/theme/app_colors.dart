@@ -31,6 +31,10 @@ class AppColors {
   static const Color amber = Color(0xFFF87F15); // your new green color
   static const Color primaryDark = Color(0xFF09276A);
 
+  static const Color backgroundLight = Color(0xFFEBEDE5); // #EBEDE5
+  static const Color backgroundGreenLight = Color(0xFFDFF6E7); // #DFF6E7
+  static const Color backgroundPurpleLight = Color(0xFFEFE5FA); // #EFE5FA
+
   // new colors with opacity
   static const Color lightBlue40 = Color(0x40BDEBFE); // #BDEBFE40
   static const Color lightPurple40 = Color(0x40BCCCFF); // #BCCCFF40

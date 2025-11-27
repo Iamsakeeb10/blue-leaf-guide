@@ -27,6 +27,7 @@ import '../../features/brand/presentation/screens/marketing_item_detail_screen.d
 import '../../features/brand/presentation/screens/planning_screen.dart';
 import '../../features/brand/presentation/screens/strategy_items_details_screen.dart';
 import '../../features/brand/presentation/screens/visual_item_detail_screen.dart';
+import '../../features/growth/presentation/screens/rewards_screen.dart';
 import '../../features/home/presentation/screens/main_navigation_screen.dart';
 import '../../features/home/presentation/widgets/total_clients_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
@@ -227,6 +228,10 @@ final GoRouter router = GoRouter(
           existingColors: extra?['existingColors'] as List<String>? ?? [],
         );
       },
+    ),
+    GoRoute(
+      path: '/rewards',
+      builder: (context, state) => const RewardsScreen(),
     ),
   ],
 );

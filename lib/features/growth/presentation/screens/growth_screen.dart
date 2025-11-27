@@ -2,6 +2,7 @@ import 'package:blue_leaf_guide/app/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../shared/widgets/custom_title_subtitle_appbar.dart';
 import '../../../../shared/widgets/dual_radial_gradient_painter.dart';
@@ -124,6 +125,9 @@ class GrowthScreen extends StatelessWidget {
                     subtitle: 'Track achievement & celebrate wins',
                     backgroundColor: AppColors.bgLight,
                     svgPath: 'assets/icons/svg/cup.svg',
+                    onTap: () {
+                      context.push('/rewards');
+                    },
                   ),
                   SizedBox(height: 12.h),
                   // Learning Guides Card
@@ -164,151 +168,155 @@ class GrowthScreen extends StatelessWidget {
     String? badge,
     required Color backgroundColor,
     bool showChevron = true,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(16.r),
-      ),
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 16.w, horizontal: 16.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // SVG Icon - vertically centered using FittedBox + Center
-                  Center(
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 12.w,
-                        vertical: 12.w,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.textPrimary.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(100.r),
-                      ),
-                      child: SvgPicture.asset(
-                        svgPath,
-                        width: 20.sp,
-                        height: 20.sp,
-                        color: Colors.black,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 16.w, horizontal: 16.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // SVG Icon - vertically centered using FittedBox + Center
+                    Center(
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 12.w,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.textPrimary.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(100.r),
+                        ),
+                        child: SvgPicture.asset(
+                          svgPath,
+                          width: 20.sp,
+                          height: 20.sp,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
-                  ),
-                  SizedBox(width: 12.w),
-                  // Title & Subtitle
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              title,
-                              style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w600,
+                    SizedBox(width: 12.w),
+                    // Title & Subtitle
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                title,
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                            ),
-                            if (badge != null) ...[
-                              SizedBox(width: 8.w),
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 8.w,
-                                  vertical: 4.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.amber,
-                                  borderRadius: BorderRadius.circular(12.r),
-                                ),
-                                child: Text(
-                                  badge,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10.sp,
-                                    fontWeight: FontWeight.w600,
+                              if (badge != null) ...[
+                                SizedBox(width: 8.w),
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 8.w,
+                                    vertical: 4.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.amber,
+                                    borderRadius: BorderRadius.circular(12.r),
+                                  ),
+                                  child: Text(
+                                    badge,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
+                              ],
+                              if (showChevron) ...[
+                                Spacer(),
+                                Icon(
+                                  Icons.chevron_right,
+                                  color: AppColors.textPrimary.withOpacity(0.8),
+                                  size: 24.sp,
+                                ),
+                              ],
+                            ],
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            subtitle,
+                            style: TextStyle(
+                              color: AppColors.textPrimary.withOpacity(0.7),
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (showProgress && progress != null) ...[
+                SizedBox(height: 12.h),
+                Row(
+                  children: [
+                    SizedBox(width: 56.w),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Progress',
+                                style: TextStyle(
+                                  color: AppColors.textPrimary.withOpacity(0.7),
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Text(
+                                '${(progress * 100).toInt()}%',
+                                style: TextStyle(
+                                  color: AppColors.brand500,
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ],
-                            if (showChevron) ...[
-                              Spacer(),
-                              Icon(
-                                Icons.chevron_right,
-                                color: AppColors.textPrimary.withOpacity(0.8),
-                                size: 24.sp,
-                              ),
-                            ],
-                          ],
-                        ),
-                        SizedBox(height: 4.h),
-                        Text(
-                          subtitle,
-                          style: TextStyle(
-                            color: AppColors.textPrimary.withOpacity(0.7),
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w500,
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (showProgress && progress != null) ...[
-              SizedBox(height: 12.h),
-              Row(
-                children: [
-                  SizedBox(width: 56.w),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Progress',
-                              style: TextStyle(
-                                color: AppColors.textPrimary.withOpacity(0.7),
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w500,
+                          SizedBox(height: 8.h),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10.r),
+                            child: LinearProgressIndicator(
+                              value: progress,
+                              backgroundColor: AppColors.brand100,
+                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                AppColors.brand500,
                               ),
+                              minHeight: 6.h,
                             ),
-                            Text(
-                              '${(progress * 100).toInt()}%',
-                              style: TextStyle(
-                                color: AppColors.brand500,
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 8.h),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(10.r),
-                          child: LinearProgressIndicator(
-                            value: progress,
-                            backgroundColor: AppColors.brand100,
-                            valueColor: const AlwaysStoppedAnimation<Color>(
-                              AppColors.brand500,
-                            ),
-                            minHeight: 6.h,
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  if (showChevron) SizedBox(width: 12.w),
-                ],
-              ),
+                    if (showChevron) SizedBox(width: 12.w),
+                  ],
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
