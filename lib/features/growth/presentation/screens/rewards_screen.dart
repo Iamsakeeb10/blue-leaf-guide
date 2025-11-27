@@ -31,6 +31,123 @@ class _RewardsScreenState extends State<RewardsScreen> {
 
   DateTime _selectedDate = DateTime.now();
 
+  // Add these new state variables at the top of _RewardsScreenState class
+  int _selectedYear = DateTime.now().year;
+  bool _isLoadingChartData = false;
+  List<double> _chartValues = List.filled(12, 0.0);
+
+  @override
+  void initState() {
+    super.initState(); // Always call super.initState() first or last.
+    _fetchYearlyChartData();
+  }
+
+  // Add this method to fetch chart data
+  Future<void> _fetchYearlyChartData() async {
+    if (_auth.currentUser == null) return;
+
+    setState(() => _isLoadingChartData = true);
+
+    try {
+      final userId = _auth.currentUser!.uid;
+
+      // Initialize monthly completion rates (12 months)
+      List<double> monthlyRates = List.filled(12, 0.0);
+
+      // Fetch all active goals for the selected year
+      for (int month = 1; month <= 12; month++) {
+        final monthKey = '${_selectedYear}-${month.toString().padLeft(2, '0')}';
+
+        final goalsSnapshot = await _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('monthly_goals')
+            .where('month', isEqualTo: monthKey)
+            .where('isActive', isEqualTo: true)
+            .get();
+
+        if (goalsSnapshot.docs.isEmpty) {
+          monthlyRates[month - 1] = -1.0;
+          continue;
+        }
+
+        int totalGoals = 0;
+        int completedGoals = 0;
+
+        for (final doc in goalsSnapshot.docs) {
+          final data = doc.data();
+          final int target = (data['targetNumber'] as num?)?.toInt() ?? 0;
+          final int progress = (data['currentProgress'] as num?)?.toInt() ?? 0;
+
+          if (target > 0) {
+            totalGoals++;
+            if (progress >= target) {
+              completedGoals++;
+            }
+          }
+        }
+
+        if (totalGoals > 0) {
+          monthlyRates[month - 1] = completedGoals / totalGoals;
+        } else {
+          monthlyRates[month - 1] = 0.0;
+        }
+      }
+
+      setState(() {
+        _chartValues = monthlyRates;
+      });
+    } catch (e) {
+      print('Error fetching chart data: $e');
+    } finally {
+      setState(() => _isLoadingChartData = false);
+    }
+  }
+
+  // Add this method to show year picker dialog
+  void _showYearPicker() async {
+    final currentYear = DateTime.now().year;
+    final years = List.generate(10, (index) => currentYear - index);
+
+    final selectedYear = await showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Year'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: years.length,
+            itemBuilder: (context, index) {
+              final year = years[index];
+              return ListTile(
+                title: Text(
+                  year.toString(),
+                  style: TextStyle(
+                    fontWeight: year == _selectedYear
+                        ? FontWeight.w600
+                        : FontWeight.w400,
+                    color: year == _selectedYear
+                        ? AppColors.brand500
+                        : AppColors.textPrimary,
+                  ),
+                ),
+                onTap: () => Navigator.pop(context, year),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    if (selectedYear != null && selectedYear != _selectedYear) {
+      setState(() {
+        _selectedYear = selectedYear;
+      });
+      await _fetchYearlyChartData();
+    }
+  }
+
   Future<bool> _isBrandBuildCompleted() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return false;
@@ -329,6 +446,20 @@ class _RewardsScreenState extends State<RewardsScreen> {
     }
   }
 
+  double _calculateAverage(List<double> values) {
+    final validValues = values.where((v) => v >= 0).toList();
+    if (validValues.isEmpty) return 0.0;
+    final sum = validValues.reduce((a, b) => a + b);
+    return sum / validValues.length;
+  }
+
+  String _formatPercentage(double value) {
+    // Clamp between 0 and 1 for safety
+    final clamped = value.clamp(0.0, 1.0);
+    // Convert to percentage with 1 decimal: 0.583 → "58.3%"
+    return '${(clamped * 100).toStringAsFixed(1)}%';
+  }
+
   @override
   Widget build(BuildContext context) {
     final userId = _auth.currentUser!.uid;
@@ -470,35 +601,38 @@ class _RewardsScreenState extends State<RewardsScreen> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12.w,
-                          vertical: 9.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(
-                            color: AppColors.textPrimary.withOpacity(0.05),
+                      GestureDetector(
+                        onTap: _showYearPicker,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 9.h,
                           ),
-                          borderRadius: BorderRadius.circular(100.r),
-                        ),
-                        child: Row(
-                          children: [
-                            Text(
-                              'Monthly',
-                              style: TextStyle(
-                                color: AppColors.textPrimary.withOpacity(0.8),
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w600,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(
+                              color: AppColors.textPrimary.withOpacity(0.05),
+                            ),
+                            borderRadius: BorderRadius.circular(100.r),
+                          ),
+                          child: Row(
+                            children: [
+                              Text(
+                                _selectedYear.toString(),
+                                style: TextStyle(
+                                  color: AppColors.textPrimary.withOpacity(0.8),
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                            ),
-                            SizedBox(width: 4.w),
-                            Icon(
-                              Icons.keyboard_arrow_down,
-                              size: 16.sp,
-                              color: Colors.black,
-                            ),
-                          ],
+                              SizedBox(width: 4.w),
+                              Icon(
+                                Icons.keyboard_arrow_down,
+                                size: 16.sp,
+                                color: Colors.black,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -516,14 +650,17 @@ class _RewardsScreenState extends State<RewardsScreen> {
                           ),
                         ),
                         SizedBox(height: 8.h),
-                        Text(
-                          '58.3%',
-                          style: TextStyle(
-                            color: AppColors.textPrimary.withOpacity(0.8),
-                            fontSize: 20.sp,
-                            fontWeight: FontWeight.w600,
+                        if (_isLoadingChartData)
+                          const CircularProgressIndicator()
+                        else
+                          Text(
+                            _formatPercentage(_calculateAverage(_chartValues)),
+                            style: TextStyle(
+                              color: AppColors.textPrimary.withOpacity(0.8),
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),
@@ -630,9 +767,29 @@ class _RewardsScreenState extends State<RewardsScreen> {
     );
   }
 
+  // Replace the existing _buildBarChart method with this updated version
   Widget _buildBarChart() {
-    final months = ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    final values = [0.75, 0.0, 0.42, 1.0, 0.0, 0.32, 0.65];
+    final months = [
+      'Ja',
+      'Fe',
+      'Ma',
+      'Ap',
+      'Ma',
+      'Ju',
+      'Ju',
+      'Au',
+      'Se',
+      'Oc',
+      'No',
+      'De',
+    ];
+
+    if (_isLoadingChartData) {
+      return SizedBox(
+        height: 180.h,
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return SizedBox(
       height: 180.h,
@@ -666,7 +823,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
                       children: [
                         Container(
                           width: 16.w,
-                          height: 150.h * values[index],
+                          height: 150.h * _chartValues[index],
                           decoration: BoxDecoration(color: AppColors.brand500),
                         ),
                         SizedBox(height: 8.h),
