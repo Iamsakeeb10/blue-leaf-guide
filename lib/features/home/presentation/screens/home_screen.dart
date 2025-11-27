@@ -9,11 +9,68 @@ import 'package:provider/provider.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../roadmap/presentation/screens/roadmap_screen.dart';
-import '../../../task/presentation/screens/firestore_data_uploader.dart';
 import '../../data/client_service.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  // Inside class HomeScreen
+  Future<int> _countCompletedMonths(String userId) async {
+    try {
+      // Fetch ALL active monthly goals for the user
+      final goalsSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('monthly_goals')
+          .where('isActive', isEqualTo: true)
+          .get();
+
+      if (goalsSnapshot.docs.isEmpty) return 0;
+
+      // Group goals by month (e.g., "2025-01")
+      final Map<String, List<Map<String, dynamic>>> goalsByMonth = {};
+
+      for (final doc in goalsSnapshot.docs) {
+        final data = doc.data();
+        final String? month = data['month'] as String?;
+        final int target = (data['targetNumber'] as num?)?.toInt() ?? 0;
+        final int progress = (data['currentProgress'] as num?)?.toInt() ?? 0;
+
+        if (month == null) continue;
+
+        goalsByMonth.putIfAbsent(month, () => []);
+        goalsByMonth[month]!.add({'target': target, 'progress': progress});
+      }
+
+      // Count how many months are fully completed
+      int completedMonths = 0;
+
+      for (final goals in goalsByMonth.values) {
+        bool allGoalsCompleted = true;
+
+        for (final goal in goals) {
+          if (goal['progress'] < goal['target']) {
+            allGoalsCompleted = false;
+            break;
+          }
+        }
+
+        if (allGoalsCompleted && goals.isNotEmpty) {
+          completedMonths++;
+        }
+      }
+
+      return completedMonths;
+    } catch (e) {
+      print('Error counting completed months: $e');
+      return 0;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -247,35 +304,44 @@ class HomeScreen extends StatelessWidget {
                     },
                   ),
 
-                  _buildStatsCard(
-                    svgPath: 'assets/icons/svg/goal.svg',
-                    label: 'Goal Completed',
-                    value: '4m',
-                    gradientColors: [
-                      Colors.white.withOpacity(0),
-                      const Color(0xFF6628EA).withOpacity(0.4),
-                      const Color(0xFF6628EA),
-                    ],
-                    onTap: () async {
-                      // ScaffoldMessenger.of(context).showSnackBar(
-                      //   SnackBar(
-                      //     content: Text('Coming soon!'),
-                      //     behavior: SnackBarBehavior.floating,
-                      //   ),
-                      // );
+                  FutureBuilder<int>(
+                    future: FirebaseAuth.instance.currentUser != null
+                        ? _countCompletedMonths(
+                            FirebaseAuth.instance.currentUser!.uid,
+                          )
+                        : Future.value(0),
+                    builder: (context, snapshot) {
+                      String displayValue = '--';
+                      int completedCount = 0;
 
-                      // final success = await uploadVisualTemplateToFirestore();
-                      // if (success) {
-                      //   ScaffoldMessenger.of(context).showSnackBar(
-                      //     SnackBar(content: Text('Visual template uploaded!')),
-                      //   );
-                      // }
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        displayValue = '--';
+                      } else if (snapshot.hasError) {
+                        displayValue = 'Err';
+                      } else {
+                        completedCount = snapshot.data ?? 0;
+                        displayValue = '${completedCount}m';
+                      }
 
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const FirestoreDataUploader(),
-                        ),
+                      return _buildStatsCard(
+                        svgPath: 'assets/icons/svg/goal.svg',
+                        label: 'Goal Completed',
+                        value: displayValue,
+                        gradientColors: [
+                          Colors.white.withOpacity(0),
+                          const Color(0xFF6628EA).withOpacity(0.4),
+                          const Color(0xFF6628EA),
+                        ],
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'You’ve fully completed $completedCount month(s)!',
+                              ),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        },
                       );
                     },
                   ),

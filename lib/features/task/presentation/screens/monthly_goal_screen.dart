@@ -408,7 +408,7 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
             'Goal deleted successfully!',
             style: TextStyle(color: Colors.white),
           ),
-          backgroundColor: AppColors.danger,
+          backgroundColor: AppColors.timelinePrimary,
         ),
       );
     } catch (e) {

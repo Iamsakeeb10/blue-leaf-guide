@@ -206,7 +206,6 @@ class _CheckInScreenState extends State<CheckInScreen> {
                 'updatedAt': FieldValue.serverTimestamp(),
               });
 
-          // Check if this goal is "earned" (order == 3)
           final goal = _dynamicGoals.firstWhere(
             (g) => g['id'] == goalId,
             orElse: () => {'order': -1},
