@@ -105,92 +105,50 @@ class GrowthScreen extends StatelessWidget {
             SizedBox(height: 12.h),
             // Brand Builder Card
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 0.w),
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
               child: Column(
                 children: [
                   _buildGrowthCard(
-                    icon: Icons.account_balance,
                     title: 'Brand Builder',
                     subtitle: 'Create your professional identity',
                     progress: 0.5,
                     showProgress: true,
+                    backgroundColor: AppColors.lightGrey,
+                    svgPath: 'assets/icons/svg/building.svg',
                   ),
-                  Row(
-                    children: [
-                      SizedBox(
-                        width: 72.w,
-                      ), // 16 (padding) + 44 (icon container) + 12 (spacing)
-                      Expanded(
-                        child: Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Progress',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 13.sp,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                                Text(
-                                  '50%',
-                                  style: TextStyle(
-                                    color: const Color(0xFF2B6EF6),
-                                    fontSize: 13.sp,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 8.h),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10.r),
-                              child: LinearProgressIndicator(
-                                value: 0.5,
-                                backgroundColor: const Color(0xFFE0E0E0),
-                                valueColor: const AlwaysStoppedAnimation<Color>(
-                                  Color(0xFF2B6EF6),
-                                ),
-                                minHeight: 6.h,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(
-                        width: 24.w,
-                      ), // 12 (spacing) + 24 (chevron) + 16 (padding)
-                    ],
+
+                  SizedBox(height: 12.h),
+                  // Progress & Rewards Card
+                  _buildGrowthCard(
+                    title: 'Progress & Rewards',
+                    subtitle: 'Track achievement & celebrate wins',
+                    backgroundColor: AppColors.bgLight,
+                    svgPath: 'assets/icons/svg/cup.svg',
                   ),
+                  SizedBox(height: 12.h),
+                  // Learning Guides Card
+                  _buildGrowthCard(
+                    title: 'Learning Guides',
+                    subtitle: 'Tutorials, tips, and industry insights',
+                    badge: 'Coming Soon',
+                    backgroundColor: AppColors.lightGrey,
+                    showChevron: false,
+                    svgPath: 'assets/icons/svg/book.svg',
+                  ),
+                  SizedBox(height: 12.h),
+                  // Interview Practices Card
+                  _buildGrowthCard(
+                    title: 'Interview Practices',
+                    subtitle: 'Get ready for salon interviews',
+                    badge: 'Coming Soon',
+                    backgroundColor: AppColors.bgLight,
+                    showChevron: false,
+                    svgPath: 'assets/icons/svg/user-black.svg',
+                  ),
+                  SizedBox(height: 80.h),
                 ],
               ),
             ),
-            SizedBox(height: 12.h),
-            // Progress & Rewards Card
-            _buildGrowthCard(
-              icon: Icons.emoji_events,
-              title: 'Progress & Rewards',
-              subtitle: 'Track achievement & celebrate wins',
-            ),
-            SizedBox(height: 12.h),
-            // Learning Guides Card
-            _buildGrowthCard(
-              icon: Icons.menu_book,
-              title: 'Learning Guides',
-              subtitle: 'Tutorials, tips, and industry insights',
-              badge: 'Coming Soon',
-            ),
-            SizedBox(height: 12.h),
-            // Interview Practices Card
-            _buildGrowthCard(
-              icon: Icons.person,
-              title: 'Interview Practices',
-              subtitle: 'Get ready for salon interviews',
-              badge: 'Coming Soon',
-            ),
-            SizedBox(height: 80.h),
           ],
         ),
       ),
@@ -198,88 +156,164 @@ class GrowthScreen extends StatelessWidget {
   }
 
   Widget _buildGrowthCard({
-    required IconData icon,
+    required String svgPath,
     required String title,
     required String subtitle,
     double? progress,
     bool showProgress = false,
     String? badge,
+    required Color backgroundColor,
+    bool showChevron = true,
   }) {
     return Container(
-      padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(16.r),
       ),
-      child: Column(
-        children: [
-          // Top Section - Icon, Title, Subtitle, Chevron
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: EdgeInsets.all(10.w),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF5F5F5),
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                child: Icon(icon, size: 24.sp, color: Colors.black),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 16.w, horizontal: 16.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // SVG Icon - vertically centered using FittedBox + Center
+                  Center(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 12.w,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.textPrimary.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(100.r),
+                      ),
+                      child: SvgPicture.asset(
+                        svgPath,
+                        width: 20.sp,
+                        height: 20.sp,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  // Title & Subtitle
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        if (badge != null) ...[
-                          SizedBox(width: 8.w),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 8.w,
-                              vertical: 4.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFF6B35),
-                              borderRadius: BorderRadius.circular(12.r),
-                            ),
-                            child: Text(
-                              badge,
+                        Row(
+                          children: [
+                            Text(
+                              title,
                               style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 10.sp,
+                                color: AppColors.textPrimary,
+                                fontSize: 16.sp,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
+                            if (badge != null) ...[
+                              SizedBox(width: 8.w),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 8.w,
+                                  vertical: 4.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.amber,
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                                child: Text(
+                                  badge,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        SizedBox(height: 4.h),
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            color: AppColors.textPrimary.withOpacity(0.7),
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w500,
                           ),
-                        ],
+                        ),
                       ],
                     ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w400,
+                  ),
+                  if (showChevron) ...[
+                    SizedBox(width: 12.w),
+                    // Chevron aligned to top
+                    Align(
+                      alignment: Alignment.topCenter,
+                      child: Icon(
+                        Icons.chevron_right,
+                        color: AppColors.textPrimary.withOpacity(0.8),
+                        size: 24.sp,
                       ),
                     ),
                   ],
-                ),
+                ],
               ),
-              SizedBox(width: 12.w),
-              Icon(Icons.chevron_right, color: Colors.grey[400], size: 24.sp),
+            ),
+            if (showProgress && progress != null) ...[
+              SizedBox(height: 12.h),
+              Row(
+                children: [
+                  SizedBox(width: 58.w),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Progress',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                            Text(
+                              '${(progress * 100).toInt()}%',
+                              style: TextStyle(
+                                color: const Color(0xFF2B6EF6),
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 8.h),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10.r),
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            backgroundColor: const Color(0xFFE0E0E0),
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              Color(0xFF2B6EF6),
+                            ),
+                            minHeight: 6.h,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (showChevron) SizedBox(width: 12.w),
+                ],
+              ),
             ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

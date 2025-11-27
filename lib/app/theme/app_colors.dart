@@ -4,6 +4,7 @@ class AppColors {
   // 🌿 Background
   static const Color background = Color(0xFFFFFFFF); // White
   static const Color lightGrey = Color(0xFFF7F7F7); // New color added
+  static const Color bgLight = Color(0xFFF6F3F6);
 
   // 🌿 Text Colors
   static const Color textPrimary = Color(0xFF090F05); // Dark text
