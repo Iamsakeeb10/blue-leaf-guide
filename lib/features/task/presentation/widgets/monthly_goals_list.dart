@@ -36,11 +36,15 @@ class MonthlyGoalsList extends StatelessWidget {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
+          return SizedBox.expand(
+            child: Center(child: Text('Error: ${snapshot.error}')),
+          );
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const SizedBox.expand(
+            child: Center(child: CircularProgressIndicator()),
+          );
         }
 
         final goals = snapshot.data?.docs ?? [];
@@ -56,33 +60,35 @@ class MonthlyGoalsList extends StatelessWidget {
         });
 
         if (goals.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.track_changes,
-                  size: 64.w,
-                  color: AppColors.textPrimary.withOpacity(0.2),
-                ),
-                SizedBox(height: 16.h),
-                Text(
-                  'No goals yet',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary.withOpacity(0.5),
+          return SizedBox.expand(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.track_changes,
+                    size: 64.w,
+                    color: AppColors.textPrimary.withOpacity(0.2),
                   ),
-                ),
-                SizedBox(height: 8.h),
-                Text(
-                  'Add your first monthly goal',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    color: AppColors.textPrimary.withOpacity(0.4),
+                  SizedBox(height: 16.h),
+                  Text(
+                    'No goals yet',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary.withOpacity(0.5),
+                    ),
                   ),
-                ),
-              ],
+                  SizedBox(height: 8.h),
+                  Text(
+                    'Add your first monthly goal',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: AppColors.textPrimary.withOpacity(0.4),
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         }

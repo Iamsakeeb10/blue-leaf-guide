@@ -494,15 +494,17 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
         ),
 
         // Reusable goals list
-        MonthlyGoalsList(
-          userId: userId,
-          monthKey: monthKey,
-          onAddGoal: _showAddGoalDialog,
-          onEditGoal: (goalId, title, target) async {
-            await _showEditGoalDialog(goalId, title, target);
-          },
-          onDeleteGoal: _deleteGoal,
-          orderSuffixMap: orderSuffixMap,
+        Expanded(
+          child: MonthlyGoalsList(
+            userId: userId,
+            monthKey: monthKey,
+            onAddGoal: _showAddGoalDialog,
+            onEditGoal: (goalId, title, target) async {
+              await _showEditGoalDialog(goalId, title, target);
+            },
+            onDeleteGoal: _deleteGoal,
+            orderSuffixMap: orderSuffixMap,
+          ),
         ),
 
         // Add Goal Button
