@@ -20,6 +20,7 @@ class AppColors {
   // 🌿 New Colors
   static const Color brand500 = Color(0xFF155DFC); // Active indicator
   static const Color brand400 = Color(0xFF447DFD);
+  static const Color brand100 = Color(0xFFB6CDFE);
 
   static const Color brand50 = Color(0xFFE8EFFF); // Brand 50
   static const Color iceBlue = Color(0xFFE8EFFF);

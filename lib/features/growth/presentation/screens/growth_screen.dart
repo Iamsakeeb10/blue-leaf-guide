@@ -268,7 +268,7 @@ class GrowthScreen extends StatelessWidget {
               SizedBox(height: 12.h),
               Row(
                 children: [
-                  SizedBox(width: 58.w),
+                  SizedBox(width: 56.w),
                   Expanded(
                     child: Column(
                       children: [
@@ -278,17 +278,17 @@ class GrowthScreen extends StatelessWidget {
                             Text(
                               'Progress',
                               style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w400,
+                                color: AppColors.textPrimary.withOpacity(0.7),
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                             Text(
                               '${(progress * 100).toInt()}%',
                               style: TextStyle(
-                                color: const Color(0xFF2B6EF6),
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w600,
+                                color: AppColors.brand500,
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
@@ -298,9 +298,9 @@ class GrowthScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10.r),
                           child: LinearProgressIndicator(
                             value: progress,
-                            backgroundColor: const Color(0xFFE0E0E0),
+                            backgroundColor: AppColors.brand100,
                             valueColor: const AlwaysStoppedAnimation<Color>(
-                              Color(0xFF2B6EF6),
+                              AppColors.brand500,
                             ),
                             minHeight: 6.h,
                           ),
