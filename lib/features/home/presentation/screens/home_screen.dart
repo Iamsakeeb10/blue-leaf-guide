@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../app/theme/app_colors.dart';
@@ -19,10 +20,15 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Inside class HomeScreen
+  // Helper: Get last day of a given month
+  DateTime _lastDayOfMonth(DateTime date) {
+    final nextMonth = DateTime(date.year, date.month + 1, 1);
+    return nextMonth.subtract(const Duration(days: 1));
+  }
+
   Future<int> _countCompletedMonths(String userId) async {
     try {
-      // Fetch ALL active monthly goals for the user
+      // Fetch all ACTIVE monthly goals
       final goalsSnapshot = await FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
@@ -37,35 +43,54 @@ class _HomeScreenState extends State<HomeScreen> {
 
       for (final doc in goalsSnapshot.docs) {
         final data = doc.data();
-        final String? month = data['month'] as String?;
+        final String? monthKey = data['month'] as String?;
+        if (monthKey == null) continue;
+
         final int target = (data['targetNumber'] as num?)?.toInt() ?? 0;
         final int progress = (data['currentProgress'] as num?)?.toInt() ?? 0;
 
-        if (month == null) continue;
-
-        goalsByMonth.putIfAbsent(month, () => []);
-        goalsByMonth[month]!.add({'target': target, 'progress': progress});
+        goalsByMonth.putIfAbsent(monthKey, () => []);
+        goalsByMonth[monthKey]!.add({'target': target, 'progress': progress});
       }
 
-      // Count how many months are fully completed
-      int completedMonths = 0;
+      // Today at start of day (for fair comparison)
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
 
-      for (final goals in goalsByMonth.values) {
-        bool allGoalsCompleted = true;
+      int completedCount = 0;
 
-        for (final goal in goals) {
-          if (goal['progress'] < goal['target']) {
-            allGoalsCompleted = false;
-            break;
-          }
+      for (final entry in goalsByMonth.entries) {
+        final String monthKey = entry.key;
+        final List<Map<String, dynamic>> goals = entry.value;
+
+        // Parse "2025-01" → DateTime(2025, 1, 1)
+        final DateTime monthStart;
+        try {
+          monthStart = DateFormat('yyyy-MM').parse(monthKey);
+        } catch (e) {
+          continue; // skip invalid month keys
         }
 
-        if (allGoalsCompleted && goals.isNotEmpty) {
-          completedMonths++;
+        // Get last day of this month (e.g., Jan 31)
+        final DateTime lastDay = _lastDayOfMonth(monthStart);
+
+        // 🔑 CRITICAL: Only count if month is FULLY in the past
+        if (today.compareTo(lastDay) <= 0) {
+          // Today is still within this month (or it's future) → skip
+          continue;
+        }
+
+        // Check if ALL goals in this PAST month are completed
+        final bool allCompleted = goals.every((goal) {
+          return (goal['progress'] as int) >= (goal['target'] as int);
+        });
+
+        if (allCompleted) {
+          completedCount++;
         }
       }
 
-      return completedMonths;
+      return completedCount;
     } catch (e) {
       print('Error counting completed months: $e');
       return 0;
@@ -304,6 +329,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                   ),
 
+                  // 🔥 GOAL COMPLETED CARD — DYNAMIC
                   FutureBuilder<int>(
                     future: FirebaseAuth.instance.currentUser != null
                         ? _countCompletedMonths(
@@ -312,15 +338,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         : Future.value(0),
                     builder: (context, snapshot) {
                       String displayValue = '--';
-                      int completedCount = 0;
+                      int count = 0;
 
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        displayValue = '--';
-                      } else if (snapshot.hasError) {
-                        displayValue = 'Err';
-                      } else {
-                        completedCount = snapshot.data ?? 0;
-                        displayValue = '${completedCount}m';
+                      if (snapshot.connectionState == ConnectionState.done) {
+                        count = snapshot.data ?? 0;
+                        displayValue = '${count}m';
                       }
 
                       return _buildStatsCard(
@@ -336,7 +358,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                'You’ve fully completed $completedCount month(s)!',
+                                'You’ve fully completed $count month(s)!',
                               ),
                               behavior: SnackBarBehavior.floating,
                             ),
