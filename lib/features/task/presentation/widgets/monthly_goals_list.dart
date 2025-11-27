@@ -24,6 +24,8 @@ class MonthlyGoalsList extends StatelessWidget {
     required this.orderSuffixMap,
   });
 
+  // Replace the entire build method in MonthlyGoalsList
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
@@ -36,14 +38,20 @@ class MonthlyGoalsList extends StatelessWidget {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return SizedBox.expand(
-            child: Center(child: Text('Error: ${snapshot.error}')),
+          return Center(
+            child: Padding(
+              padding: EdgeInsets.all(16.h),
+              child: Text('Error: ${snapshot.error}'),
+            ),
           );
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox.expand(
-            child: Center(child: CircularProgressIndicator()),
+          return Center(
+            child: Padding(
+              padding: EdgeInsets.all(16.h),
+              child: const CircularProgressIndicator(),
+            ),
           );
         }
 
@@ -60,10 +68,11 @@ class MonthlyGoalsList extends StatelessWidget {
         });
 
         if (goals.isEmpty) {
-          return SizedBox.expand(
-            child: Center(
+          return Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 40.h),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
                     Icons.track_changes,
@@ -94,12 +103,11 @@ class MonthlyGoalsList extends StatelessWidget {
         }
 
         return ListView.separated(
-          shrinkWrap: true, // ✅ Critical: makes ListView fit content
-          physics:
-              const NeverScrollableScrollPhysics(), // ✅ Prevent nested scrolling
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
           itemCount: goals.length,
           separatorBuilder: (context, index) {
-            if (index == goals.length - 1) return SizedBox(height: 0);
+            if (index == goals.length - 1) return const SizedBox.shrink();
             return Column(
               children: [
                 SizedBox(height: 12.h),

@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/month_year_picker_dialog.dart';
 import '../../../task/presentation/widgets/edit_goal_dialog.dart';
+import '../../../task/presentation/widgets/monthly_goals_list.dart';
 
 class RewardsScreen extends StatefulWidget {
   const RewardsScreen({Key? key}) : super(key: key);
@@ -807,19 +808,19 @@ class _RewardsScreenState extends State<RewardsScreen> {
               ),
             ),
             SizedBox(height: 16.h),
-            // Padding(
-            //   padding: EdgeInsets.symmetric(horizontal: 16.w),
-            //   child: MonthlyGoalsList(
-            //     userId: userId,
-            //     monthKey: monthKey,
-            //     onAddGoal: () {},
-            //     onEditGoal: (goalId, title, target) async {
-            //       await _showEditGoalDialog(goalId, title, target);
-            //     },
-            //     onDeleteGoal: _deleteGoal,
-            //     orderSuffixMap: orderSuffixMap,
-            //   ),
-            // ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: MonthlyGoalsList(
+                userId: userId,
+                monthKey: monthKey,
+                onAddGoal: () {},
+                onEditGoal: (goalId, title, target) async {
+                  await _showEditGoalDialog(goalId, title, target);
+                },
+                onDeleteGoal: _deleteGoal,
+                orderSuffixMap: orderSuffixMap,
+              ),
+            ),
             SizedBox(height: 80.h),
           ],
         ),
