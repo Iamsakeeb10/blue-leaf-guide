@@ -235,6 +235,14 @@ class GrowthScreen extends StatelessWidget {
                                 ),
                               ),
                             ],
+                            if (showChevron) ...[
+                              Spacer(),
+                              Icon(
+                                Icons.chevron_right,
+                                color: AppColors.textPrimary.withOpacity(0.8),
+                                size: 24.sp,
+                              ),
+                            ],
                           ],
                         ),
                         SizedBox(height: 4.h),
@@ -249,18 +257,6 @@ class GrowthScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (showChevron) ...[
-                    SizedBox(width: 12.w),
-                    // Chevron aligned to top
-                    Align(
-                      alignment: Alignment.topCenter,
-                      child: Icon(
-                        Icons.chevron_right,
-                        color: AppColors.textPrimary.withOpacity(0.8),
-                        size: 24.sp,
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
