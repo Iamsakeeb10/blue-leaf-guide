@@ -8,7 +8,6 @@ import 'package:intl/intl.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/month_year_picker_dialog.dart';
 import '../../../task/presentation/widgets/edit_goal_dialog.dart';
-import '../../../task/presentation/widgets/monthly_goals_list.dart';
 
 class RewardsScreen extends StatefulWidget {
   const RewardsScreen({Key? key}) : super(key: key);
@@ -20,6 +19,8 @@ class RewardsScreen extends StatefulWidget {
 class _RewardsScreenState extends State<RewardsScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  int _selectedTaskYear = DateTime.now().year;
+  int _selectedTaskMonth = DateTime.now().month;
 
   final Map<int, String> orderSuffixMap = {
     1: 'distributed',
@@ -39,7 +40,108 @@ class _RewardsScreenState extends State<RewardsScreen> {
   @override
   void initState() {
     super.initState(); // Always call super.initState() first or last.
+    _selectedTaskMonth = DateTime.now().month;
+    _selectedTaskYear = DateTime.now().year;
     _fetchYearlyChartData();
+  }
+
+  // Add this method to show month picker
+  void _showTaskMonthPicker() async {
+    final months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+
+    final selectedMonth = await showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Month'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: months.length,
+            itemBuilder: (context, index) {
+              return ListTile(
+                title: Text(
+                  months[index],
+                  style: TextStyle(
+                    fontWeight: (index + 1) == _selectedTaskMonth
+                        ? FontWeight.w600
+                        : FontWeight.w400,
+                    color: (index + 1) == _selectedTaskMonth
+                        ? AppColors.brand500
+                        : AppColors.textPrimary,
+                  ),
+                ),
+                onTap: () => Navigator.pop(context, index + 1),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    if (selectedMonth != null && selectedMonth != _selectedTaskMonth) {
+      setState(() {
+        _selectedTaskMonth = selectedMonth;
+        _selectedDate = DateTime(_selectedTaskYear, _selectedTaskMonth, 1);
+      });
+    }
+  }
+
+  // Add this method to show year picker for task section
+  void _showTaskYearPicker() async {
+    final currentYear = DateTime.now().year;
+    final years = List.generate(10, (index) => currentYear - index);
+
+    final selectedYear = await showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Year'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: years.length,
+            itemBuilder: (context, index) {
+              final year = years[index];
+              return ListTile(
+                title: Text(
+                  year.toString(),
+                  style: TextStyle(
+                    fontWeight: year == _selectedTaskYear
+                        ? FontWeight.w600
+                        : FontWeight.w400,
+                    color: year == _selectedTaskYear
+                        ? AppColors.brand500
+                        : AppColors.textPrimary,
+                  ),
+                ),
+                onTap: () => Navigator.pop(context, year),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    if (selectedYear != null && selectedYear != _selectedTaskYear) {
+      setState(() {
+        _selectedTaskYear = selectedYear;
+        _selectedDate = DateTime(_selectedTaskYear, _selectedTaskMonth, 1);
+      });
+    }
   }
 
   // Add this method to fetch chart data
@@ -67,7 +169,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
             .get();
 
         if (goalsSnapshot.docs.isEmpty) {
-          monthlyRates[month - 1] = -1.0;
+          monthlyRates[month - 1] = 0.0;
           continue;
         }
 
@@ -686,28 +788,38 @@ class _RewardsScreenState extends State<RewardsScreen> {
                   ),
                   Row(
                     children: [
-                      _buildDropdown('November'),
+                      GestureDetector(
+                        onTap: _showTaskMonthPicker,
+                        child: _buildDropdown(
+                          DateFormat('MMMM').format(
+                            DateTime(_selectedTaskYear, _selectedTaskMonth),
+                          ),
+                        ),
+                      ),
                       SizedBox(width: 8.w),
-                      _buildDropdown('2025'),
+                      GestureDetector(
+                        onTap: _showTaskYearPicker,
+                        child: _buildDropdown(_selectedTaskYear.toString()),
+                      ),
                     ],
                   ),
                 ],
               ),
             ),
             SizedBox(height: 16.h),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: MonthlyGoalsList(
-                userId: userId,
-                monthKey: monthKey,
-                onAddGoal: () {},
-                onEditGoal: (goalId, title, target) async {
-                  await _showEditGoalDialog(goalId, title, target);
-                },
-                onDeleteGoal: _deleteGoal,
-                orderSuffixMap: orderSuffixMap,
-              ),
-            ),
+            // Padding(
+            //   padding: EdgeInsets.symmetric(horizontal: 16.w),
+            //   child: MonthlyGoalsList(
+            //     userId: userId,
+            //     monthKey: monthKey,
+            //     onAddGoal: () {},
+            //     onEditGoal: (goalId, title, target) async {
+            //       await _showEditGoalDialog(goalId, title, target);
+            //     },
+            //     onDeleteGoal: _deleteGoal,
+            //     orderSuffixMap: orderSuffixMap,
+            //   ),
+            // ),
             SizedBox(height: 80.h),
           ],
         ),
