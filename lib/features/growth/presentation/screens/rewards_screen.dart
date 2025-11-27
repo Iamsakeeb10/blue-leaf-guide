@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../app/theme/app_colors.dart';
@@ -583,7 +584,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
                 children: [
                   Expanded(
                     child: _buildStatCard(
-                      icon: '🔥',
+                      svgPath: 'assets/icons/svg/fire.svg',
                       title: 'Current Streak',
                       value: '5 days',
                       backgroundColor: AppColors.backgroundLight,
@@ -607,7 +608,8 @@ class _RewardsScreenState extends State<RewardsScreen> {
                         }
 
                         return _buildStatCard(
-                          icon: '🎯',
+                          svgPath: 'assets/icons/svg/stats-target.svg',
+
                           title: 'Goal Completed',
                           value: displayValue,
                           backgroundColor: AppColors.brand50,
@@ -633,15 +635,13 @@ class _RewardsScreenState extends State<RewardsScreen> {
                         }
 
                         return _buildStatCard(
-                          icon: '✓',
+                          svgPath: 'assets/icons/svg/stats-check.svg',
+
                           title: 'Brand Build',
                           value: isCompleted ? 'Completed' : 'None',
                           backgroundColor: isCompleted
                               ? AppColors.backgroundGreenLight
                               : AppColors.backgroundLight,
-                          iconColor: isCompleted
-                              ? Colors.green
-                              : AppColors.textPrimary.withOpacity(0.5),
                         );
                       },
                     ),
@@ -670,7 +670,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
                         }
 
                         return _buildStatCard(
-                          icon: '👥',
+                          svgPath: 'assets/icons/svg/stats-user.svg',
                           title: 'Client Served',
                           value: clientServed,
                           backgroundColor: AppColors.backgroundPurpleLight,
@@ -829,7 +829,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
   }
 
   Widget _buildStatCard({
-    required String icon,
+    required String svgPath,
     required String title,
     required String value,
     required Color backgroundColor,
@@ -851,11 +851,21 @@ class _RewardsScreenState extends State<RewardsScreen> {
                 color: iconColor,
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.check, color: Colors.white, size: 24.sp),
+              child: Center(
+                child: SvgPicture.asset(
+                  svgPath,
+                  width: 20.w,
+                  height: 20.w,
+                  colorFilter: const ColorFilter.mode(
+                    Colors.white,
+                    BlendMode.srcIn,
+                  ),
+                ),
+              ),
             )
           else
-            Text(icon, style: TextStyle(fontSize: 32.sp)),
-          SizedBox(height: 8.h),
+            SvgPicture.asset(svgPath, width: 40.w, height: 40.w),
+          SizedBox(height: 12.h),
           Text(
             title,
             textAlign: TextAlign.center,
