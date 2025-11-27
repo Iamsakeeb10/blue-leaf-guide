@@ -1,14 +1,169 @@
 import 'package:blue_leaf_guide/shared/widgets/custom_appbar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../shared/widgets/month_year_picker_dialog.dart';
+import '../../../task/presentation/widgets/edit_goal_dialog.dart';
+import '../../../task/presentation/widgets/monthly_goals_list.dart';
 
-class RewardsScreen extends StatelessWidget {
+class RewardsScreen extends StatefulWidget {
   const RewardsScreen({Key? key}) : super(key: key);
 
   @override
+  State<RewardsScreen> createState() => _RewardsScreenState();
+}
+
+class _RewardsScreenState extends State<RewardsScreen> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  final Map<int, String> orderSuffixMap = {
+    1: 'distributed',
+    2: 'acquired',
+    3: 'earned',
+    4: 'posted',
+    5: 'attended',
+  };
+
+  DateTime _selectedDate = DateTime.now();
+
+  Future<void> _showEditGoalDialog(
+    String goalId,
+    String currentTitle,
+    int currentTarget,
+  ) async {
+    await EditGoalDialog.show(
+      context: context,
+      currentTitle: currentTitle,
+      currentTarget: currentTarget,
+      onSave: (newTarget) async {
+        await _updateGoal(goalId, newTarget);
+      },
+    );
+  }
+
+  Future<void> _updateGoal(String goalId, int newTarget) async {
+    if (_auth.currentUser == null) return;
+
+    try {
+      final userId = _auth.currentUser!.uid;
+
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('monthly_goals')
+          .doc(goalId)
+          .update({
+            'targetNumber': newTarget,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Goal updated successfully!',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: AppColors.timelinePrimary,
+        ),
+      );
+    } catch (e) {
+      print('Error updating goal: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to update goal: $e',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
+  }
+
+  Future<void> _deleteGoal(String goalId) async {
+    if (_auth.currentUser == null) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Goal'),
+        content: const Text('Are you sure you want to delete this goal?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      final userId = _auth.currentUser!.uid;
+
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('monthly_goals')
+          .doc(goalId)
+          .delete();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Goal deleted successfully!',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    } catch (e) {
+      print('Error deleting goal: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to delete goal: $e',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
+  }
+
+  String _getMonthKey(DateTime date) {
+    return DateFormat('yyyy-MM').format(date);
+  }
+
+  // ignore: unused_element
+  void _showMonthYearPicker() async {
+    final result = await showDialog<DateTime>(
+      context: context,
+      builder: (context) => MonthYearPickerDialog(initialDate: _selectedDate),
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedDate = result;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final userId = _auth.currentUser!.uid;
+    final monthKey = _getMonthKey(_selectedDate);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: const CustomAppBar(title: 'Progress & Rewards'),
@@ -179,40 +334,18 @@ class RewardsScreen extends StatelessWidget {
               ),
             ),
             SizedBox(height: 16.h),
-            // Task Items
-            _buildTaskItem(
-              title: 'Distribute business cards',
-              progress: 0.4,
-              completed: 20,
-              target: 50,
-              targetColor: const Color(0xFFFF6B35),
-            ),
-            SizedBox(height: 12.h),
-            _buildTaskItem(
-              title: 'Total client served',
-              progress: 0.5,
-              completed: 5,
-              target: 10,
-              targetColor: const Color(0xFF10B981),
-              subtitle: 'Acquired',
-            ),
-            SizedBox(height: 12.h),
-            _buildTaskItem(
-              title: 'Post on social media',
-              progress: 0.5,
-              completed: 5,
-              target: 10,
-              targetColor: const Color(0xFFFF6B35),
-              subtitle: 'Posted',
-            ),
-            SizedBox(height: 12.h),
-            _buildTaskItem(
-              title: 'Attend hair show or class',
-              progress: 0.0,
-              completed: 0,
-              target: 5,
-              targetColor: const Color(0xFF10B981),
-              subtitle: 'Attended',
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: MonthlyGoalsList(
+                userId: userId,
+                monthKey: monthKey,
+                onAddGoal: () {},
+                onEditGoal: (goalId, title, target) async {
+                  await _showEditGoalDialog(goalId, title, target);
+                },
+                onDeleteGoal: _deleteGoal,
+                orderSuffixMap: orderSuffixMap,
+              ),
             ),
             SizedBox(height: 80.h),
           ],
@@ -364,88 +497,6 @@ class RewardsScreen extends StatelessWidget {
           ),
           SizedBox(width: 4.w),
           Icon(Icons.keyboard_arrow_down, size: 16.sp, color: Colors.black),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTaskItem({
-    required String title,
-    required double progress,
-    required int completed,
-    required int target,
-    required Color targetColor,
-    String? subtitle,
-  }) {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 10.w,
-                      vertical: 4.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: targetColor,
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: Text(
-                      'Target $target',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 11.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 8.w),
-                  Icon(Icons.more_vert, color: Colors.grey[600], size: 20.sp),
-                ],
-              ),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10.r),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: const Color(0xFFE0E0E0),
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                Color(0xFF2B6EF6),
-              ),
-              minHeight: 8.h,
-            ),
-          ),
-          SizedBox(height: 8.h),
-          Text(
-            '$completed ${subtitle ?? "distributed"}',
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
         ],
       ),
     );
