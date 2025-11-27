@@ -880,21 +880,20 @@ class _RewardsScreenState extends State<RewardsScreen> {
     );
   }
 
-  // Replace the existing _buildBarChart method with this updated version
   Widget _buildBarChart() {
     final months = [
-      'Ja',
-      'Fe',
-      'Ma',
-      'Ap',
-      'Ma',
-      'Ju',
-      'Ju',
-      'Au',
-      'Se',
-      'Oc',
-      'No',
-      'De',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
 
     if (_isLoadingChartData) {
@@ -905,7 +904,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
     }
 
     return SizedBox(
-      height: 180.h,
+      height: 200.h, // Increased height to accommodate rotated text
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -930,7 +929,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
               children: List.generate(months.length, (index) {
                 return Expanded(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4.w),
+                    padding: EdgeInsets.symmetric(horizontal: 2.w),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
@@ -940,12 +939,15 @@ class _RewardsScreenState extends State<RewardsScreen> {
                           decoration: BoxDecoration(color: AppColors.brand500),
                         ),
                         SizedBox(height: 8.h),
-                        Text(
-                          months[index],
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 11.sp,
-                            fontWeight: FontWeight.w400,
+                        Transform.rotate(
+                          angle: -0.785398, // -45 degrees in radians
+                          child: Text(
+                            months[index],
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w400,
+                            ),
                           ),
                         ),
                       ],
