@@ -1,4 +1,6 @@
 import 'package:blue_leaf_guide/app/theme/app_colors.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -7,8 +9,115 @@ import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/custom_title_subtitle_appbar.dart';
 import '../../../../shared/widgets/dual_radial_gradient_painter.dart';
 
-class GrowthScreen extends StatelessWidget {
+class GrowthScreen extends StatefulWidget {
   const GrowthScreen({Key? key}) : super(key: key);
+
+  @override
+  State<GrowthScreen> createState() => _GrowthScreenState();
+}
+
+class _GrowthScreenState extends State<GrowthScreen> {
+  Future<double> _calculateBrandBuilderCompletion() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return 0.0;
+
+    final uid = user.uid;
+    final db = FirebaseFirestore.instance;
+
+    int completedCount = 0;
+    int totalCount = 0;
+
+    try {
+      // === 1. Strategy Items (5 items) ===
+      final strategyDoc = await db
+          .collection('users')
+          .doc(uid)
+          .collection('strategy')
+          .doc('items')
+          .get();
+
+      totalCount += 5;
+      if (strategyDoc.exists && strategyDoc.data() != null) {
+        final data = strategyDoc.data()!;
+        final List<dynamic>? items = data['items'];
+        if (items != null) {
+          completedCount += items
+              .where((item) => (item as Map)['isCompleted'] == true)
+              .length;
+        }
+      }
+
+      // === 2. Visual Items (4 items) ===
+      final visualDoc = await db
+          .collection('users')
+          .doc(uid)
+          .collection('visual')
+          .doc('items')
+          .get();
+
+      totalCount += 4;
+      if (visualDoc.exists && visualDoc.data() != null) {
+        final data = visualDoc.data()!;
+        final List<dynamic>? items = data['items'];
+        if (items != null) {
+          completedCount += items
+              .where((item) => (item as Map)['isCompleted'] == true)
+              .length;
+        }
+      }
+
+      // === 3. Marketing Items (6 items) ===
+      final marketingDoc = await db
+          .collection('users')
+          .doc(uid)
+          .collection('marketing')
+          .doc('items')
+          .get();
+
+      totalCount += 6;
+      if (marketingDoc.exists && marketingDoc.data() != null) {
+        final data = marketingDoc.data()!;
+        final List<dynamic>? items = data['items'];
+        if (items != null) {
+          completedCount += items
+              .where((item) => (item as Map)['isCompleted'] == true)
+              .length;
+        }
+      }
+
+      // === 4. Planning Checkboxes (10 total) ===
+      final planningDoc = await db
+          .collection('users')
+          .doc(uid)
+          .collection('planning')
+          .doc('data') // 👈 CORRECT DOC ID
+          .get();
+
+      totalCount += 10; // 3 + 3 + 4
+      if (planningDoc.exists && planningDoc.data() != null) {
+        final data = planningDoc.data()!;
+
+        final List<dynamic>? month1 = data['month1'];
+        final List<dynamic>? month2 = data['month2'];
+        final List<dynamic>? month3 = data['month3'];
+
+        if (month1 != null) {
+          completedCount += month1.where((e) => e == true).length;
+        }
+        if (month2 != null) {
+          completedCount += month2.where((e) => e == true).length;
+        }
+        if (month3 != null) {
+          completedCount += month3.where((e) => e == true).length;
+        }
+      }
+
+      return totalCount > 0 ? completedCount / totalCount : 0.0;
+    } catch (e) {
+      print('Error calculating brand builder completion: $e');
+      return 0.0;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,13 +218,26 @@ class GrowthScreen extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               child: Column(
                 children: [
-                  _buildGrowthCard(
-                    title: 'Brand Builder',
-                    subtitle: 'Create your professional identity',
-                    progress: 0.5,
-                    showProgress: true,
-                    backgroundColor: AppColors.lightGrey,
-                    svgPath: 'assets/icons/svg/building.svg',
+                  FutureBuilder<double>(
+                    future: _calculateBrandBuilderCompletion(),
+                    builder: (context, snapshot) {
+                      double progress = snapshot.data ?? 0.0;
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        progress = 0.0;
+                      }
+
+                      return _buildGrowthCard(
+                        title: 'Brand Builder',
+                        subtitle: 'Create your professional identity',
+                        progress: progress,
+                        showProgress: true,
+                        backgroundColor: AppColors.lightGrey,
+                        svgPath: 'assets/icons/svg/building.svg',
+                        onTap: () {
+                          context.push('/build-brand');
+                        },
+                      );
+                    },
                   ),
 
                   SizedBox(height: 12.h),

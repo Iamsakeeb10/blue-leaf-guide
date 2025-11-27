@@ -31,6 +31,176 @@ class _RewardsScreenState extends State<RewardsScreen> {
 
   DateTime _selectedDate = DateTime.now();
 
+  Future<bool> _isBrandBuildCompleted() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return false;
+
+    final uid = user.uid;
+    final db = FirebaseFirestore.instance;
+
+    try {
+      int completedCount = 0;
+      int totalCount = 25; // 5 + 4 + 6 + 10
+
+      // === Strategy (5) ===
+      final strategyDoc = await db
+          .collection('users')
+          .doc(uid)
+          .collection('strategy')
+          .doc('items')
+          .get();
+      if (strategyDoc.exists && strategyDoc.data() != null) {
+        final data = strategyDoc.data()!;
+        final List<dynamic>? items = data['items'];
+        if (items != null) {
+          completedCount += items
+              .where((item) => (item as Map)['isCompleted'] == true)
+              .length;
+        }
+      }
+
+      // === Visual (4) ===
+      final visualDoc = await db
+          .collection('users')
+          .doc(uid)
+          .collection('visual')
+          .doc('items')
+          .get();
+      if (visualDoc.exists && visualDoc.data() != null) {
+        final data = visualDoc.data()!;
+        final List<dynamic>? items = data['items'];
+        if (items != null) {
+          completedCount += items
+              .where((item) => (item as Map)['isCompleted'] == true)
+              .length;
+        }
+      }
+
+      // === Marketing (6) ===
+      final marketingDoc = await db
+          .collection('users')
+          .doc(uid)
+          .collection('marketing')
+          .doc('items')
+          .get();
+      if (marketingDoc.exists && marketingDoc.data() != null) {
+        final data = marketingDoc.data()!;
+        final List<dynamic>? items = data['items'];
+        if (items != null) {
+          completedCount += items
+              .where((item) => (item as Map)['isCompleted'] == true)
+              .length;
+        }
+      }
+
+      // === Planning (10) ===
+      final planningDoc = await db
+          .collection('users')
+          .doc(uid)
+          .collection('planning')
+          .doc('data')
+          .get();
+      if (planningDoc.exists && planningDoc.data() != null) {
+        final data = planningDoc.data()!;
+        final List<dynamic>? month1 = data['month1'];
+        final List<dynamic>? month2 = data['month2'];
+        final List<dynamic>? month3 = data['month3'];
+
+        if (month1 != null) {
+          completedCount += month1.where((e) => e == true).length;
+        }
+        if (month2 != null) {
+          completedCount += month2.where((e) => e == true).length;
+        }
+        if (month3 != null) {
+          completedCount += month3.where((e) => e == true).length;
+        }
+      }
+
+      return completedCount == totalCount;
+    } catch (e) {
+      print('Error checking brand build completion: $e');
+      return false;
+    }
+  }
+
+  // Helper: Get last day of a given month
+  DateTime _lastDayOfMonth(DateTime date) {
+    final nextMonth = DateTime(date.year, date.month + 1, 1);
+    return nextMonth.subtract(const Duration(days: 1));
+  }
+
+  Future<int> _countCompletedMonths(String userId) async {
+    try {
+      // Fetch all ACTIVE monthly goals
+      final goalsSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('monthly_goals')
+          .where('isActive', isEqualTo: true)
+          .get();
+
+      if (goalsSnapshot.docs.isEmpty) return 0;
+
+      // Group goals by month (e.g., "2025-01")
+      final Map<String, List<Map<String, dynamic>>> goalsByMonth = {};
+
+      for (final doc in goalsSnapshot.docs) {
+        final data = doc.data();
+        final String? monthKey = data['month'] as String?;
+        if (monthKey == null) continue;
+
+        final int target = (data['targetNumber'] as num?)?.toInt() ?? 0;
+        final int progress = (data['currentProgress'] as num?)?.toInt() ?? 0;
+
+        goalsByMonth.putIfAbsent(monthKey, () => []);
+        goalsByMonth[monthKey]!.add({'target': target, 'progress': progress});
+      }
+
+      // Today at start of day (for fair comparison)
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+
+      int completedCount = 0;
+
+      for (final entry in goalsByMonth.entries) {
+        final String monthKey = entry.key;
+        final List<Map<String, dynamic>> goals = entry.value;
+
+        // Parse "2025-01" → DateTime(2025, 1, 1)
+        final DateTime monthStart;
+        try {
+          monthStart = DateFormat('yyyy-MM').parse(monthKey);
+        } catch (e) {
+          continue; // skip invalid month keys
+        }
+
+        // Get last day of this month (e.g., Jan 31)
+        final DateTime lastDay = _lastDayOfMonth(monthStart);
+
+        // 🔑 CRITICAL: Only count if month is FULLY in the past
+        if (today.compareTo(lastDay) <= 0) {
+          // Today is still within this month (or it's future) → skip
+          continue;
+        }
+
+        // Check if ALL goals in this PAST month are completed
+        final bool allCompleted = goals.every((goal) {
+          return (goal['progress'] as int) >= (goal['target'] as int);
+        });
+
+        if (allCompleted) {
+          completedCount++;
+        }
+      }
+
+      return completedCount;
+    } catch (e) {
+      print('Error counting completed months: $e');
+      return 0;
+    }
+  }
+
   Future<void> _showEditGoalDialog(
     String goalId,
     String currentTitle,
@@ -187,11 +357,28 @@ class _RewardsScreenState extends State<RewardsScreen> {
                   ),
                   SizedBox(width: 12.w),
                   Expanded(
-                    child: _buildStatCard(
-                      icon: '🎯',
-                      title: 'Goal Completed',
-                      value: '3 months',
-                      backgroundColor: AppColors.brand50,
+                    child: FutureBuilder(
+                      future: FirebaseAuth.instance.currentUser != null
+                          ? _countCompletedMonths(
+                              FirebaseAuth.instance.currentUser!.uid,
+                            )
+                          : Future.value(0),
+                      builder: (context, snapshot) {
+                        String displayValue = 'None';
+                        int count = 0;
+
+                        if (snapshot.connectionState == ConnectionState.done) {
+                          count = snapshot.data ?? 0;
+                          displayValue = '${count} months';
+                        }
+
+                        return _buildStatCard(
+                          icon: '🎯',
+                          title: 'Goal Completed',
+                          value: displayValue,
+                          backgroundColor: AppColors.brand50,
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -203,12 +390,26 @@ class _RewardsScreenState extends State<RewardsScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    child: _buildStatCard(
-                      icon: '✓',
-                      title: 'Brand Build',
-                      value: 'Completed',
-                      backgroundColor: AppColors.backgroundGreenLight,
-                      iconColor: Colors.green,
+                    child: FutureBuilder<bool>(
+                      future: _isBrandBuildCompleted(),
+                      builder: (context, snapshot) {
+                        bool isCompleted = false;
+                        if (snapshot.connectionState == ConnectionState.done) {
+                          isCompleted = snapshot.data ?? false;
+                        }
+
+                        return _buildStatCard(
+                          icon: '✓',
+                          title: 'Brand Build',
+                          value: isCompleted ? 'Completed' : 'None',
+                          backgroundColor: isCompleted
+                              ? AppColors.backgroundGreenLight
+                              : AppColors.backgroundLight,
+                          iconColor: isCompleted
+                              ? Colors.green
+                              : AppColors.textPrimary.withOpacity(0.5),
+                        );
+                      },
                     ),
                   ),
                   SizedBox(width: 12.w),

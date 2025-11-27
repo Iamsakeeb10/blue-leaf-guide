@@ -329,7 +329,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                   ),
 
-                  // 🔥 GOAL COMPLETED CARD — DYNAMIC
                   FutureBuilder<int>(
                     future: FirebaseAuth.instance.currentUser != null
                         ? _countCompletedMonths(
