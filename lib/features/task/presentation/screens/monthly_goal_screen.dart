@@ -298,7 +298,7 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
             'Goal added successfully!',
             style: TextStyle(color: Colors.white),
           ),
-          backgroundColor: AppColors.danger,
+          backgroundColor: AppColors.timelinePrimary,
         ),
       );
     } catch (e) {

@@ -98,10 +98,12 @@ class _CheckInScreenState extends State<CheckInScreen> {
           .get();
 
       _dynamicGoals = goalsSnapshot.docs.map((doc) {
+        final data = doc.data();
         return {
           'id': doc.id,
           'shortTitle': doc.data()['shortTitle'] ?? '',
           'fullTitle': doc.data()['fullTitle'] ?? '',
+          'order': data['order'] ?? -1, // 👈 ADD ORDER
         };
       }).toList();
 
@@ -160,12 +162,14 @@ class _CheckInScreenState extends State<CheckInScreen> {
       final userId = _auth.currentUser!.uid;
       final dateKey = _getDateKey(_selectedDate);
 
+      // Parse dynamic fields (user input for goals)
       Map<String, dynamic> dynamicFieldsData = {};
       for (var entry in dynamicControllers.entries) {
         final value = int.tryParse(entry.value.text) ?? 0;
         dynamicFieldsData[entry.key] = value;
       }
 
+      // Save check-in document
       await _firestore
           .collection('users')
           .doc(userId)
@@ -182,11 +186,16 @@ class _CheckInScreenState extends State<CheckInScreen> {
             'createdAt': FieldValue.serverTimestamp(),
           });
 
+      // 🔥 NEW: Calculate total "earned" from today's input
+      int totalEarnedToday = 0;
+
+      // Update monthly goal progress AND check for "earned"
       for (var entry in dynamicFieldsData.entries) {
         final goalId = entry.key;
         final value = entry.value as int;
 
         if (value > 0) {
+          // Update monthly goal
           await _firestore
               .collection('users')
               .doc(userId)
@@ -196,7 +205,23 @@ class _CheckInScreenState extends State<CheckInScreen> {
                 'currentProgress': FieldValue.increment(value),
                 'updatedAt': FieldValue.serverTimestamp(),
               });
+
+          // Check if this goal is "earned" (order == 3)
+          final goal = _dynamicGoals.firstWhere(
+            (g) => g['id'] == goalId,
+            orElse: () => {'order': -1},
+          );
+
+          if (goal['order'] == 3) {
+            totalEarnedToday += value;
+          }
         }
+      }
+
+      if (totalEarnedToday > 0) {
+        await _firestore.collection('users').doc(userId).update({
+          'stats.totalEarned': FieldValue.increment(totalEarnedToday),
+        });
       }
 
       ScaffoldMessenger.of(context).showSnackBar(

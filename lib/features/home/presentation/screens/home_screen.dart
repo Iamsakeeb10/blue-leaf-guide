@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -28,6 +29,24 @@ class HomeScreen extends StatelessWidget {
       if (hour < 12) return "Good Morning";
       if (hour < 18) return "Good Afternoon";
       return "Good Evening";
+    }
+
+    String _formatNumber(int number) {
+      if (number >= 1000000) {
+        double value = number / 1000000;
+        return (value % 1 == 0)
+            ? '${value.toStringAsFixed(0)}M'
+            : '${value.toStringAsFixed(1)}M';
+      }
+
+      if (number >= 1000) {
+        double value = number / 1000;
+        return (value % 1 == 0)
+            ? '${value.toStringAsFixed(0)}K'
+            : '${value.toStringAsFixed(1)}K';
+      }
+
+      return number.toString();
     }
 
     return Scaffold(
@@ -164,21 +183,66 @@ class HomeScreen extends StatelessWidget {
                     },
                   ),
 
-                  _buildStatsCard(
-                    svgPath: 'assets/icons/svg/dollar.svg',
-                    label: 'Total Earned',
-                    value: '3K',
-                    gradientColors: [
-                      Colors.white.withOpacity(0),
-                      const Color(0xFF2C63FD).withOpacity(0.4),
-                      const Color(0xFF2C63FD),
-                    ],
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Coming soon!'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
+                  StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(FirebaseAuth.instance.currentUser!.uid)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return _buildStatsCard(
+                          svgPath: 'assets/icons/svg/dollar.svg',
+                          label: 'Total Earned',
+                          value: '--',
+                          gradientColors: [
+                            Colors.white.withOpacity(0),
+                            const Color(0xFF2C63FD).withOpacity(0.4),
+                            const Color(0xFF2C63FD),
+                          ],
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Loading...')),
+                            );
+                          },
+                        );
+                      }
+
+                      if (snapshot.hasError) {
+                        return _buildStatsCard(
+                          svgPath: 'assets/icons/svg/dollar.svg',
+                          label: 'Total Earned',
+                          value: 'Err',
+                          gradientColors: [
+                            Colors.white.withOpacity(0),
+                            const Color(0xFF2C63FD).withOpacity(0.4),
+                            const Color(0xFF2C63FD),
+                          ],
+                          onTap: () {},
+                        );
+                      }
+
+                      final data =
+                          snapshot.data?.data() as Map<String, dynamic>?;
+                      final numValue = data?['stats']?['totalEarned'] as num?;
+                      final intValue = numValue?.toInt() ?? 0;
+                      final totalEarned = _formatNumber(intValue);
+                      return _buildStatsCard(
+                        svgPath: 'assets/icons/svg/dollar.svg',
+                        label: 'Total Earned',
+                        value: totalEarned,
+                        gradientColors: [
+                          Colors.white.withOpacity(0),
+                          const Color(0xFF2C63FD).withOpacity(0.4),
+                          const Color(0xFF2C63FD),
+                        ],
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Total Earned: $totalEarned'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        },
                       );
                     },
                   ),
