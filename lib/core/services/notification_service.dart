@@ -25,6 +25,7 @@ class NotificationService {
   static const int _dailyTaskCompleteNotificationId = 3;
   static const int _roadmapCompleteNotificationId = 4;
   static const int _allRoadmapsCompleteNotificationId = 5;
+  static const int _dailyTaskReminderNotificationId = 6;
 
   static const String _keyPushNotificationEnabled = 'push_notification_enabled';
 
@@ -462,6 +463,71 @@ class NotificationService {
     );
 
     print('✅ Daily task completion notification sent');
+  }
+
+  /// Schedule automatic daily task reminder (always on, no toggle)
+  Future<void> scheduleDailyTaskReminder() async {
+    // Set default time: 9:00 AM
+    const int defaultHour = 7;
+    const int defaultMinute = 59;
+
+    await _notifications.cancel(_dailyTaskReminderNotificationId);
+
+    final tz.TZDateTime scheduledDate = _nextInstanceOfTime(
+      defaultHour,
+      defaultMinute,
+    );
+
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'daily_task_reminders',
+          'Daily Task Reminders',
+          channelDescription: 'Daily reminders to complete your tasks',
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        );
+
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    // Array of motivational messages (one will be picked randomly each day)
+    final messages = [
+      'Start your day strong! Check off your daily tasks.',
+      'Time to tackle today\'s goals! Let\'s make progress.',
+      'Good morning! Your daily tasks are waiting for you.',
+      'Rise and shine! Complete your tasks and build momentum.',
+      'New day, new opportunities! Don\'t forget your daily tasks.',
+      'Stay consistent! Your daily tasks help you succeed.',
+      'Great things happen one task at a time. Let\'s go!',
+      'Your future self will thank you. Complete your tasks today!',
+    ];
+
+    // Pick a random message
+    final randomIndex = DateTime.now().millisecond % messages.length;
+    final todayMessage = messages[randomIndex];
+
+    await _notifications.zonedSchedule(
+      _dailyTaskReminderNotificationId,
+      'Daily Task Reminder ✨',
+      todayMessage,
+      scheduledDate,
+      details,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.time, // Repeat daily
+    );
+
+    print('✅ Daily task reminder scheduled for 9:00 AM every day');
   }
 
   /// Show notification for Roadmap completion

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:app_links/app_links.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -19,9 +20,31 @@ final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await NotificationService().initialize();
   await initializeFirebase();
+
+  // Initialize NotificationService
+  final notificationService = NotificationService();
+  await notificationService.initialize();
+
   await LocalStorageService.instance.init();
+
+  // Schedule daily task reminder on app start (regardless of login state)
+  // This ensures reminder stays active even after logout
+  await notificationService.scheduleDailyTaskReminder();
+  print('✅ Daily task reminder scheduled');
+
+  // Listen for auth state changes to re-schedule on login
+  // (in case user reinstalled app or cleared data)
+  FirebaseAuth.instance.authStateChanges().listen((User? user) async {
+    if (user != null) {
+      // User just logged in, ensure reminder is scheduled
+      await notificationService.scheduleDailyTaskReminder();
+      print('✅ Daily task reminder re-confirmed on login');
+    } else {
+      // User logged out - keep reminder active (don't cancel)
+      print('ℹ️ User logged out, but daily reminder stays active');
+    }
+  });
 
   runApp(const MyApp());
 }
