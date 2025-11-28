@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../chat/presentation/screens/chat_screen.dart';
 import '../../../growth/presentation/screens/growth_screen.dart';
 import '../../../home/presentation/screens/home_screen.dart';
 import '../../../roadmap/presentation/screens/roadmap_screen.dart';
@@ -24,8 +25,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     GrowthScreen(),
     RoadmapScreen(),
     TaskScreen(),
-    // const PlaceholderScreen(title: 'Profile'),
-    const PlaceholderScreen(title: 'AI Tutor'),
+    ChatScreen(),
   ];
 
   @override

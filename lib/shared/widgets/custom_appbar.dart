@@ -7,13 +7,21 @@ import 'back_button_icon.dart';
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final VoidCallback? onBack;
-  final bool hideBackButton; // <-- new optional prop
+  final bool hideBackButton;
+
+  // NEW RIGHT ICON PROPS
+  final String? rightIconPath; // SVG for right icon
+  final VoidCallback? onRightTap;
+  final bool hideRightIcon;
 
   const CustomAppBar({
     super.key,
     required this.title,
     this.onBack,
-    this.hideBackButton = false, // default false
+    this.hideBackButton = false,
+    this.rightIconPath,
+    this.onRightTap,
+    this.hideRightIcon = true,
   });
 
   @override
@@ -22,7 +30,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      bottom: false, // don't add padding at bottom
+      bottom: false,
       child: Container(
         height: preferredSize.height,
         padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -30,6 +38,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
+            /// LEFT BACK BUTTON
             if (!hideBackButton)
               Align(
                 alignment: Alignment.centerLeft,
@@ -37,10 +46,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   onTap: onBack ?? () => Navigator.of(context).pop(),
                 ),
               ),
+
+            /// CENTER TITLE
             Center(
               child: Text(
                 title,
-                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
@@ -50,6 +60,16 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
               ),
             ),
+
+            /// RIGHT ICON (same style as BackButtonIcon)
+            if (!hideRightIcon && rightIconPath != null)
+              Align(
+                alignment: Alignment.centerRight,
+                child: BackButtonIcon(
+                  iconPath: rightIconPath, // <-- different icon but same style
+                  onTap: onRightTap,
+                ),
+              ),
           ],
         ),
       ),
