@@ -46,6 +46,10 @@ dependencies:
   device_info_plus: ^12.2.0
   url_launcher: ^6.3.2
   flutter_colorpicker: ^1.1.0
+  record: ^6.1.2
+  just_audio: ^0.10.5
+  path_provider: ^2.1.5
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
@@ -61,13 +65,24 @@ flutter:
     - assets/illustrations/onboarding/
 
 # ----------------------------------------------------
-# 🔥 ADD YOUR SPLASH CONFIG BELOW (outside flutter:)
+# 🔥 FLUTTER NATIVE SPLASH CONFIG
 # ----------------------------------------------------
 flutter_native_splash:
   color: "#FFFFFF"
-  image: assets/images/splash.png
+  image: assets/images/splash.png # <-- replace with your new splash image
   android: true
   ios: true
-
   android_gravity: center
   ios_content_mode: center
+
+# ----------------------------------------------------
+# 🔥 FLUTTER LAUNCHER ICONS CONFIG
+# ----------------------------------------------------
+flutter_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  image_path: "assets/images/app_icon.png" # <-- replace with your app icon
+  adaptive_icon_background: "#FFFFFF" # optional background for Android
+  adaptive_icon_foreground: "assets/images/app_icon.png" # optional foreground for Android
+
