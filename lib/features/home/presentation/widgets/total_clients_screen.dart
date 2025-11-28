@@ -108,7 +108,6 @@ class TotalClientsScreen extends StatelessWidget {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(32.r),
                           ),
-                          elevation: 4,
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,

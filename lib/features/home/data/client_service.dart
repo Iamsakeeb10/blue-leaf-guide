@@ -129,7 +129,11 @@ class ClientService {
 
   /// Get all clients for current user
   Stream<QuerySnapshot> getClientsStream() {
-    if (_userId == null) throw Exception('User not authenticated');
+    // If there's no authenticated user, return an empty stream instead of
+    // throwing. This makes callers (StreamBuilder) resilient to unauthenticated
+    // states and keeps UI from crashing.
+    if (_userId == null) return const Stream.empty();
+
     return _clientsCollection
         .orderBy('createdAt', descending: true)
         .snapshots();

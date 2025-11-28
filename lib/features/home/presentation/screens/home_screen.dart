@@ -131,6 +131,9 @@ class _HomeScreenState extends State<HomeScreen> {
       return number.toString();
     }
 
+    // Current authenticated user (may be null)
+    final currentUser = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -232,45 +235,118 @@ class _HomeScreenState extends State<HomeScreen> {
 
               SizedBox(height: 20.h),
 
+              // (currentUser will be declared above to keep build's widget list clean)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  StreamBuilder<QuerySnapshot>(
-                    stream: ClientService().getClientsStream(),
-                    builder: (context, snapshot) {
-                      int totalClients = 0;
-                      if (snapshot.hasData) {
-                        totalClients = snapshot.data?.docs.length ?? 0;
-                      }
+                  // Total Clients: show a placeholder when not authenticated
+                  if (currentUser == null)
+                    _buildStatsCard(
+                      svgPath: 'assets/icons/svg/multi-user.svg',
+                      label: 'Total Client',
+                      value: '0',
+                      gradientColors: [
+                        Colors.white.withOpacity(0),
+                        const Color(0xFF24AC69).withOpacity(0.4),
+                        const Color(0xFF24AC69),
+                      ],
+                      onTap: () {
+                        // If not authenticated, navigate to login or show message
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please log in to view clients'),
+                          ),
+                        );
+                      },
+                    )
+                  else
+                    StreamBuilder<QuerySnapshot>(
+                      stream: ClientService().getClientsStream(),
+                      builder: (context, snapshot) {
+                        int totalClients = 0;
+                        if (snapshot.hasData) {
+                          totalClients = snapshot.data?.docs.length ?? 0;
+                        }
 
-                      return _buildStatsCard(
-                        svgPath: 'assets/icons/svg/multi-user.svg',
-                        label: 'Total Client',
-                        value:
-                            '$totalClients', // dynamically show total clients
-                        gradientColors: [
-                          Colors.white.withOpacity(0),
-                          const Color(0xFF24AC69).withOpacity(0.4),
-                          const Color(0xFF24AC69),
-                        ],
-                        onTap: () {
-                          context.push('/total-clients');
-                        },
-                      );
-                    },
-                  ),
+                        return _buildStatsCard(
+                          svgPath: 'assets/icons/svg/multi-user.svg',
+                          label: 'Total Client',
+                          value:
+                              '$totalClients', // dynamically show total clients
+                          gradientColors: [
+                            Colors.white.withOpacity(0),
+                            const Color(0xFF24AC69).withOpacity(0.4),
+                            const Color(0xFF24AC69),
+                          ],
+                          onTap: () {
+                            context.push('/total-clients');
+                          },
+                        );
+                      },
+                    ),
 
-                  StreamBuilder<DocumentSnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(FirebaseAuth.instance.currentUser!.uid)
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
+                  // Total Earned: guard currentUser before subscribing
+                  if (currentUser == null)
+                    _buildStatsCard(
+                      svgPath: 'assets/icons/svg/dollar.svg',
+                      label: 'Total Earned',
+                      value: '--',
+                      gradientColors: [
+                        Colors.white.withOpacity(0),
+                        const Color(0xFF2C63FD).withOpacity(0.4),
+                        const Color(0xFF2C63FD),
+                      ],
+                      onTap: () {},
+                    )
+                  else
+                    StreamBuilder<DocumentSnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(currentUser.uid)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return _buildStatsCard(
+                            svgPath: 'assets/icons/svg/dollar.svg',
+                            label: 'Total Earned',
+                            value: '--',
+                            gradientColors: [
+                              Colors.white.withOpacity(0),
+                              const Color(0xFF2C63FD).withOpacity(0.4),
+                              const Color(0xFF2C63FD),
+                            ],
+                            onTap: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Loading...')),
+                              );
+                            },
+                          );
+                        }
+
+                        if (snapshot.hasError) {
+                          return _buildStatsCard(
+                            svgPath: 'assets/icons/svg/dollar.svg',
+                            label: 'Total Earned',
+                            value: 'Err',
+                            gradientColors: [
+                              Colors.white.withOpacity(0),
+                              const Color(0xFF2C63FD).withOpacity(0.4),
+                              const Color(0xFF2C63FD),
+                            ],
+                            onTap: () {},
+                          );
+                        }
+
+                        final data =
+                            snapshot.data?.data() as Map<String, dynamic>?;
+                        final numValue = data?['stats']?['totalEarned'] as num?;
+                        final intValue = numValue?.toInt() ?? 0;
+                        final totalEarned = _formatNumber(intValue);
                         return _buildStatsCard(
                           svgPath: 'assets/icons/svg/dollar.svg',
                           label: 'Total Earned',
-                          value: '--',
+                          value: totalEarned,
                           gradientColors: [
                             Colors.white.withOpacity(0),
                             const Color(0xFF2C63FD).withOpacity(0.4),
@@ -278,51 +354,15 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                           onTap: () {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Loading...')),
+                              SnackBar(
+                                content: Text('Total Earned: $totalEarned'),
+                                behavior: SnackBarBehavior.floating,
+                              ),
                             );
                           },
                         );
-                      }
-
-                      if (snapshot.hasError) {
-                        return _buildStatsCard(
-                          svgPath: 'assets/icons/svg/dollar.svg',
-                          label: 'Total Earned',
-                          value: 'Err',
-                          gradientColors: [
-                            Colors.white.withOpacity(0),
-                            const Color(0xFF2C63FD).withOpacity(0.4),
-                            const Color(0xFF2C63FD),
-                          ],
-                          onTap: () {},
-                        );
-                      }
-
-                      final data =
-                          snapshot.data?.data() as Map<String, dynamic>?;
-                      final numValue = data?['stats']?['totalEarned'] as num?;
-                      final intValue = numValue?.toInt() ?? 0;
-                      final totalEarned = _formatNumber(intValue);
-                      return _buildStatsCard(
-                        svgPath: 'assets/icons/svg/dollar.svg',
-                        label: 'Total Earned',
-                        value: totalEarned,
-                        gradientColors: [
-                          Colors.white.withOpacity(0),
-                          const Color(0xFF2C63FD).withOpacity(0.4),
-                          const Color(0xFF2C63FD),
-                        ],
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Total Earned: $totalEarned'),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
+                      },
+                    ),
 
                   FutureBuilder<int>(
                     future: FirebaseAuth.instance.currentUser != null
