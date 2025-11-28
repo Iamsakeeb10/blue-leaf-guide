@@ -1,10 +1,3 @@
-import 'package:blue_leaf_guide/features/home/presentation/widgets/add_client_screen.dart';
-import 'package:blue_leaf_guide/features/profile/presentation/change_password_screen.dart';
-import 'package:blue_leaf_guide/features/profile/presentation/confirm_change_password_screen.dart';
-import 'package:blue_leaf_guide/features/profile/presentation/screens/notifications_screen.dart';
-import 'package:blue_leaf_guide/features/profile/presentation/screens/privacy_policy_screen.dart';
-import 'package:blue_leaf_guide/features/profile/presentation/screens/profile_information_screen.dart';
-import 'package:blue_leaf_guide/features/profile/presentation/screens/terms_of_service_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -28,11 +21,19 @@ import '../../features/brand/presentation/screens/planning_screen.dart';
 import '../../features/brand/presentation/screens/strategy_items_details_screen.dart';
 import '../../features/brand/presentation/screens/visual_item_detail_screen.dart';
 import '../../features/growth/presentation/screens/rewards_screen.dart';
+import '../../features/home/notification/presentation/notification_list_screen.dart';
 import '../../features/home/presentation/screens/main_navigation_screen.dart';
+import '../../features/home/presentation/widgets/add_client_screen.dart';
 import '../../features/home/presentation/widgets/total_clients_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
+import '../../features/profile/presentation/change_password_screen.dart';
+import '../../features/profile/presentation/confirm_change_password_screen.dart';
 import '../../features/profile/presentation/screens/my_account_screen.dart';
+import '../../features/profile/presentation/screens/notifications_screen.dart';
+import '../../features/profile/presentation/screens/privacy_policy_screen.dart';
+import '../../features/profile/presentation/screens/profile_information_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
+import '../../features/profile/presentation/screens/terms_of_service_screen.dart';
 import '../../features/roadmap/presentation/screens/roadmap_details_screen.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -232,6 +233,10 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/rewards',
       builder: (context, state) => const RewardsScreen(),
+    ),
+    GoRoute(
+      path: '/notification-list',
+      builder: (context, state) => const NotificationListScreen(),
     ),
   ],
 );

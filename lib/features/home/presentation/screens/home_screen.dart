@@ -206,12 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Coming soon!'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
+                      context.push('/notification-list');
                     },
                     child: ClipOval(
                       child: SvgPicture.asset(
