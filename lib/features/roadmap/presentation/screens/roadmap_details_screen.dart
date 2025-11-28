@@ -4,8 +4,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../../shared/widgets/button.dart';
 import '../../../../shared/widgets/custom_appbar.dart';
 import '../../../../shared/widgets/custom_checkbox.dart';
@@ -22,6 +24,7 @@ class RoadmapDetailsScreen extends StatefulWidget {
 
 class _RoadmapDetailsScreenState extends State<RoadmapDetailsScreen> {
   final RoadmapService _roadmapService = RoadmapService();
+  final NotificationService _notificationService = NotificationService();
 
   Map<String, dynamic>? roadmap;
   Map<String, dynamic>? progress;
@@ -148,8 +151,14 @@ class _RoadmapDetailsScreenState extends State<RoadmapDetailsScreen> {
       reflections[label] = controller.text.trim();
     });
 
-    // Check if roadmap is completed (all checklist items checked)
-    final isCompleted = checklistStates.every((checked) => checked);
+    // Check if roadmap is completed (ALL checklist items checked)
+    final totalItems = checklistStates.length;
+    final completedItems = completedIndexes.length;
+    final isCompleted = completedItems == totalItems;
+
+    // Check if this is a NEW completion (wasn't completed before)
+    final wasCompletedBefore = progress?['completed'] ?? false;
+    final isNewCompletion = isCompleted && !wasCompletedBefore;
 
     final success = await _roadmapService.saveRoadmapProgress(
       roadmapId: widget.roadmapId,
@@ -161,6 +170,12 @@ class _RoadmapDetailsScreenState extends State<RoadmapDetailsScreen> {
     setState(() => isSaving = false);
 
     if (success) {
+      // If this roadmap is newly completed, check if ALL roadmaps are now completed
+      if (isNewCompletion && _roadmapService.currentUserId != null) {
+        // Check if all roadmaps are completed
+        await _checkAndNotifyAllRoadmapsComplete();
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -168,7 +183,7 @@ class _RoadmapDetailsScreenState extends State<RoadmapDetailsScreen> {
               'Progress saved successfully',
               style: TextStyle(color: Colors.white),
             ),
-            backgroundColor: AppColors.timelinePrimary, // your custom color
+            backgroundColor: AppColors.timelinePrimary,
           ),
         );
 
@@ -186,6 +201,49 @@ class _RoadmapDetailsScreenState extends State<RoadmapDetailsScreen> {
           ),
         );
       }
+    }
+  }
+
+  Future<void> _checkAndNotifyAllRoadmapsComplete() async {
+    if (_roadmapService.currentUserId == null) return;
+
+    try {
+      // Fetch all roadmaps
+      final allRoadmaps = await _roadmapService.fetchRoadmaps();
+
+      // Fetch all user progress
+      final allProgress = await _roadmapService.fetchUserProgress();
+
+      // Check if ALL roadmaps are completed
+      bool allCompleted = true;
+      for (var roadmap in allRoadmaps) {
+        final roadmapId = roadmap['id'] as String;
+        final progress = allProgress[roadmapId];
+        final completed = progress?['completed'] ?? false;
+
+        if (!completed) {
+          allCompleted = false;
+          break;
+        }
+      }
+
+      // If all roadmaps are completed, show notification
+      if (allCompleted && allRoadmaps.isNotEmpty) {
+        final prefs = await SharedPreferences.getInstance();
+        final notificationKey = 'all_roadmaps_notification';
+        final notificationSent = prefs.getBool(notificationKey) ?? false;
+
+        if (!notificationSent) {
+          await _notificationService.showAllRoadmapsCompleteNotification(
+            _roadmapService.currentUserId!,
+          );
+
+          // Mark as sent
+          await prefs.setBool(notificationKey, true);
+        }
+      }
+    } catch (e) {
+      print('Error checking all roadmaps completion: $e');
     }
   }
 

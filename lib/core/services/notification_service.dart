@@ -23,6 +23,8 @@ class NotificationService {
   // Add these constants with the existing ones:
   static const int _buildBrandCompleteNotificationId = 2;
   static const int _dailyTaskCompleteNotificationId = 3;
+  static const int _roadmapCompleteNotificationId = 4;
+  static const int _allRoadmapsCompleteNotificationId = 5;
 
   static const String _keyPushNotificationEnabled = 'push_notification_enabled';
 
@@ -460,5 +462,106 @@ class NotificationService {
     );
 
     print('✅ Daily task completion notification sent');
+  }
+
+  /// Show notification for Roadmap completion
+  Future<void> showRoadmapCompleteNotification(
+    String uid,
+    String roadmapTitle,
+  ) async {
+    // Check if push notifications are enabled
+    final pushEnabled = await isPushNotificationEnabled();
+    if (!pushEnabled) {
+      print('❌ Push notifications are disabled');
+      return;
+    }
+
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'roadmap_complete',
+          'Roadmap Completion',
+          channelDescription: 'Notifications for roadmap completion',
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        );
+
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _notifications.show(
+      _roadmapCompleteNotificationId,
+      'Milestone Achieved! 🎯',
+      'You\'ve completed "$roadmapTitle". Keep up the great work!',
+      details,
+      payload: 'roadmap_complete',
+    );
+
+    // Save notification to Firestore
+    await _saveNotificationToFirestore(
+      uid: uid,
+      title: 'Milestone Achieved! 🎯',
+      subtitle: 'You\'ve completed "$roadmapTitle". Keep up the great work!',
+      icon: 'assets/icons/svg/bell.svg',
+    );
+
+    print('✅ Roadmap completion notification sent for: $roadmapTitle');
+  }
+
+  Future<void> showAllRoadmapsCompleteNotification(String uid) async {
+    // Check if push notifications are enabled
+    final pushEnabled = await isPushNotificationEnabled();
+    if (!pushEnabled) {
+      print('❌ Push notifications are disabled');
+      return;
+    }
+
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'all_roadmaps_complete',
+          'All Roadmaps Completion',
+          channelDescription: 'Notification when all roadmaps are completed',
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        );
+
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _notifications.show(
+      _allRoadmapsCompleteNotificationId,
+      'Amazing Achievement! 🎉🎯',
+      'You\'ve completed all roadmaps! Your dedication is truly inspiring!',
+      details,
+      payload: 'all_roadmaps_complete',
+    );
+
+    // Save notification to Firestore
+    await _saveNotificationToFirestore(
+      uid: uid,
+      title: 'Amazing Achievement! 🎉🎯',
+      subtitle:
+          'You\'ve completed all roadmaps! Your dedication is truly inspiring!',
+      icon: 'assets/icons/svg/bell.svg',
+    );
+
+    print('✅ All roadmaps completion notification sent');
   }
 }
