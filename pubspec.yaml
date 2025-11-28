@@ -68,12 +68,22 @@ flutter:
 # 🔥 FLUTTER NATIVE SPLASH CONFIG
 # ----------------------------------------------------
 flutter_native_splash:
+  # White background
   color: "#FFFFFF"
-  image: assets/images/splash.png # <-- replace with your new splash image
+
+  # Centered splash image
+  image: assets/images/splash.png # <-- replace with your splash image
   android: true
   ios: true
   android_gravity: center
   ios_content_mode: center
+  fullscreen: true
+
+  # Android 12+ specific splash configuration
+  android_12:
+    color: "#FFFFFF" # background color
+    image: assets/images/splash.png # center image
+    icon_background_color: "#FFFFFF" # circular icon background
 
 # ----------------------------------------------------
 # 🔥 FLUTTER LAUNCHER ICONS CONFIG
