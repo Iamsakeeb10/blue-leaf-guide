@@ -26,11 +26,20 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
   late StrategyItem editableItem;
   final StrategyService _strategyService = StrategyService();
   bool _isSaving = false;
-  Map<int, TextEditingController> _textControllers = {};
+  Map<int, dynamic> _textControllers =
+      {}; // Can store single or list of controllers
 
   @override
   void dispose() {
-    _textControllers.values.forEach((c) => c.dispose());
+    _textControllers.forEach((key, value) {
+      if (value is TextEditingController) {
+        value.dispose();
+      } else if (value is List<TextEditingController>) {
+        for (var controller in value) {
+          controller.dispose();
+        }
+      }
+    });
     super.dispose();
   }
 
@@ -124,7 +133,6 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
 
     setState(() => _isSaving = true);
 
-    // editableItem.isCompleted = canSave();
     editableItem.isCompleted = _isStepCompleted(editableItem);
 
     final success = await _strategyService.saveStrategyItem(
@@ -203,10 +211,152 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
         );
       }
     } else if (section.isTextField) {
-      return _buildTextFieldSection(section, sectionIndex);
+      // Check if this is the "Core values" section
+      final subtitleLower = section.subtitle.toLowerCase();
+      if (subtitleLower.contains('core value')) {
+        return _buildMultiTextSection(section, sectionIndex);
+      } else {
+        return _buildTextFieldSection(section, sectionIndex);
+      }
     } else {
       return _buildStaticSection(section);
     }
+  }
+
+  Widget _buildMultiTextSection(StrategySection section, int sectionIndex) {
+    if (!_textControllers.containsKey(sectionIndex)) {
+      final controllers = <TextEditingController>[];
+      for (var i = 0; i < section.userInputs.length; i++) {
+        controllers.add(TextEditingController(text: section.userInputs[i]));
+      }
+      if (controllers.isEmpty) {
+        controllers.add(TextEditingController());
+        section.userInputs.add("");
+      }
+      _textControllers[sectionIndex] = controllers;
+    }
+
+    final controllers =
+        _textControllers[sectionIndex] as List<TextEditingController>;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          section.subtitle,
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary.withOpacity(0.7),
+            height: 1.4,
+          ),
+        ),
+        SizedBox(height: 8.h),
+        ...List.generate(controllers.length, (index) {
+          return Padding(
+            padding: EdgeInsets.only(bottom: 12.h),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: controllers[index],
+                    decoration: InputDecoration(
+                      hintText:
+                          "${section.hintText ?? 'Core value'} ${index + 1}",
+                      hintStyle: TextStyle(
+                        fontSize: 12.sp,
+                        color: AppColors.textPrimary.withOpacity(0.3),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: EdgeInsets.all(14.w),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(100.r),
+                        borderSide: BorderSide(
+                          color: AppColors.neutral50.withOpacity(0.05),
+                          width: 1,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(100.r),
+                        borderSide: BorderSide(
+                          color: AppColors.brand500,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      section.userInputs[index] = value;
+                      setState(() {});
+                    },
+                  ),
+                ),
+                SizedBox(width: 8.w),
+                // Show Add button only on first field, Delete button on others
+                if (index == 0)
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        controllers.add(TextEditingController());
+                        section.userInputs.add("");
+                      });
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 12.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.lightGrey,
+                        borderRadius: BorderRadius.circular(100.r),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.add,
+                            color: AppColors.textPrimary.withOpacity(0.8),
+                            size: 20.sp,
+                          ),
+                          SizedBox(width: 6.w),
+                          Text(
+                            "Add",
+                            style: TextStyle(
+                              fontSize: 15.sp,
+                              color: AppColors.textPrimary.withOpacity(0.8),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        controllers[index].dispose();
+                        controllers.removeAt(index);
+                        section.userInputs.removeAt(index);
+                      });
+                    },
+                    child: Container(
+                      padding: EdgeInsets.all(10.w),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(100.r),
+                      ),
+                      child: Icon(Icons.remove, color: Colors.red, size: 20.sp),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        }),
+        SizedBox(height: 12.h),
+      ],
+    );
   }
 
   Widget _buildDropdownSection(StrategySection section, int sectionIndex) {
@@ -366,13 +516,10 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
       );
     }
 
-    final controller = _textControllers[sectionIndex]!;
+    final controller = _textControllers[sectionIndex] as TextEditingController;
 
     // Determine number of lines
     final subtitleLower = section.subtitle.toLowerCase();
-    print('🟨 Subtitel $subtitleLower');
-
-    print('🎨 HintText value: ${section.hintText}');
 
     final isMultiLine =
         subtitleLower.contains('story') ||
@@ -491,7 +638,6 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
                 .toList(),
           ),
         ),
-
         SizedBox(height: 24.h),
       ],
     );
@@ -526,7 +672,6 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
                   ? 12.h
                   : 24.h,
             ),
-
             Expanded(
               child: ListView.builder(
                 itemCount: editableItem.sections.length,
@@ -547,9 +692,7 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
                   ? AppColors.brand500
                   : AppColors.brand500.withOpacity(0.3),
             ),
-
             SizedBox(height: 12.h),
-
             SizedBox(
               width: double.infinity,
               child: TextButton(
