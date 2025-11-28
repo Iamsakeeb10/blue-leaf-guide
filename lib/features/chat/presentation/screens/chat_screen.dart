@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/custom_appbar.dart';
@@ -16,7 +17,7 @@ class ChatScreen extends StatelessWidget {
         hideRightIcon: false,
         title: "AI Tutor",
         rightIconPath: "assets/icons/svg/history.svg",
-        onRightTap: () => print("Right icon clicked"),
+        onRightTap: () => context.push('/chat-history'),
       ),
 
       body: Column(
