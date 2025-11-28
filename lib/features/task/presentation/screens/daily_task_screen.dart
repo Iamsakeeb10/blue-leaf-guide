@@ -3,8 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../../shared/custom_date_picker_dialog.dart';
 import '../../../../shared/widgets/profile_item.dart';
 
@@ -18,6 +20,7 @@ class DailyTaskScreen extends StatefulWidget {
 class _DailyTaskScreenState extends State<DailyTaskScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final NotificationService _notificationService = NotificationService();
 
   late String _userId;
   DateTime _selectedDate = DateTime.now();
@@ -112,9 +115,26 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
           .collection('dates')
           .doc(formattedDate)
           .set({
-            'toggles': List.from(_switchValues), // new list for Firestore
+            'toggles': List.from(_switchValues),
             'updatedAt': FieldValue.serverTimestamp(),
           });
+
+      // Check if all tasks are completed AND it's today's date
+      if (_isCurrentDateEditable && _switchValues.every((val) => val == true)) {
+        // Check if notification was already sent today
+        final prefs = await SharedPreferences.getInstance();
+        final today = _formatDate(DateTime.now());
+        final notificationKey = 'daily_task_notification_$today';
+        final notificationSent = prefs.getBool(notificationKey) ?? false;
+
+        if (!notificationSent) {
+          // All tasks completed - show notification
+          await _notificationService.showDailyTaskCompleteNotification(_userId);
+
+          // Mark as sent for today
+          await prefs.setBool(notificationKey, true);
+        }
+      }
     } catch (e) {
       print('❌ Error saving toggle: $e');
     }

@@ -33,23 +33,24 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     _loadSettings();
   }
 
-  /// Load reminder settings from local storage and Firestore
   Future<void> _loadSettings() async {
     setState(() => _isLoading = true);
 
     try {
       final settings = await _notificationService.loadReminderSettings();
+      final pushEnabled = await _notificationService
+          .isPushNotificationEnabled();
 
       final enabled = settings['enabled'] as bool;
       final hour24 = settings['hour'] as int;
       final minute = settings['minute'] as int;
 
-      // Convert 24-hour to 12-hour format
       final is12Hour = hour24 > 12;
       final hour12 = is12Hour ? hour24 - 12 : (hour24 == 0 ? 12 : hour24);
       final period = hour24 >= 12 ? "PM" : "AM";
 
       setState(() {
+        _isNotification1 = pushEnabled;
         _isGoalRemindersEnabled = enabled;
         _selectedHour = hour12;
         _selectedMinute = minute;
@@ -386,10 +387,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               title: 'Push Notifications',
               subtitle: 'Receive app notification',
               switchValue: _isNotification1,
-              onSwitchChanged: (value) {
+              onSwitchChanged: (value) async {
                 setState(() {
                   _isNotification1 = value;
                 });
+                await _notificationService.savePushNotificationEnabled(value);
               },
             ),
             Divider(color: AppColors.neutral50, thickness: 1.w, height: 1.h),

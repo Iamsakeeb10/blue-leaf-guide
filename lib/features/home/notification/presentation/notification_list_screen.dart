@@ -1,10 +1,12 @@
 // lib/features/notifications/presentation/screens/notifications_screen.dart
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../../shared/widgets/custom_appbar.dart';
 
 class NotificationItem {
@@ -21,36 +23,51 @@ class NotificationItem {
   });
 }
 
-// Sample data
-final notifications = [
-  NotificationItem(
-    icon: 'assets/icons/svg/bell.svg',
-    title: 'Don’t Forget Today’s Tasks',
-    subtitle: 'Complete your daily actions to stay on track with your goals.',
-    timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
-  ),
-  NotificationItem(
-    icon: 'assets/icons/svg/bell.svg',
-    title: 'Rise and Shine',
-    subtitle: 'Start your day with a positive mindset and small wins.',
-    timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-  ),
-  NotificationItem(
-    icon: 'assets/icons/svg/bell.svg',
-    title: 'Don’t Forget Today’s Tasks',
-    subtitle: 'Complete your daily actions to stay on track with your goals.',
-    timestamp: DateTime.now().subtract(const Duration(hours: 12)),
-  ),
-  NotificationItem(
-    icon: 'assets/icons/svg/bell.svg',
-    title: 'Don’t Forget Today’s Tasks',
-    subtitle: 'Complete your daily actions to stay on track with your goals.',
-    timestamp: DateTime.now().subtract(const Duration(days: 1, hours: 1)),
-  ),
-];
-
-class NotificationListScreen extends StatelessWidget {
+class NotificationListScreen extends StatefulWidget {
   const NotificationListScreen({super.key});
+
+  @override
+  State<NotificationListScreen> createState() => _NotificationListScreenState();
+}
+
+class _NotificationListScreenState extends State<NotificationListScreen> {
+  final NotificationService _notificationService = NotificationService();
+  List<NotificationItem> notifications = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotifications();
+  }
+
+  Future<void> _loadNotifications() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    try {
+      final firestoreNotifications = await _notificationService
+          .loadNotificationsFromFirestore(userId);
+
+      setState(() {
+        notifications = firestoreNotifications.map((data) {
+          return NotificationItem(
+            icon: data['icon'] as String,
+            title: data['title'] as String,
+            subtitle: data['subtitle'] as String,
+            timestamp: data['timestamp'] as DateTime,
+          );
+        }).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading notifications: $e');
+      setState(() => _isLoading = false);
+    }
+  }
 
   Map<String, List<NotificationItem>> _groupNotificationsByDate() {
     final now = DateTime.now();
@@ -116,6 +133,14 @@ class NotificationListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: CustomAppBar(title: 'Notifications'),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final grouped = _groupNotificationsByDate();
 
     return Scaffold(
@@ -147,7 +172,6 @@ class NotificationListScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    // Build cards with bottom border (except last)
                     ...List.generate(items.length, (index) {
                       final isLast = index == items.length - 1;
                       return _buildNotificationCard(

@@ -20,6 +20,12 @@ class NotificationService {
   static const String _keyReminderHour = 'reminder_hour';
   static const String _keyReminderMinute = 'reminder_minute';
 
+  // Add these constants with the existing ones:
+  static const int _buildBrandCompleteNotificationId = 2;
+  static const int _dailyTaskCompleteNotificationId = 3;
+
+  static const String _keyPushNotificationEnabled = 'push_notification_enabled';
+
   /// Initialize the notification service
   Future<void> initialize() async {
     // Initialize timezone data
@@ -275,5 +281,184 @@ class NotificationService {
     } catch (e) {
       print('❌ Error syncing reminder settings: $e');
     }
+  }
+
+  /// Check if push notifications are enabled
+  Future<bool> isPushNotificationEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyPushNotificationEnabled) ?? true;
+  }
+
+  /// Save push notification setting
+  Future<void> savePushNotificationEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyPushNotificationEnabled, enabled);
+  }
+
+  /// Show immediate notification for Build Brand completion
+  Future<void> showBuildBrandCompleteNotification(String uid) async {
+    // Check if push notifications are enabled
+    final pushEnabled = await isPushNotificationEnabled();
+    if (!pushEnabled) {
+      print('❌ Push notifications are disabled');
+      return;
+    }
+
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'build_brand_complete',
+          'Build Brand Completion',
+          channelDescription:
+              'Notifications for Build Brand milestone completion',
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        );
+
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _notifications.show(
+      _buildBrandCompleteNotificationId,
+      'Congratulations! 🎉',
+      'You\'ve completed all Build Brand steps. Great job!',
+      details,
+      payload: 'build_brand_complete',
+    );
+
+    // Save notification to Firestore
+    await _saveNotificationToFirestore(
+      uid: uid,
+      title: 'Congratulations! 🎉',
+      subtitle: 'You\'ve completed all Build Brand steps. Great job!',
+      icon: 'assets/icons/svg/bell.svg',
+    );
+
+    print('✅ Build Brand completion notification sent');
+  }
+
+  /// Save notification to Firestore
+  Future<void> _saveNotificationToFirestore({
+    required String uid,
+    required String title,
+    required String subtitle,
+    required String icon,
+  }) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('notifications')
+          .add({
+            'title': title,
+            'subtitle': subtitle,
+            'icon': icon,
+            'timestamp': FieldValue.serverTimestamp(),
+            'read': false,
+          });
+      print('✅ Notification saved to Firestore');
+    } catch (e) {
+      print('❌ Error saving notification to Firestore: $e');
+    }
+  }
+
+  /// Load notifications from Firestore
+  Future<List<Map<String, dynamic>>> loadNotificationsFromFirestore(
+    String uid,
+  ) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('notifications')
+          .orderBy('timestamp', descending: true)
+          .get();
+
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        return {
+          'id': doc.id,
+          'title': data['title'] ?? '',
+          'subtitle': data['subtitle'] ?? '',
+          'icon': data['icon'] ?? 'assets/icons/svg/bell.svg',
+          'timestamp':
+              (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          'read': data['read'] ?? false,
+        };
+      }).toList();
+    } catch (e) {
+      print('❌ Error loading notifications from Firestore: $e');
+      return [];
+    }
+  }
+
+  /// Mark notification as read
+  Future<void> markNotificationAsRead(String uid, String notificationId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('notifications')
+          .doc(notificationId)
+          .update({'read': true});
+    } catch (e) {
+      print('❌ Error marking notification as read: $e');
+    }
+  }
+
+  Future<void> showDailyTaskCompleteNotification(String uid) async {
+    // Check if push notifications are enabled
+    final pushEnabled = await isPushNotificationEnabled();
+    if (!pushEnabled) {
+      print('❌ Push notifications are disabled');
+      return;
+    }
+
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'daily_task_complete',
+          'Daily Task Completion',
+          channelDescription: 'Notifications for daily task completion',
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        );
+
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _notifications.show(
+      _dailyTaskCompleteNotificationId,
+      'Great Job! 🎉',
+      'You\'ve completed all your daily tasks today!',
+      details,
+      payload: 'daily_task_complete',
+    );
+
+    // Save notification to Firestore
+    await _saveNotificationToFirestore(
+      uid: uid,
+      title: 'Great Job! 🎉',
+      subtitle: 'You\'ve completed all your daily tasks today!',
+      icon: 'assets/icons/svg/bell.svg',
+    );
+
+    print('✅ Daily task completion notification sent');
   }
 }

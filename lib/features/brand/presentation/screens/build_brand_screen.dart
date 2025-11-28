@@ -3,8 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../../shared/widgets/button.dart';
 import '../../../../shared/widgets/profile_list_item.dart';
 import '../../data/marketing_service.dart';
@@ -35,6 +37,7 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
   final StrategyService _strategyService = StrategyService();
   final MarketingService _marketingService = MarketingService();
   final PlanningService _planningService = PlanningService();
+  final NotificationService _notificationService = NotificationService();
 
   List<StrategyItem> strategyItems = [];
   List<MarketingItem> marketingItems = [];
@@ -83,8 +86,7 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
     _loadData();
   }
 
-  /// Call after updating lists to auto-advance when the current step is fully completed.
-  void _maybeAdvanceStep() {
+  void _maybeAdvanceStep() async {
     if (!mounted) return;
 
     if (currentStep == 1) {
@@ -104,8 +106,30 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
           marketingItems.isNotEmpty &&
           marketingItems.every((m) => m.isCompleted);
       if (allDone) {
-        // go to Planning (step 4)
+        // Don't check planning here - just navigate
         context.push('/planning');
+      }
+    }
+  }
+
+  Future<void> _checkAndTriggerCompletionNotification() async {
+    // Check if ALL 4 steps are completed
+    if (_isStepCompleted(1) &&
+        _isStepCompleted(2) &&
+        _isStepCompleted(3) &&
+        _isStepCompleted(4)) {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId != null) {
+        // Check if notification was already sent
+        final prefs = await SharedPreferences.getInstance();
+        final notificationSent =
+            prefs.getBool('build_brand_notification_sent') ?? false;
+
+        if (!notificationSent) {
+          await _notificationService.showBuildBrandCompleteNotification(userId);
+          // Mark as sent so it doesn't show again
+          await prefs.setBool('build_brand_notification_sent', true);
+        }
       }
     }
   }
@@ -161,17 +185,19 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
     }
   }
 
-  /// Navigate to planning screen and handle the returned data
+  // REPLACE the _navigateToPlanning method with this:
   Future<void> _navigateToPlanning() async {
     final result = await context.push<Map<String, List<bool>>>('/planning');
 
-    // If planning data was returned, update local state and refresh stepper
     if (result != null && mounted) {
       setState(() {
         planningMonth1 = result['month1'] ?? planningMonth1;
         planningMonth2 = result['month2'] ?? planningMonth2;
         planningMonth3 = result['month3'] ?? planningMonth3;
       });
+
+      // Check if all steps are now completed and trigger notification
+      await _checkAndTriggerCompletionNotification();
     }
   }
 
