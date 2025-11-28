@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 
 import '../../../../app/theme/app_colors.dart';
 
@@ -43,10 +44,10 @@ class ProfileListItem extends StatelessWidget {
             Row(
               children: [
                 if (showCheckmark)
-                  Icon(
-                    Icons.check, // no background
-                    size: 18.sp,
-                    color: AppColors.timelinePrimary,
+                  SvgPicture.asset(
+                    'assets/icons/svg/tick.svg', // path to your SVG
+                    height: 24.sp,
+                    width: 24.sp,
                   ),
                 if (showCheckmark)
                   SizedBox(width: 20.w), // space between checkmark & arrow
