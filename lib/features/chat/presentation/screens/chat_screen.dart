@@ -153,7 +153,7 @@ class ChatScreen extends StatelessWidget {
                       ),
                     ),
 
-                    // SizedBox(width: 12.w),
+                    // SizedBox(width: f.w),
                     Container(
                       width: 40.w,
                       height: 40.w,

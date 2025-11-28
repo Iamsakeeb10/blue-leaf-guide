@@ -20,6 +20,7 @@ import '../../features/brand/presentation/screens/marketing_item_detail_screen.d
 import '../../features/brand/presentation/screens/planning_screen.dart';
 import '../../features/brand/presentation/screens/strategy_items_details_screen.dart';
 import '../../features/brand/presentation/screens/visual_item_detail_screen.dart';
+import '../../features/chat/presentation/screens/chat_screen.dart';
 import '../../features/growth/presentation/screens/rewards_screen.dart';
 import '../../features/home/notification/presentation/notification_list_screen.dart';
 import '../../features/home/presentation/screens/main_navigation_screen.dart';
@@ -238,5 +239,6 @@ final GoRouter router = GoRouter(
       path: '/notification-list',
       builder: (context, state) => const NotificationListScreen(),
     ),
+    GoRoute(path: '/chat', builder: (context, state) => const ChatScreen()),
   ],
 );

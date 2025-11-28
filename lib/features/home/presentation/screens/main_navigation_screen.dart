@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../chat/presentation/screens/chat_screen.dart';
@@ -105,9 +106,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
     return GestureDetector(
       onTap: () {
-        setState(() {
-          _currentIndex = index;
-        });
+        if (index == 4) {
+          context.push('/chat');
+        } else {
+          setState(() {
+            _currentIndex = index;
+          });
+        }
       },
       behavior: HitTestBehavior.opaque,
       child: Container(
