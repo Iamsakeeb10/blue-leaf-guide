@@ -68,29 +68,36 @@ class TotalClientsScreen extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.people_outline,
-                      size: 80.r,
-                      color: AppColors.textSecondary.withOpacity(0.3),
+                    SvgPicture.asset(
+                      'assets/icons/svg/hand.svg',
+                      height: 80.r,
+                      width: 80.r,
                     ),
-                    SizedBox(height: 16.h),
+                    SizedBox(height: 24.h),
                     Text(
-                      'No clients added yet',
+                      'No clients yet',
                       style: TextStyle(
-                        fontSize: 16.sp,
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 15.sp,
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     SizedBox(height: 8.h),
-                    Text(
-                      'Tap the button below to add your first client',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: AppColors.textSecondary.withOpacity(0.7),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: 260.w, // <-- your desired max width
+                      ),
+                      child: Text(
+                        'You haven’t added any clients. Start by adding a new client.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textSecondary.withOpacity(0.7),
+                        ),
                       ),
                     ),
-                    SizedBox(height: 24.h),
+                    SizedBox(height: 16.h),
                     SizedBox(
                       width: 180.w,
                       height: 50.h,
@@ -106,8 +113,6 @@ class TotalClientsScreen extends StatelessWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.add, size: 20.r, color: Colors.white),
-                            SizedBox(width: 8.w),
                             Text(
                               'Add Client',
                               style: TextStyle(
@@ -116,6 +121,8 @@ class TotalClientsScreen extends StatelessWidget {
                                 color: Colors.white,
                               ),
                             ),
+                            SizedBox(width: 8.w),
+                            Icon(Icons.add, size: 20.r, color: Colors.white),
                           ],
                         ),
                       ),
@@ -525,8 +532,11 @@ class _DeleteClientDialogState extends State<DeleteClientDialog> {
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result['message']),
-          backgroundColor: AppColors.timelineBorder,
+          content: Text(
+            result['message'],
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: AppColors.timelinePrimary,
           behavior: SnackBarBehavior.floating,
         ),
       );
