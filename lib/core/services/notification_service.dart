@@ -29,25 +29,58 @@ class NotificationService {
 
   static const String _keyPushNotificationEnabled = 'push_notification_enabled';
 
-  /// Initialize the notification service
+  // /// Initialize the notification service
+  // Future<void> initialize() async {
+  //   // Initialize timezone data
+  //   tz.initializeTimeZones();
+
+  //   // Get device's local timezone
+  //   final String timeZoneName = await _getLocalTimeZone();
+  //   tz.setLocalLocation(tz.getLocation(timeZoneName));
+
+  //   // Android initialization settings
+  //   const AndroidInitializationSettings androidSettings =
+  //       AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  //   // iOS initialization settings
+  //   const DarwinInitializationSettings iosSettings =
+  //       DarwinInitializationSettings(
+  //         requestAlertPermission: true,
+  //         requestBadgePermission: true,
+  //         requestSoundPermission: true,
+  //       );
+
+  //   const InitializationSettings initSettings = InitializationSettings(
+  //     android: androidSettings,
+  //     iOS: iosSettings,
+  //   );
+
+  //   await _notifications.initialize(
+  //     initSettings,
+  //     onDidReceiveNotificationResponse: _onNotificationTapped,
+  //   );
+
+  //   // Request permissions for iOS
+  //   await _requestPermissions();
+  // }
+
   Future<void> initialize() async {
-    // Initialize timezone data
+    // Initialize timezone
     tz.initializeTimeZones();
 
-    // Get device's local timezone
     final String timeZoneName = await _getLocalTimeZone();
     tz.setLocalLocation(tz.getLocation(timeZoneName));
 
-    // Android initialization settings
+    // Android init
     const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    // iOS initialization settings
+    // iOS init (NO automatic permissions)
     const DarwinInitializationSettings iosSettings =
         DarwinInitializationSettings(
-          requestAlertPermission: true,
-          requestBadgePermission: true,
-          requestSoundPermission: true,
+          requestAlertPermission: false,
+          requestBadgePermission: false,
+          requestSoundPermission: false,
         );
 
     const InitializationSettings initSettings = InitializationSettings(
@@ -60,8 +93,8 @@ class NotificationService {
       onDidReceiveNotificationResponse: _onNotificationTapped,
     );
 
-    // Request permissions for iOS
-    await _requestPermissions();
+    // ❌ REMOVE this:
+    // await _requestPermissions();
   }
 
   /// Get the device's local timezone name
@@ -96,6 +129,7 @@ class NotificationService {
   }
 
   /// Request notification permissions (primarily for iOS)
+  // ignore: unused_element
   Future<void> _requestPermissions() async {
     // ignore: unused_local_variable
     final bool? result = await _notifications
@@ -468,8 +502,8 @@ class NotificationService {
   /// Schedule automatic daily task reminder (always on, no toggle)
   Future<void> scheduleDailyTaskReminder() async {
     // Set default time: 9:00 AM
-    const int defaultHour = 7;
-    const int defaultMinute = 59;
+    const int defaultHour = 20;
+    const int defaultMinute = 10;
 
     await _notifications.cancel(_dailyTaskReminderNotificationId);
 

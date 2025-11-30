@@ -123,7 +123,7 @@ class _SplashScreenState extends State<SplashScreen>
                         height: 120.w,
                         decoration: BoxDecoration(
                           color: AppColors.brand500,
-                          borderRadius: BorderRadius.circular(30.r),
+                          borderRadius: BorderRadius.circular(100.r),
                           boxShadow: [
                             BoxShadow(
                               color: AppColors.brand500.withOpacity(0.3),
@@ -132,12 +132,15 @@ class _SplashScreenState extends State<SplashScreen>
                             ),
                           ],
                         ),
-                        child: Icon(
-                          Icons.eco_outlined,
-                          size: 60.sp,
-                          color: Colors.white,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(100.r),
+                          child: Image.asset(
+                            'assets/images/app_icon.png', // Replace with your asset path
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
+
                       SizedBox(height: 24.h),
                       // App Name
                       Text(

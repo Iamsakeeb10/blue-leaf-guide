@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:blue_leaf_guide/app/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
@@ -52,6 +53,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           'Get instant guidance to learn, improve, and grow. supporting you at every stage.',
     ),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    askNotificationPermission();
+  }
+
+  Future<void> askNotificationPermission() async {
+    final plugin = FlutterLocalNotificationsPlugin();
+
+    // Android 13+
+    await plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.requestNotificationsPermission();
+
+    // iOS
+    await plugin
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >()
+        ?.requestPermissions(alert: true, badge: true, sound: true);
+  }
 
   @override
   void dispose() {
