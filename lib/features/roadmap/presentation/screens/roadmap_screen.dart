@@ -147,6 +147,15 @@ class RoadmapItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    // Define your colors
+    final List<Color> roadmapColors = [
+      const Color(0xFFF2E3CD), // first color
+      const Color(0xFFD3E9FA), // second color
+      const Color(0xFFDFF6E7), // third color
+    ];
+
+    final buttonColor = roadmapColors[index % 3];
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -193,9 +202,7 @@ class RoadmapItem extends StatelessWidget {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 decoration: BoxDecoration(
-                  color: index.isOdd
-                      ? const Color(0xFFEFE5FA)
-                      : AppColors.lightGrey,
+                  color: buttonColor,
                   borderRadius: BorderRadius.circular(100.r),
                 ),
                 child: Text(
