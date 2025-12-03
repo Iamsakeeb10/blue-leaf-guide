@@ -20,9 +20,7 @@ class ResetPasswordScreen extends StatefulWidget {
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final passwordController = TextEditingController();
-  final confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
   bool _isVerifying = true;
   String? _verifiedEmail;
 
@@ -37,7 +35,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   void dispose() {
     passwordController.dispose();
-    confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -62,20 +59,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   Future<void> _handleResetPassword() async {
     final password = passwordController.text;
-    final confirmPassword = confirmPasswordController.text;
 
-    if (password.isEmpty || confirmPassword.isEmpty) {
-      _showError('Please fill in all fields');
+    if (password.isEmpty) {
+      _showError('Please enter a password');
       return;
     }
 
     if (password.length < 6) {
       _showError('Password must be at least 6 characters');
-      return;
-    }
-
-    if (password != confirmPassword) {
-      _showError('Passwords do not match');
       return;
     }
 
@@ -213,10 +204,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     setState(() => _obscurePassword = !_obscurePassword);
   }
 
-  void _toggleConfirmPasswordVisibility() {
-    setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
-  }
-
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -283,34 +270,21 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 SizedBox(height: 32.h),
                 CustomTextField.TextField(
                   controller: passwordController,
-                  label: 'New Password',
-                  hint: 'Enter new password',
+                  label: '',
+                  hint: 'Create New Password',
                   obscureText: _obscurePassword,
-                  textInputAction: TextInputAction.next,
+                  textInputAction: TextInputAction.done,
                   prefixIconSvg: 'assets/icons/svg/lock.svg',
                   suffixIconSvg: _obscurePassword
                       ? 'assets/icons/svg/eye-closed.svg'
-                      : 'assets/icons/svg/eye-open.svg',
+                      : null, // Use null to trigger icon fallback
                   onSuffixIconTap: _togglePasswordVisibility,
-                ),
-                SizedBox(height: 16.h),
-                CustomTextField.TextField(
-                  controller: confirmPasswordController,
-                  label: 'Confirm Password',
-                  hint: 'Re-enter new password',
-                  obscureText: _obscureConfirmPassword,
-                  textInputAction: TextInputAction.done,
-                  prefixIconSvg: 'assets/icons/svg/lock.svg',
-                  suffixIconSvg: _obscureConfirmPassword
-                      ? 'assets/icons/svg/eye-closed.svg'
-                      : 'assets/icons/svg/eye-open.svg',
-                  onSuffixIconTap: _toggleConfirmPasswordVisibility,
                 ),
                 SizedBox(height: 12.h),
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Password must be at least 6 characters',
+                    'Create a password with at least 4 characters',
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w500,
@@ -322,9 +296,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 SizedBox(height: 24.h),
                 Button(
                   onPressed: _handleResetPassword,
-                  text: authProvider.isLoading
-                      ? 'Resetting...'
-                      : 'Reset Password',
+                  text: 'Done',
                   height: 54.h,
                   borderRadius: BorderRadius.circular(32.r),
                   fontSize: 15.sp,

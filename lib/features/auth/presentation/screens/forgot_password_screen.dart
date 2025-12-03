@@ -155,7 +155,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               CustomTextField.TextField(
                 controller: emailController,
                 label: '',
-                hint: 'Enter your registered email',
+                hint: 'Email',
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.done,
                 prefixIconSvg: 'assets/icons/svg/mail.svg',
@@ -163,7 +163,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               SizedBox(height: 24.h),
               Button(
                 onPressed: _handleSendResetEmail,
-                text: authProvider.isLoading ? 'Sending...' : 'Send Reset Link',
+                text: 'Reset',
                 height: 54.h,
                 borderRadius: BorderRadius.circular(32.r),
                 fontSize: 15.sp,
