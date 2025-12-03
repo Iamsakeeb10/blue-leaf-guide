@@ -25,7 +25,7 @@ class CustomSegmentTab extends StatefulWidget {
     ), // AppColors.textPrimary.withOpacity(0.05)
     this.textColor = Colors.white,
     this.unselectedTextColor = Colors.black87,
-    this.fontSize = 13,
+    this.fontSize = 12.5,
     this.fontWeight = FontWeight.w600,
     this.borderRadius = 100,
     this.padding = const EdgeInsets.symmetric(horizontal: 2.0),
@@ -65,6 +65,7 @@ class _CustomSegmentTabState extends State<CustomSegmentTab>
     return Column(
       children: [
         Container(
+          margin: EdgeInsets.symmetric(horizontal: 10.w),
           padding: widget.padding,
 
           decoration: BoxDecoration(

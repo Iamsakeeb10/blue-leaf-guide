@@ -74,18 +74,24 @@ class _TaskScreenState extends State<TaskScreen>
       body: Column(
         children: [
           Expanded(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: CustomSegmentTab(
-                tabs: tabs,
-                tabViews: [
-                  DailyTaskScreen(),
-                  CheckInScreen(),
-                  MonthlyGoalScreen(),
-                ],
-                // Pass the same TabController so we can listen for index changes
-                controller: _tabController,
-              ),
+            child: CustomSegmentTab(
+              tabs: tabs,
+              tabViews: [
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: DailyTaskScreen(),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: CheckInScreen(),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: MonthlyGoalScreen(),
+                ),
+              ],
+              // Pass the same TabController so we can listen for index changes
+              controller: _tabController,
             ),
           ),
         ],
