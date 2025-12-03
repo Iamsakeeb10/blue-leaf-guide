@@ -256,17 +256,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: 8.h),
-                Center(
-                  child: Text(
-                    'For: $_verifiedEmail',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ),
                 SizedBox(height: 32.h),
                 CustomTextField.TextField(
                   controller: passwordController,
