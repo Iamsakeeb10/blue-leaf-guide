@@ -78,7 +78,7 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
     return Scaffold(
       appBar: const CustomTitleSubtitleAppbar(
         title: "Roadmap",
-        subtitle: "Plan your project phases",
+        subtitle: "Hour Range (0 to 1500 hours)",
       ),
       backgroundColor: Colors.white,
       body: isLoading

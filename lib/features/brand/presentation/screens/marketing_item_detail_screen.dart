@@ -227,6 +227,7 @@ class _MarketingItemDetailScreenState extends State<MarketingItemDetailScreen> {
 
     final controller = _textControllers[sectionIndex]![0];
     final isTextarea = section.fieldType == 'textarea';
+    final borderRadius = isTextarea ? 16.r : 100.r;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,14 +258,14 @@ class _MarketingItemDetailScreenState extends State<MarketingItemDetailScreen> {
             alignLabelWithHint: true,
             contentPadding: EdgeInsets.all(14.w),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(100.r),
+              borderRadius: BorderRadius.circular(borderRadius),
               borderSide: BorderSide(
                 color: AppColors.neutral50.withOpacity(0.05),
                 width: 1,
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(100.r),
+              borderRadius: BorderRadius.circular(borderRadius),
               borderSide: BorderSide(color: AppColors.brand500, width: 1.5),
             ),
           ),
