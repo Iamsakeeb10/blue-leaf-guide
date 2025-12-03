@@ -51,15 +51,18 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
     if (!standaloneDoc.exists) {
       // Fallback to hardcoded tasks (for testing or first run)
       _tasks = [
-        {"icon": "assets/icons/svg/fb.svg", "title": "Review project plan"},
-        {"icon": "assets/icons/svg/insta.svg", "title": "Check emails"},
-        {"icon": "assets/icons/svg/tik.svg", "title": "Team standup meeting"},
-        {"icon": "assets/icons/svg/gallery.svg", "title": "Code review"},
-        {"icon": "assets/icons/svg/add.svg", "title": "Update documentation"},
+        {"icon": "assets/icons/svg/fb.svg", "title": "Post on Facebook"},
+        {"icon": "assets/icons/svg/insta.svg", "title": "Post on Instagram"},
+        {"icon": "assets/icons/svg/tik.svg", "title": "Post on TikTok"},
         {
-          "icon": "assets/icons/svg/user-gradient.svg",
-          "title": "Deploy updates",
+          "icon": "assets/icons/svg/gallery.svg",
+          "title": "Take picture of your work",
         },
+        {
+          "icon": "assets/icons/svg/add.svg",
+          "title": "Post pictures of your work",
+        },
+        {"icon": "assets/icons/svg/user-gradient.svg", "title": "Client serve"},
       ];
     } else {
       final data = standaloneDoc.data()!;

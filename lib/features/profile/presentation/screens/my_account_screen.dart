@@ -203,7 +203,7 @@ class MyAccountScreen extends StatelessWidget {
                         return CustomDialog(
                           title: "Delete All Data",
                           subtitle:
-                              "Deleting data will permanently remove all your data and progress.",
+                              "Deleting data will be securely erased and removed from our system upon deletion.",
                           isLoading: authProvider.isLoading,
                           primaryButtonText: "Yes, Delete",
                           primaryButtonOnPressed: () async {
