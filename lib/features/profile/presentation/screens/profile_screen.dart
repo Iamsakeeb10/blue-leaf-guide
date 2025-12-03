@@ -120,9 +120,17 @@ class ProfileScreen extends StatelessWidget {
                 },
               ),
               _buildProfileItem(
+                svgIconPath: 'assets/icons/svg/circle-user.svg',
+                iconBackgroundColor: AppColors.textPrimary.withOpacity(0.05),
+                title: 'My Clients',
+                onTap: () {
+                  context.push('/total-clients');
+                },
+              ),
+              _buildProfileItem(
                 svgIconPath: 'assets/icons/svg/profile-notification.svg',
                 iconBackgroundColor: AppColors.textPrimary.withOpacity(0.05),
-                title: 'Notifications',
+                title: 'Notifications Settings',
                 onTap: () {
                   context.push('/notifications');
                 },
