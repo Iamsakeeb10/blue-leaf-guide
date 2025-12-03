@@ -508,7 +508,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                 controller: emailController,
                 label: 'Email',
                 hint: 'jonjons@gmail.com',
-                icon: Icons.email_outlined,
+                prefixIconSvg: 'assets/icons/svg/mail.svg',
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -524,7 +524,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                 controller: phoneController,
                 label: 'Phone',
                 hint: '(555) 247-8391',
-                icon: Icons.phone_outlined,
+                prefixIconSvg: 'assets/icons/svg/call.svg',
                 keyboardType: TextInputType.phone,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -537,34 +537,6 @@ class _AddClientScreenState extends State<AddClientScreen> {
 
               Row(
                 children: [
-                  // Client Type Dropdown
-                  // Expanded(
-                  //   child: custom.TextField(
-                  //     controller: TextEditingController(text: clientType),
-                  //     label: 'Client Type',
-                  //     hint: 'Select Client Type',
-                  //     suffixIcon: Icon(Icons.arrow_drop_down, size: 24.r),
-                  //     readOnly: true, // makes field not editable, dropdown only
-                  //     onTap: () async {
-                  //       final selected = await showDialog<String>(
-                  //         context: context,
-                  //         builder: (ctx) => SimpleDialog(
-                  //           title: const Text('Select Client Type'),
-                  //           children: clientTypes
-                  //               .map(
-                  //                 (type) => SimpleDialogOption(
-                  //                   onPressed: () => Navigator.pop(ctx, type),
-                  //                   child: Text(type),
-                  //                 ),
-                  //               )
-                  //               .toList(),
-                  //         ),
-                  //       );
-                  //       if (selected != null)
-                  //         setState(() => clientType = selected);
-                  //     },
-                  //   ),
-                  // ),
                   Expanded(
                     child: StandaloneDropdown(
                       value: clientType,
