@@ -35,7 +35,6 @@ class MonthlyGoalsList extends StatefulWidget {
 }
 
 class _MonthlyGoalsListState extends State<MonthlyGoalsList> {
-  // Replace the entire build method in MonthlyGoalsList
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -46,6 +45,8 @@ class _MonthlyGoalsListState extends State<MonthlyGoalsList> {
 
   @override
   Widget build(BuildContext context) {
+    final isScrollable = !(widget.shrinkWrap ?? false);
+
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('users')
@@ -120,158 +121,164 @@ class _MonthlyGoalsListState extends State<MonthlyGoalsList> {
           );
         }
 
-        return Scrollbar(
-          controller: _scrollController,
-          thumbVisibility: true,
-          child: ListView.separated(
-            padding: EdgeInsets.only(bottom: 44.h),
-            itemCount: goals.length,
-            separatorBuilder: (context, index) {
-              if (index == goals.length - 1) return const SizedBox.shrink();
-              return Column(
-                children: [
-                  SizedBox(height: 12.h),
-                  Divider(
-                    color: AppColors.textPrimary.withOpacity(0.05),
-                    thickness: 1.h,
-                  ),
-                ],
-              );
-            },
-            itemBuilder: (context, index) {
-              final goal = goals[index].data() as Map<String, dynamic>;
-              final goalId = goals[index].id;
-              final fullTitle = goal['fullTitle'] ?? '';
-              final target = goal['targetNumber'] ?? 0;
-              final progress = goal['currentProgress'] ?? 0;
-              final progressPercentage = target > 0
-                  ? (progress / target).clamp(0.0, 1.0)
-                  : 0.0;
-
-              final order = goal['order'] ?? 0;
-              final suffix = widget.orderSuffixMap[order] ?? '';
-
-              return Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16.r),
+        final listView = ListView.separated(
+          padding: EdgeInsets.only(bottom: 44.h),
+          controller: isScrollable ? _scrollController : null,
+          shrinkWrap: widget.shrinkWrap ?? false,
+          physics: widget.physics,
+          itemCount: goals.length,
+          separatorBuilder: (context, index) {
+            if (index == goals.length - 1) return const SizedBox.shrink();
+            return Column(
+              children: [
+                SizedBox(height: 12.h),
+                Divider(
+                  color: AppColors.textPrimary.withOpacity(0.05),
+                  thickness: 1.h,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            fullTitle,
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary.withOpacity(0.8),
-                            ),
+              ],
+            );
+          },
+          itemBuilder: (context, index) {
+            final goal = goals[index].data() as Map<String, dynamic>;
+            final goalId = goals[index].id;
+            final fullTitle = goal['fullTitle'] ?? '';
+            final target = goal['targetNumber'] ?? 0;
+            final progress = goal['currentProgress'] ?? 0;
+            final progressPercentage = target > 0
+                ? (progress / target).clamp(0.0, 1.0)
+                : 0.0;
+
+            final order = goal['order'] ?? 0;
+            final suffix = widget.orderSuffixMap[order] ?? '';
+
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16.r),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          fullTitle,
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary.withOpacity(0.8),
                           ),
                         ),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8.w,
-                            vertical: 4.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: index.isEven
-                                ? AppColors.amber
-                                : AppColors.timelinePrimary,
-                            borderRadius: BorderRadius.circular(100.r),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Target ',
-                                style: TextStyle(
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              Text(
-                                target.toString(),
-                                style: TextStyle(
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
+                      ),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 4.h,
                         ),
-                        PopupMenuButton<String>(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16.r),
-                          padding: EdgeInsets.zero,
-                          icon: Icon(
-                            Icons.more_vert,
-                            size: 20.w,
-                            color: AppColors.textPrimary.withOpacity(0.6),
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                          onSelected: (value) {
-                            if (value == 'edit') {
-                              widget.onEditGoal(goalId, fullTitle, target);
-                            } else if (value == 'delete') {
-                              widget.onDeleteGoal(goalId);
-                            }
-                          },
-                          itemBuilder: (context) => [
-                            const PopupMenuItem(
-                              value: 'edit',
-                              child: Text('Edit'),
+                        decoration: BoxDecoration(
+                          color: index.isEven
+                              ? AppColors.amber
+                              : AppColors.timelinePrimary,
+                          borderRadius: BorderRadius.circular(100.r),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Target ',
+                              style: TextStyle(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
                             ),
-                            PopupMenuItem(
-                              value: 'delete',
-                              child: Text(
-                                'Delete',
-                                style: TextStyle(color: Colors.red),
+                            Text(
+                              target.toString(),
+                              style: TextStyle(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
                               ),
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(30.r),
-                      child: LinearProgressIndicator(
-                        value: progressPercentage,
-                        minHeight: 8.h,
-                        backgroundColor: AppColors.brand50,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          progressPercentage >= 1.0
-                              ? Colors.green
-                              : AppColors.brand400,
+                      ),
+                      PopupMenuButton<String>(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16.r),
+                        padding: EdgeInsets.zero,
+                        icon: Icon(
+                          Icons.more_vert,
+                          size: 20.w,
+                          color: AppColors.textPrimary.withOpacity(0.6),
                         ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            widget.onEditGoal(goalId, fullTitle, target);
+                          } else if (value == 'delete') {
+                            widget.onDeleteGoal(goalId);
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Text('Edit'),
+                          ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Text(
+                              'Delete',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(30.r),
+                    child: LinearProgressIndicator(
+                      value: progressPercentage,
+                      minHeight: 8.h,
+                      backgroundColor: AppColors.brand50,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        progressPercentage >= 1.0
+                            ? Colors.green
+                            : AppColors.brand400,
                       ),
                     ),
-                    SizedBox(height: 8.h),
-                    Text(
-                      '$progress $suffix',
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary.withOpacity(0.7),
-                      ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    '$progress $suffix',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary.withOpacity(0.7),
                     ),
-                  ],
-                ),
-              );
-            },
-
-            // Only apply optional props if provided
-            shrinkWrap: widget.shrinkWrap ?? false,
-            physics: widget.physics,
-          ),
+                  ),
+                ],
+              ),
+            );
+          },
         );
+
+        // Only wrap with Scrollbar if the list is scrollable
+        if (isScrollable) {
+          return Scrollbar(
+            controller: _scrollController,
+            thumbVisibility: true,
+            child: listView,
+          );
+        }
+
+        return listView;
       },
     );
   }
