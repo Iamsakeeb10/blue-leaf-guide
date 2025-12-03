@@ -347,32 +347,43 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                   _isStepCompleted(4),
                 ],
                 onStepTap: (stepNumber) {
+                  // If tapping on current step, do nothing
+                  if (stepNumber == currentStep) {
+                    return;
+                  }
+
                   // Allow going back to any previous step
                   if (stepNumber < currentStep) {
                     setState(() {
                       currentStep = stepNumber;
                     });
-                  } else if (stepNumber == currentStep) {
-                    // Already on this step, do nothing
                     return;
-                  } else {
-                    // Going forward: check if current step is completed
-                    if (_isStepCompleted(currentStep)) {
-                      setState(() {
-                        currentStep = stepNumber;
-                      });
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Please complete all items in the current step first.',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          duration: Duration(seconds: 2),
-                          backgroundColor: AppColors.danger,
-                        ),
-                      );
+                  }
+
+                  // Going forward: check if all steps up to target are completed
+                  bool canNavigate = true;
+                  for (int i = currentStep; i < stepNumber; i++) {
+                    if (!_isStepCompleted(i)) {
+                      canNavigate = false;
+                      break;
                     }
+                  }
+
+                  if (canNavigate) {
+                    setState(() {
+                      currentStep = stepNumber;
+                    });
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Please complete all previous steps first.',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        duration: Duration(seconds: 2),
+                        backgroundColor: AppColors.danger,
+                      ),
+                    );
                   }
                 },
               ),
