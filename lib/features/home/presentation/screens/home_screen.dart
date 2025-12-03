@@ -448,6 +448,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 svgPath: 'assets/icons/svg/card-three.svg',
                 color: AppColors.lightPink33.withOpacity(0.2),
                 textColor: AppColors.brightPurple,
+                onTap: () {
+                  context.read<NavigationProvider>().setTab(3);
+                },
               ),
             ],
           ),
