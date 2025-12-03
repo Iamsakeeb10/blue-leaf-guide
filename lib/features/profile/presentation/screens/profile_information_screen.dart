@@ -151,7 +151,7 @@ class _ProfileInformationScreenState extends State<ProfileInformationScreen> {
               // First Name
               CustomTextField.TextField(
                 controller: firstNameController,
-                label: 'First Name',
+                label: '',
                 hint: 'First Name',
                 keyboardType: TextInputType.name,
                 textInputAction: TextInputAction.next,
@@ -162,7 +162,7 @@ class _ProfileInformationScreenState extends State<ProfileInformationScreen> {
               // Last Name
               CustomTextField.TextField(
                 controller: lastNameController,
-                label: 'Last Name',
+                label: '',
                 hint: 'Last Name',
                 keyboardType: TextInputType.name,
                 textInputAction: TextInputAction.next,

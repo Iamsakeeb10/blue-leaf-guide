@@ -88,7 +88,7 @@ class _ConfirmChangePasswordScreenState
               // New Password Field
               CustomTextField.TextField(
                 controller: newPasswordController,
-                label: 'Create New Password',
+                label: '',
                 hint: 'Create New Password',
                 obscureText: _obscureNewPassword,
                 textInputAction: TextInputAction.next,
@@ -108,7 +108,7 @@ class _ConfirmChangePasswordScreenState
               // Confirm Password Field
               CustomTextField.TextField(
                 controller: confirmPasswordController,
-                label: 'Confirm Password',
+                label: '',
                 hint: 'Confirm New Password',
                 obscureText: _obscureConfirmPassword,
                 textInputAction: TextInputAction.done,

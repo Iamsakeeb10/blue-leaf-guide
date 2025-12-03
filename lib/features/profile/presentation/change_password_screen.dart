@@ -57,7 +57,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               // Password Field
               CustomTextField.TextField(
                 controller: passwordController,
-                label: 'Current Password',
+                label: '',
                 hint: 'Current Password',
                 obscureText: _obscurePassword,
                 textInputAction: TextInputAction.done,
