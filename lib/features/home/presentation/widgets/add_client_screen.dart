@@ -15,6 +15,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/custom_date_picker_dialog.dart';
 import '../../../../shared/widgets/button.dart';
 import '../../../../shared/widgets/custom_appbar.dart';
+import '../../../../shared/widgets/stand_alone_dropdown.dart';
 import '../../../../shared/widgets/text_field.dart' as custom;
 import '../../data/client_service.dart';
 import '../widgets/image_source_bottom_sheet.dart';
@@ -41,7 +42,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
   final TextEditingController linkedinController = TextEditingController();
   final TextEditingController twitterController = TextEditingController();
 
-  String clientType = 'Personal Client';
+  String? clientType = 'Client type';
   final List<String> clientTypes = ['Personal Client', 'School Client'];
 
   String? _selectedImagePath;
@@ -356,7 +357,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                     ),
                     decoration: BoxDecoration(
                       color: Color(0xCC090F05), // var(--transparent-black-80)
-                      borderRadius: BorderRadius.circular(8.r),
+                      borderRadius: BorderRadius.circular(32.r),
                     ),
                     child: Text(
                       'Upload Photo (optional)',
@@ -537,30 +538,41 @@ class _AddClientScreenState extends State<AddClientScreen> {
               Row(
                 children: [
                   // Client Type Dropdown
+                  // Expanded(
+                  //   child: custom.TextField(
+                  //     controller: TextEditingController(text: clientType),
+                  //     label: 'Client Type',
+                  //     hint: 'Select Client Type',
+                  //     suffixIcon: Icon(Icons.arrow_drop_down, size: 24.r),
+                  //     readOnly: true, // makes field not editable, dropdown only
+                  //     onTap: () async {
+                  //       final selected = await showDialog<String>(
+                  //         context: context,
+                  //         builder: (ctx) => SimpleDialog(
+                  //           title: const Text('Select Client Type'),
+                  //           children: clientTypes
+                  //               .map(
+                  //                 (type) => SimpleDialogOption(
+                  //                   onPressed: () => Navigator.pop(ctx, type),
+                  //                   child: Text(type),
+                  //                 ),
+                  //               )
+                  //               .toList(),
+                  //         ),
+                  //       );
+                  //       if (selected != null)
+                  //         setState(() => clientType = selected);
+                  //     },
+                  //   ),
+                  // ),
                   Expanded(
-                    child: custom.TextField(
-                      controller: TextEditingController(text: clientType),
+                    child: StandaloneDropdown(
+                      value: clientType,
                       label: 'Client Type',
                       hint: 'Select Client Type',
-                      suffixIcon: Icon(Icons.arrow_drop_down, size: 24.r),
-                      readOnly: true, // makes field not editable, dropdown only
-                      onTap: () async {
-                        final selected = await showDialog<String>(
-                          context: context,
-                          builder: (ctx) => SimpleDialog(
-                            title: const Text('Select Client Type'),
-                            children: clientTypes
-                                .map(
-                                  (type) => SimpleDialogOption(
-                                    onPressed: () => Navigator.pop(ctx, type),
-                                    child: Text(type),
-                                  ),
-                                )
-                                .toList(),
-                          ),
-                        );
-                        if (selected != null)
-                          setState(() => clientType = selected);
+                      items: clientTypes,
+                      onChanged: (value) {
+                        setState(() => clientType = value);
                       },
                     ),
                   ),

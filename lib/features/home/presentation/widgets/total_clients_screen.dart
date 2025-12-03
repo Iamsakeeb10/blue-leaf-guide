@@ -579,7 +579,7 @@ class _DeleteClientDialogState extends State<DeleteClientDialog> {
             ConstrainedBox(
               constraints: BoxConstraints(maxWidth: 280.w),
               child: Text(
-                'Are you sure you want to delete this client? This action cannot be undone.',
+                'Deleting this client will remove the client and all related data.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14.sp,

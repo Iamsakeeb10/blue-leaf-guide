@@ -125,6 +125,7 @@ class _TextFieldState extends State<TextField> {
                   fontSize: 14.sp,
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w500,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 decoration: InputDecoration(
                   hintText: widget.hint,
