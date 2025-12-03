@@ -811,6 +811,8 @@ class _RewardsScreenState extends State<RewardsScreen> {
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               child: MonthlyGoalsList(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
                 userId: userId,
                 monthKey: monthKey,
                 onAddGoal: () {},

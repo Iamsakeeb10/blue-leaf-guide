@@ -14,6 +14,10 @@ class MonthlyGoalsList extends StatefulWidget {
   final Future<void> Function(String goalId) onDeleteGoal;
   final Map<int, String> orderSuffixMap;
 
+  /// Optional props for embedding in other scrollables
+  final bool? shrinkWrap;
+  final ScrollPhysics? physics;
+
   const MonthlyGoalsList({
     super.key,
     required this.userId,
@@ -22,6 +26,8 @@ class MonthlyGoalsList extends StatefulWidget {
     required this.onEditGoal,
     required this.onDeleteGoal,
     required this.orderSuffixMap,
+    this.shrinkWrap,
+    this.physics,
   });
 
   @override
@@ -260,6 +266,10 @@ class _MonthlyGoalsListState extends State<MonthlyGoalsList> {
                 ),
               );
             },
+
+            // Only apply optional props if provided
+            shrinkWrap: widget.shrinkWrap ?? false,
+            physics: widget.physics,
           ),
         );
       },
