@@ -9,8 +9,8 @@ import 'package:provider/provider.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../auth/providers/auth_provider.dart';
-import '../../../roadmap/presentation/screens/roadmap_screen.dart';
 import '../../data/client_service.dart';
+import '../../providers/navigation_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -425,11 +425,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 svgPath: 'assets/icons/svg/card-two.svg',
                 color: AppColors.lightBlue40.withOpacity(0.25),
                 textColor: AppColors.timelinePrimary,
-                onTap: () async {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => RoadmapScreen()),
-                  );
+                onTap: () {
+                  // Use provider to switch to Roadmap tab (index 2)
+                  context.read<NavigationProvider>().setTab(2);
                 },
               ),
               SizedBox(height: 8.h),

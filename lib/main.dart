@@ -12,6 +12,7 @@ import 'app/utils/firebase_helper.dart';
 import 'core/services/local_storage.dart';
 import 'core/services/notification_service.dart';
 import 'features/auth/providers/auth_provider.dart';
+import 'features/home/providers/navigation_provider.dart';
 import 'features/task/providers/subtitle_provider.dart';
 
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
@@ -146,6 +147,7 @@ class _MyAppState extends State<MyApp> {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => NavigationProvider()),
         ChangeNotifierProvider(create: (_) => SubtitleProvider()),
       ],
       child: ScreenUtilInit(

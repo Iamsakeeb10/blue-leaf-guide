@@ -2,23 +2,42 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../chat/presentation/screens/chat_screen.dart';
 import '../../../growth/presentation/screens/growth_screen.dart';
-import '../../../home/presentation/screens/home_screen.dart';
 import '../../../roadmap/presentation/screens/roadmap_screen.dart';
 import '../../../task/presentation/screens/task_screen.dart';
+import '../../providers/navigation_provider.dart';
+import '../screens/home_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
-  const MainNavigationScreen({super.key});
+  final int initialTab;
+  const MainNavigationScreen({super.key, this.initialTab = 0});
 
   @override
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
-  int _currentIndex = 0;
+  @override
+  void initState() {
+    super.initState();
+    // Initialize the provider with the initial tab from the route
+    Future.microtask(() {
+      context.read<NavigationProvider>().setTab(widget.initialTab);
+    });
+  }
+
+  @override
+  void didUpdateWidget(MainNavigationScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update tab when initialTab changes (from route parameters)
+    if (oldWidget.initialTab != widget.initialTab) {
+      context.read<NavigationProvider>().setTab(widget.initialTab);
+    }
+  }
 
   // Placeholder screens for other tabs
   final List<Widget> _screens = [
@@ -31,8 +50,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final currentIndex = context.watch<NavigationProvider>().currentTab;
     return Scaffold(
-      body: _screens[_currentIndex],
+      key: ValueKey(widget.initialTab),
+      body: _screens[currentIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -102,16 +123,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     required String activeIcon,
     required String label,
   }) {
-    final isActive = _currentIndex == index;
+    final isActive = context.watch<NavigationProvider>().currentTab == index;
 
     return GestureDetector(
       onTap: () {
         if (index == 4) {
           context.push('/chat');
         } else {
-          setState(() {
-            _currentIndex = index;
-          });
+          context.read<NavigationProvider>().setTab(index);
         }
       },
       behavior: HitTestBehavior.opaque,

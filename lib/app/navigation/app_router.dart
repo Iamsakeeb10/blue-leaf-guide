@@ -112,7 +112,10 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(
       path: '/home',
-      builder: (context, state) => const MainNavigationScreen(),
+      builder: (context, state) {
+        final tab = int.tryParse(state.uri.queryParameters['tab'] ?? '0') ?? 0;
+        return MainNavigationScreen(initialTab: tab);
+      },
     ),
 
     GoRoute(
