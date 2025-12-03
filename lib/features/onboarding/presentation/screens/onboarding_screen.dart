@@ -33,7 +33,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ),
     OnboardingData(
       illustration:
-          'assets/illustrations/onboarding/onboarding_notifications.svg',
+          'assets/illustrations/onboarding/onboarding_task_create.svg',
       title: 'View Your Roadmap',
       subtitle:
           'See every step of your journey in one simple view. stay focused on steady progress.',
@@ -47,7 +47,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ),
     OnboardingData(
       illustration:
-          'assets/illustrations/onboarding/onboarding_task_create.svg',
+          'assets/illustrations/onboarding/onboarding_notifications.svg',
       title: 'Your AI Tutor',
       subtitle:
           'Get instant guidance to learn, improve, and grow. supporting you at every stage.',
