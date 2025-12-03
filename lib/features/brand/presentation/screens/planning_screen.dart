@@ -7,6 +7,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/button.dart';
 import '../../../../shared/widgets/custom_appbar.dart';
 import '../../../../shared/widgets/custom_checkbox.dart';
+import '../widgets/custom_stepper.dart';
 
 class PlanningScreen extends StatefulWidget {
   const PlanningScreen({super.key});
@@ -39,6 +40,14 @@ class _PlanningScreenState extends State<PlanningScreen> {
     "Plan first event or pop-up",
     "Launch charitable initiative",
     "Analyse metrics and plan next 90 days",
+  ];
+
+  // Step titles for the stepper
+  final List<String> stepTitles = [
+    'Strategy',
+    'Visual',
+    'Marketing',
+    'Planning',
   ];
 
   @override
@@ -207,19 +216,43 @@ class _PlanningScreenState extends State<PlanningScreen> {
       appBar: CustomAppBar(title: 'Build Brand'),
       backgroundColor: Colors.white,
       body: Padding(
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.only(
+          left: 18.w,
+          right: 16.w,
+          bottom: MediaQuery.of(context).padding.bottom + 16.h,
+        ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Planning',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-                textAlign: TextAlign.left,
+            SizedBox(height: 24.h),
+            // Add CustomStepper
+            Padding(
+              padding: EdgeInsets.only(left: 12.w, right: 20.w),
+              child: CustomStepper(
+                currentStep: 4, // Planning is step 4
+                totalSteps: 4,
+                titles: stepTitles,
+                completedSteps: [
+                  true, // Strategy - assuming completed if user reached planning
+                  true, // Visual - assuming completed if user reached planning
+                  true, // Marketing - assuming completed if user reached planning
+                  areAllCheckboxesCompleted, // Planning
+                ],
+                onStepTap: (stepNumber) {
+                  // Navigate back to BuildBrandScreen if tapping on previous steps
+                  if (stepNumber < 4) {
+                    Navigator.of(context).pop();
+                  }
+                },
+              ),
+            ),
+            SizedBox(height: 32.h),
+            Text(
+              'Planning',
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
               ),
             ),
             SizedBox(height: 24.h),
@@ -262,9 +295,9 @@ class _PlanningScreenState extends State<PlanningScreen> {
             Column(
               children: [
                 Button(
-                  onPressed: areAllCheckboxesCompleted
+                  onPressed: hasAnyCheckboxSelected
                       ? () async {
-                          // All checkboxes completed - save and navigate back
+                          // At least one checkbox selected - save
                           await _savePlanningData();
                           if (mounted) {
                             Navigator.of(context).pop({
@@ -281,7 +314,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                   fontSize: 15.sp,
                   fontWeight: FontWeight.w600,
                   textColor: Colors.white,
-                  backgroundColor: areAllCheckboxesCompleted
+                  backgroundColor: hasAnyCheckboxSelected
                       ? AppColors.brand500
                       : AppColors.brand500.withOpacity(0.3),
                 ),
