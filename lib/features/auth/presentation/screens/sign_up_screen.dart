@@ -100,7 +100,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   children: [
                     CustomTextField.TextField(
                       controller: emailController,
-                      label: 'Email',
+                      label: '',
                       hint: 'Email',
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,

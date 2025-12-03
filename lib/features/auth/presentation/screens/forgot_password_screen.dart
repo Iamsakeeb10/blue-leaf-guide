@@ -154,7 +154,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               SizedBox(height: 32.h),
               CustomTextField.TextField(
                 controller: emailController,
-                label: 'Email',
+                label: '',
                 hint: 'Enter your registered email',
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.done,

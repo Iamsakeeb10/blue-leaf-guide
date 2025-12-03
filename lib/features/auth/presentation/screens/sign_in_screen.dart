@@ -127,7 +127,7 @@ class _SignInScreenState extends State<SignInScreen> {
                         SizedBox(height: 32.h),
                         CustomTextField.TextField(
                           controller: emailController,
-                          label: 'Email',
+                          label: '',
                           hint: 'Email',
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
@@ -136,7 +136,7 @@ class _SignInScreenState extends State<SignInScreen> {
                         SizedBox(height: 12.h),
                         CustomTextField.TextField(
                           controller: passwordController,
-                          label: 'Password',
+                          label: '',
                           hint: 'Password',
                           obscureText: _obscurePassword,
                           textInputAction: TextInputAction.done,
