@@ -49,13 +49,13 @@ class StandaloneDropdown extends StatelessWidget {
         GestureDetector(
           onTap: () => _showDropdownDialog(context),
           child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
             decoration: BoxDecoration(
               color: backgroundColor ?? Colors.white,
               borderRadius: BorderRadius.circular(100.r),
               border: Border.all(
-                color: borderColor ?? AppColors.lightGrey,
-                width: 1.5,
+                color: borderColor ?? AppColors.textPrimary.withOpacity(0.05),
+                width: 1.25,
               ),
             ),
             child: Row(
