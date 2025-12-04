@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -346,7 +347,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         return _buildStatsCard(
                           svgPath: 'assets/icons/svg/dollar.svg',
                           label: 'Total Earned',
-                          value: totalEarned,
+                          value: '\$${totalEarned}',
                           gradientColors: [
                             Colors.white.withOpacity(0),
                             const Color(0xFF2C63FD).withOpacity(0.4),

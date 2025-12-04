@@ -68,18 +68,49 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
     editableItem = StrategyItem(
       id: widget.item.id,
       title: widget.item.title,
-      sections: widget.item.sections
-          .map(
-            (s) => StrategySection(
-              subtitle: s.subtitle,
-              bullets: s.bullets,
-              isTextField: s.isTextField,
-              fieldType: s.fieldType,
-              hintText: s.hintText,
-              userInputs: List.from(s.userInputs),
-            ),
-          )
-          .toList(),
+      sections: (() {
+        // Create a defensive copy of sections and remove duplicates by subtitle
+        final mapped = widget.item.sections
+            .map(
+              (s) => StrategySection(
+                subtitle: s.subtitle,
+                bullets: List<String>.from(s.bullets),
+                isTextField: s.isTextField,
+                fieldType: s.fieldType,
+                hintText: s.hintText,
+                // preserve order and make a copy
+                userInputs: List<String>.from(s.userInputs),
+              ),
+            )
+            .toList();
+
+        final seen = <String>{};
+        final deduped = <StrategySection>[];
+
+        for (var sec in mapped) {
+          final key = sec.subtitle.trim().toLowerCase();
+          if (!seen.contains(key)) {
+            seen.add(key);
+
+            // Deduplicate userInputs for the section while preserving order
+            final seenInputs = <String>{};
+            final inputs = <String>[];
+            for (var input in sec.userInputs) {
+              final normalized =
+                  input; // keep as-is (do not trim empty intentionally)
+              if (!seenInputs.contains(normalized)) {
+                seenInputs.add(normalized);
+                inputs.add(normalized);
+              }
+            }
+            sec.userInputs = inputs;
+
+            deduped.add(sec);
+          }
+        }
+
+        return deduped;
+      })(),
       isCompleted: widget.item.isCompleted,
     );
   }
@@ -585,6 +616,7 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Always show the subtitle
         Text(
           section.subtitle,
           style: TextStyle(
@@ -594,51 +626,57 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
           ),
         ),
         SizedBox(height: 8.h),
-        Container(
-          padding: EdgeInsets.all(16.w),
-          decoration: BoxDecoration(
-            color: AppColors.lightGrey,
-            borderRadius: BorderRadius.circular(16.r),
-          ),
-          margin: EdgeInsets.only(bottom: 16.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: section.bullets
-                .map(
-                  (bullet) => Padding(
-                    padding: EdgeInsets.only(bottom: 4.h),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          "•",
-                          style: TextStyle(
-                            fontSize: 18.sp,
-                            height: 1.2,
-                            color: AppColors.textPrimary.withOpacity(0.6),
-                          ),
-                        ),
-                        SizedBox(width: 4.w),
-                        Expanded(
-                          child: Text(
-                            bullet,
+
+        // If there are bullets, show them inside a styled container.
+        // If bullets is empty, don't render the empty grey container.
+        if (section.bullets.isNotEmpty) ...[
+          Container(
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              color: AppColors.lightGrey,
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            margin: EdgeInsets.only(bottom: 0.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: section.bullets
+                  .map(
+                    (bullet) => Padding(
+                      padding: EdgeInsets.only(bottom: 4.h),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            "•",
                             style: TextStyle(
-                              fontSize: 14.sp,
-                              height: 1.4,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textPrimary.withOpacity(0.7),
+                              fontSize: 18.sp,
+                              height: 1.2,
+                              color: AppColors.textPrimary.withOpacity(0.6),
                             ),
                           ),
-                        ),
-                      ],
+                          SizedBox(width: 4.w),
+                          Expanded(
+                            child: Text(
+                              bullet,
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                height: 1.4,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.textPrimary.withOpacity(0.7),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                )
-                .toList(),
+                  )
+                  .toList(),
+            ),
           ),
-        ),
-        SizedBox(height: 24.h),
+          SizedBox(height: 24.h),
+        ] else
+          SizedBox(height: 16.h),
       ],
     );
   }
