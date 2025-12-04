@@ -257,21 +257,43 @@ class AuthService {
       // Split name
       final nameParts = user.displayName?.split(' ') ?? ['', ''];
 
+      // Check if user exists to decide on photoURL logic
+      final userDoc = await _firestore.collection('users').doc(uid).get();
+      String? currentPhotoURL;
+      if (userDoc.exists) {
+        currentPhotoURL = userDoc.data()?['photoURL'];
+      }
+
+      // Determine if the current image is a custom uploaded image (Base64)
+      // We assume URLs start with 'http'. If it's not empty and doesn't start with http, it's likely Base64.
+      bool hasCustomImage = currentPhotoURL != null &&
+          currentPhotoURL.isNotEmpty &&
+          !currentPhotoURL.startsWith('http');
+
+      final Map<String, dynamic> userData = {
+        'firstName': nameParts.isNotEmpty ? nameParts[0] : '',
+        'lastName': nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '',
+        'email': user.email ?? '',
+        'provider': 'google',
+        'googlePhotoURL': user.photoURL ?? '', // Store Google photo as fallback
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      // Only update photoURL if the user DOES NOT have a custom image
+      // This ensures we don't overwrite their uploaded profile picture with the Google one on every login
+      if (!hasCustomImage) {
+        userData['photoURL'] = user.photoURL ?? '';
+      }
+
+      if (!userDoc.exists) {
+        userData['createdAt'] = FieldValue.serverTimestamp();
+      }
+
       // Save/update Firestore user document
       await _firestore.collection('users').doc(uid).set(
-        {
-          'firstName': nameParts.isNotEmpty ? nameParts[0] : '',
-          'lastName': nameParts.length > 1
-              ? nameParts.sublist(1).join(' ')
-              : '',
-          'email': user.email ?? '',
-          'photoURL': user.photoURL ?? '',
-          'provider': 'google',
-          'createdAt': FieldValue.serverTimestamp(), // for new users
-          'updatedAt': FieldValue.serverTimestamp(), // for existing users
-        },
-        SetOptions(merge: true),
-      ); // merge ensures we don't overwrite existing fields
+            userData,
+            SetOptions(merge: true),
+          );
 
       // Save login state
       await _saveLoginState(uid);
