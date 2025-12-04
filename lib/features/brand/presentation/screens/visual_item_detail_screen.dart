@@ -298,7 +298,13 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
       if (section.fieldType == 'color') {
         if (section.userInputs.isEmpty) return false;
       } else if (section.isTextField && section.fieldType == 'text') {
-        if (_controllers[i].text.trim().isEmpty) return false;
+        // For the Business Name item, the Tagline field is optional.
+        if (_editableItem.id == 'business_name' &&
+            section.subtitle.toLowerCase().contains('tagline')) {
+          // skip tagline (optional)
+        } else {
+          if (_controllers[i].text.trim().isEmpty) return false;
+        }
       } else if (section.fieldType == 'chips') {
         // ✅ At least one chip must be selected
         if (section.selectedOptions == null ||
@@ -371,6 +377,22 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
   }
 
   bool _isSaveEnabled() {
+    // For Business Name, require the Name field specifically (Tagline optional)
+    if (_editableItem.id == 'business_name') {
+      for (int i = 0; i < _editableItem.sections.length; i++) {
+        final section = _editableItem.sections[i];
+        if (section.isTextField &&
+            section.fieldType == 'text' &&
+            section.subtitle.toLowerCase().contains('name')) {
+          return _controllers.length > i &&
+              _controllers[i].text.trim().isNotEmpty;
+        }
+      }
+      // If no Name field found, don't allow save
+      return false;
+    }
+
+    // Default behavior: allow save if any text input has content or any chips selected
     for (int i = 0; i < _editableItem.sections.length; i++) {
       final section = _editableItem.sections[i];
 

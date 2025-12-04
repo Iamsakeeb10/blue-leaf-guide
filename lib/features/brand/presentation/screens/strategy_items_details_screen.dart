@@ -46,7 +46,7 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
   // Dropdown options
   final List<String> ageRanges = [
     '18-24',
-    '25-34',
+    '25-35',
     '35-44',
     '45-54',
     '55-64',
@@ -419,10 +419,20 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
 
   Widget _buildDropdownSection(StrategySection section, int sectionIndex) {
     List<String> options = [];
+    String hintText = "Select..."; // default hint
+
     if (section.subtitle.toLowerCase().contains('age')) {
       options = ageRanges;
+      // First dropdown hint
+      if (sectionIndex == 0 && section.userInputs.isEmpty) {
+        hintText = '25-35';
+      }
     } else if (section.subtitle.toLowerCase().contains('income')) {
       options = incomeLevels;
+      // Second dropdown hint
+      if (sectionIndex == 1 && section.userInputs.isEmpty) {
+        hintText = '\$50k';
+      }
     }
 
     String? currentValue = section.userInputs.isNotEmpty
@@ -463,7 +473,7 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
                   horizontal: 14.w,
                   vertical: 14.h,
                 ),
-                hintText: "Select...",
+                hintText: hintText, // <-- set custom hint here
                 hintStyle: TextStyle(
                   fontSize: 12.sp,
                   color: AppColors.textPrimary.withOpacity(0.3),
