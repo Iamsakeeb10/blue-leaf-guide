@@ -119,41 +119,40 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
     // Branding Basics step is always savable
     if (editableItem.id == "branding_basics") return true;
 
-    bool hasAnyInput = false;
-
-    for (var section in editableItem.sections) {
-      if (section.isTextField) {
-        if (section.fieldType == 'chips') {
-          if (section.userInputs.isNotEmpty) hasAnyInput = true;
-        } else {
-          if (section.userInputs.any((e) => e.trim().isNotEmpty))
-            hasAnyInput = true;
+    // Special handling for Brand Personality: require at least one
+    // selected chip that matches one of the defined bullets.
+    if (editableItem.id == 'brand_personality') {
+      for (var section in editableItem.sections) {
+        // Prefer validating against bullets to ensure selection is valid
+        if (section.bullets.isNotEmpty) {
+          if (section.userInputs.any(
+            (u) => u.trim().isNotEmpty && section.bullets.contains(u.trim()),
+          )) {
+            return true;
+          }
         }
-      } else if (section.fieldType == 'dropdown') {
-        if (section.userInputs.isNotEmpty &&
-            section.userInputs[0].trim().isNotEmpty) {
-          hasAnyInput = true;
+
+        // Fallback: if field type explicitly set to chips, accept any non-empty input
+        if (section.isTextField && section.fieldType == 'chips') {
+          if (section.userInputs.any((u) => u.trim().isNotEmpty)) return true;
         }
       }
+
+      // No valid chip selection found for brand_personality
+      return false;
     }
 
-    // If nothing is filled, disable save
-    if (!hasAnyInput) return false;
-
-    // Check required fields
+    // For non-chip steps, require all fields to be filled
     for (var section in editableItem.sections) {
       if (section.isTextField) {
-        if (section.fieldType == 'chips') {
-          if (section.userInputs.isEmpty) return false;
-        } else if (section.userInputs.isEmpty ||
-            section.userInputs.any((e) => e.trim().isEmpty)) {
-          return false;
+        if (section.fieldType != 'chips') {
+          if (section.userInputs.isEmpty ||
+              section.userInputs.any((e) => e.trim().isEmpty))
+            return false;
         }
       } else if (section.fieldType == 'dropdown') {
-        if (section.userInputs.isEmpty ||
-            section.userInputs[0].trim().isEmpty) {
+        if (section.userInputs.isEmpty || section.userInputs[0].trim().isEmpty)
           return false;
-        }
       }
     }
 
