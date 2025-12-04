@@ -319,8 +319,7 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
                   child: TextField(
                     controller: controllers[index],
                     decoration: InputDecoration(
-                      hintText:
-                          "${section.hintText ?? 'Core value'} ${index + 1}",
+                      hintText: 'Core value ${index + 1}',
                       hintStyle: TextStyle(
                         fontSize: 12.sp,
                         color: AppColors.textPrimary.withOpacity(0.3),
