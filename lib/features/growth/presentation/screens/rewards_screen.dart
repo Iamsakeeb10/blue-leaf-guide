@@ -39,12 +39,22 @@ class _RewardsScreenState extends State<RewardsScreen> {
   bool _isLoadingChartData = false;
   List<double> _chartValues = List.filled(12, 0.0);
 
+  // Cache the brand build future to prevent flickering
+  late Future<bool> _brandBuildFuture;
+  late Future<int> _completedMonthsFuture;
+
   @override
   void initState() {
     super.initState(); // Always call super.initState() first or last.
     _selectedTaskMonth = DateTime.now().month;
     _selectedTaskYear = DateTime.now().year;
     _fetchYearlyChartData();
+
+    // Initialize cached futures
+    _brandBuildFuture = _isBrandBuildCompleted();
+    _completedMonthsFuture = FirebaseAuth.instance.currentUser != null
+        ? _countCompletedMonths(FirebaseAuth.instance.currentUser!.uid)
+        : Future.value(0);
   }
 
   // Add this method to show month picker
@@ -593,25 +603,21 @@ class _RewardsScreenState extends State<RewardsScreen> {
                   SizedBox(width: 12.w),
                   Expanded(
                     child: FutureBuilder(
-                      future: FirebaseAuth.instance.currentUser != null
-                          ? _countCompletedMonths(
-                              FirebaseAuth.instance.currentUser!.uid,
-                            )
-                          : Future.value(0),
+                      future: _completedMonthsFuture,
                       builder: (context, snapshot) {
-                        String displayValue = 'None';
+                        bool isLoading =
+                            snapshot.connectionState != ConnectionState.done;
                         int count = 0;
 
                         if (snapshot.connectionState == ConnectionState.done) {
                           count = snapshot.data ?? 0;
-                          displayValue = '${count} months';
                         }
 
                         return _buildStatCard(
                           svgPath: 'assets/icons/svg/stats-target.svg',
-
                           title: 'Goal Completed',
-                          value: displayValue,
+                          value: isLoading ? '' : '${count} months',
+                          isLoading: isLoading,
                           backgroundColor: AppColors.brand50,
                         );
                       },
@@ -627,21 +633,28 @@ class _RewardsScreenState extends State<RewardsScreen> {
                 children: [
                   Expanded(
                     child: FutureBuilder<bool>(
-                      future: _isBrandBuildCompleted(),
+                      future: _brandBuildFuture,
                       builder: (context, snapshot) {
                         bool isCompleted = false;
+                        bool isLoading =
+                            snapshot.connectionState != ConnectionState.done;
+
                         if (snapshot.connectionState == ConnectionState.done) {
                           isCompleted = snapshot.data ?? false;
                         }
 
                         return _buildStatCard(
                           svgPath: 'assets/icons/svg/stats-check.svg',
-
                           title: 'Brand Build',
-                          value: isCompleted ? 'Completed' : 'None',
-                          backgroundColor: isCompleted
-                              ? AppColors.backgroundGreenLight
-                              : AppColors.backgroundLight,
+                          value: isLoading
+                              ? ''
+                              : (isCompleted ? 'Completed' : 'None'),
+                          isLoading: isLoading,
+                          backgroundColor: isLoading
+                              ? AppColors.backgroundLight
+                              : (isCompleted
+                                    ? AppColors.backgroundGreenLight
+                                    : AppColors.backgroundLight),
                         );
                       },
                     ),
@@ -741,6 +754,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
                     ],
                   ),
                   SizedBox(height: 20.h),
+                  SizedBox(height: 20.h),
                   Center(
                     child: Column(
                       children: [
@@ -836,6 +850,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
     required String value,
     required Color backgroundColor,
     Color? iconColor,
+    bool isLoading = false,
   }) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
@@ -878,15 +893,27 @@ class _RewardsScreenState extends State<RewardsScreen> {
             ),
           ),
           SizedBox(height: 4.h),
-          Text(
-            value,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppColors.textPrimary.withOpacity(0.8),
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w600,
+          if (isLoading)
+            SizedBox(
+              width: 20.w,
+              height: 20.w,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.w,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppColors.textPrimary.withOpacity(0.5),
+                ),
+              ),
+            )
+          else
+            Text(
+              value,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.textPrimary.withOpacity(0.8),
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
         ],
       ),
     );

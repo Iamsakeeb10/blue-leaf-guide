@@ -315,7 +315,6 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
 
     if (_isLoading) {
       return Scaffold(
-        appBar: CustomAppBar(title: 'Build Brand'),
         backgroundColor: Colors.white,
         body: Center(child: CircularProgressIndicator()),
       );

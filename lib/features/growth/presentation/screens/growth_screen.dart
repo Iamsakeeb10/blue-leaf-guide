@@ -16,7 +16,27 @@ class GrowthScreen extends StatefulWidget {
   State<GrowthScreen> createState() => _GrowthScreenState();
 }
 
-class _GrowthScreenState extends State<GrowthScreen> {
+class _GrowthScreenState extends State<GrowthScreen>
+    with SingleTickerProviderStateMixin {
+  late Future<double> _brandBuilderFuture;
+  late AnimationController _progressController;
+
+  @override
+  void initState() {
+    super.initState();
+    _brandBuilderFuture = _calculateBrandBuilderCompletion();
+    _progressController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+  }
+
+  @override
+  void dispose() {
+    _progressController.dispose();
+    super.dispose();
+  }
+
   Future<double> _calculateBrandBuilderCompletion() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return 0.0;
@@ -219,17 +239,23 @@ class _GrowthScreenState extends State<GrowthScreen> {
               child: Column(
                 children: [
                   FutureBuilder<double>(
-                    future: _calculateBrandBuilderCompletion(),
+                    future: _brandBuilderFuture,
                     builder: (context, snapshot) {
+                      bool isLoading =
+                          snapshot.connectionState != ConnectionState.done;
                       double progress = snapshot.data ?? 0.0;
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        progress = 0.0;
+
+                      // Animate progress when data arrives
+                      if (!isLoading && progress > 0) {
+                        _progressController.forward(from: 0.0);
                       }
 
                       return _buildGrowthCard(
                         title: 'Brand Builder',
                         subtitle: 'Create your professional identity',
                         progress: progress,
+                        isLoadingProgress: isLoading,
+                        progressController: _progressController,
                         showProgress: true,
                         backgroundColor: AppColors.lightGrey,
                         svgPath: 'assets/icons/svg/building.svg',
@@ -287,6 +313,8 @@ class _GrowthScreenState extends State<GrowthScreen> {
     required String subtitle,
     double? progress,
     bool showProgress = false,
+    bool isLoadingProgress = false,
+    AnimationController? progressController,
     String? badge,
     required Color backgroundColor,
     bool showChevron = true,
@@ -408,28 +436,85 @@ class _GrowthScreenState extends State<GrowthScreen> {
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
-                              Text(
-                                '${(progress * 100).toInt()}%',
-                                style: TextStyle(
-                                  color: AppColors.brand500,
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w500,
+                              if (isLoadingProgress)
+                                SizedBox(
+                                  width: 40.w,
+                                  height: 16.h,
+                                  child: const LinearProgressIndicator(
+                                    backgroundColor: Color(0xFFF0F0F0),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Color(0xFFEEEEEE),
+                                    ),
+                                    minHeight: 4,
+                                  ),
+                                )
+                              else if (progressController != null)
+                                AnimatedBuilder(
+                                  animation: progressController,
+                                  builder: (context, child) {
+                                    return Text(
+                                      '${(progress * progressController.value * 100).toInt()}%',
+                                      style: TextStyle(
+                                        color: AppColors.brand500,
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    );
+                                  },
+                                )
+                              else
+                                Text(
+                                  '${(progress * 100).toInt()}%',
+                                  style: TextStyle(
+                                    color: AppColors.brand500,
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
-                              ),
                             ],
                           ),
                           SizedBox(height: 8.h),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10.r),
-                            child: LinearProgressIndicator(
-                              value: progress,
-                              backgroundColor: AppColors.brand100,
-                              valueColor: const AlwaysStoppedAnimation<Color>(
-                                AppColors.brand500,
+                          if (isLoadingProgress)
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10.r),
+                              child: LinearProgressIndicator(
+                                backgroundColor: AppColors.brand100,
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Color(0xFFEEEEEE),
+                                ),
+                                minHeight: 6.h,
                               ),
-                              minHeight: 6.h,
+                            )
+                          else if (progressController != null)
+                            AnimatedBuilder(
+                              animation: progressController,
+                              builder: (context, child) {
+                                return ClipRRect(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  child: LinearProgressIndicator(
+                                    value: progress * progressController.value,
+                                    backgroundColor: AppColors.brand100,
+                                    valueColor:
+                                        const AlwaysStoppedAnimation<Color>(
+                                          AppColors.brand500,
+                                        ),
+                                    minHeight: 6.h,
+                                  ),
+                                );
+                              },
+                            )
+                          else
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10.r),
+                              child: LinearProgressIndicator(
+                                value: progress,
+                                backgroundColor: AppColors.brand100,
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  AppColors.brand500,
+                                ),
+                                minHeight: 6.h,
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     ),
