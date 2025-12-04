@@ -116,19 +116,47 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
   }
 
   bool canSave() {
+    // Branding Basics step is always savable
     if (editableItem.id == "branding_basics") return true;
+
+    bool hasAnyInput = false;
 
     for (var section in editableItem.sections) {
       if (section.isTextField) {
         if (section.fieldType == 'chips') {
-          // Brand personality requires at least 1 selection
+          if (section.userInputs.isNotEmpty) hasAnyInput = true;
+        } else {
+          if (section.userInputs.any((e) => e.trim().isNotEmpty))
+            hasAnyInput = true;
+        }
+      } else if (section.fieldType == 'dropdown') {
+        if (section.userInputs.isNotEmpty &&
+            section.userInputs[0].trim().isNotEmpty) {
+          hasAnyInput = true;
+        }
+      }
+    }
+
+    // If nothing is filled, disable save
+    if (!hasAnyInput) return false;
+
+    // Check required fields
+    for (var section in editableItem.sections) {
+      if (section.isTextField) {
+        if (section.fieldType == 'chips') {
           if (section.userInputs.isEmpty) return false;
         } else if (section.userInputs.isEmpty ||
-            section.userInputs.any((e) => e.isEmpty)) {
+            section.userInputs.any((e) => e.trim().isEmpty)) {
+          return false;
+        }
+      } else if (section.fieldType == 'dropdown') {
+        if (section.userInputs.isEmpty ||
+            section.userInputs[0].trim().isEmpty) {
           return false;
         }
       }
     }
+
     return true;
   }
 
@@ -719,7 +747,9 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
               ),
             ),
             Button(
-              onPressed: _saveItem,
+              onPressed: canSave()
+                  ? _saveItem
+                  : null, // <-- Pass null if cannot save
               text: _isSaving ? 'Saving...' : 'Save',
               height: 54.h,
               borderRadius: BorderRadius.circular(32.r),
@@ -728,7 +758,9 @@ class _StrategyItemDetailScreenState extends State<StrategyItemDetailScreen> {
               textColor: Colors.white,
               backgroundColor: canSave()
                   ? AppColors.brand500
-                  : AppColors.brand500.withOpacity(0.3),
+                  : AppColors.brand500.withOpacity(
+                      0.3,
+                    ), // Optional visual feedback
             ),
             SizedBox(height: 12.h),
             SizedBox(
