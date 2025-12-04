@@ -1,12 +1,19 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:blue_leaf_guide/shared/widgets/custom_appbar.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/button.dart';
 import '../../../../shared/widgets/text_field.dart' as CustomTextField;
 import '../../../auth/providers/auth_provider.dart';
+import '../../../home/presentation/widgets/image_source_bottom_sheet.dart';
 
 class ProfileInformationScreen extends StatefulWidget {
   const ProfileInformationScreen({super.key});
@@ -19,6 +26,9 @@ class ProfileInformationScreen extends StatefulWidget {
 class _ProfileInformationScreenState extends State<ProfileInformationScreen> {
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
+
+  String? _selectedImagePath;
+  bool _isImageLoading = false;
 
   @override
   void initState() {
@@ -34,6 +44,137 @@ class _ProfileInformationScreenState extends State<ProfileInformationScreen> {
       firstNameController.text = userData['firstName'] ?? '';
       lastNameController.text = userData['lastName'] ?? '';
     }
+  }
+
+  Future<void> _pickImage() async {
+    final source = await showImageSourceBottomSheet(context);
+    if (source == null) return;
+
+    final hasPermission = await _requestPermission(source);
+    if (!hasPermission) return;
+
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedFile = await picker.pickImage(
+      source: source,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      imageQuality: 85,
+    );
+
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImagePath = pickedFile.path;
+        _isImageLoading = true;
+      });
+
+      // Upload the image
+      await _uploadImage(pickedFile.path);
+    }
+  }
+
+  Future<void> _uploadImage(String imagePath) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    final result = await authProvider.updateProfileImage(imagePath);
+
+    setState(() => _isImageLoading = false);
+
+    if (!mounted) return;
+
+    if (result['success']) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message']),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message']),
+          backgroundColor: Colors.red,
+        ),
+      );
+      // Reset selected image path on failure
+      setState(() => _selectedImagePath = null);
+    }
+  }
+
+  Future<bool> _requestPermission(ImageSource source) async {
+    Permission permission;
+    String permissionName;
+
+    if (source == ImageSource.camera) {
+      permission = Permission.camera;
+      permissionName = 'Camera';
+    } else {
+      if (Platform.isIOS) {
+        permission = Permission.photos;
+        permissionName = 'Photos';
+      } else {
+        final isAndroid13OrHigher = await _isAndroid13OrHigher();
+        if (isAndroid13OrHigher) {
+          permission = Permission.photos;
+          permissionName = 'Photos';
+        } else {
+          permission = Permission.storage;
+          permissionName = 'Storage';
+        }
+      }
+    }
+
+    final status = await permission.status;
+
+    if (status.isGranted) return true;
+
+    if (status.isDenied) {
+      final result = await permission.request();
+      if (result.isGranted) return true;
+      if (result.isPermanentlyDenied) {
+        _showPermissionDeniedDialog(permissionName);
+        return false;
+      }
+      return false;
+    }
+
+    if (status.isPermanentlyDenied) {
+      _showPermissionDeniedDialog(permissionName);
+      return false;
+    }
+
+    return false;
+  }
+
+  Future<bool> _isAndroid13OrHigher() async {
+    if (!Platform.isAndroid) return false;
+    final androidInfo = await DeviceInfoPlugin().androidInfo;
+    return androidInfo.version.sdkInt >= 33;
+  }
+
+  void _showPermissionDeniedDialog(String permissionName) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('$permissionName Permission Required'),
+        content: Text(
+          '$permissionName permission is required to select images. '
+          'Please enable it in app settings.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              openAppSettings();
+            },
+            child: const Text('Open Settings'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _handleSave() async {
@@ -80,13 +221,118 @@ class _ProfileInformationScreenState extends State<ProfileInformationScreen> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  Widget _buildProfileImage() {
+    final authProvider = Provider.of<AuthProvider>(context);
     final userData = authProvider.userData;
     final firstName = userData?['firstName'] ?? '';
     final photoURL = userData?['photoURL'];
 
+    // Check if we have a newly selected local image
+    if (_selectedImagePath != null) {
+      return Stack(
+        children: [
+          Container(
+            width: 72.w,
+            height: 72.h,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.lightGrey,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(100),
+              child: Image.file(
+                File(_selectedImagePath!),
+                fit: BoxFit.cover,
+                width: 72.w,
+                height: 72.h,
+              ),
+            ),
+          ),
+          if (_isImageLoading)
+            Container(
+              width: 72.w,
+              height: 72.h,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.black.withOpacity(0.5),
+              ),
+              child: Center(
+                child: SizedBox(
+                  width: 24.w,
+                  height: 24.w,
+                  child: const CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      );
+    }
+
+    // Check if we have a base64-encoded image from Firestore
+    if (photoURL != null && photoURL.isNotEmpty) {
+      // Check if it's a base64 string (not a URL)
+      final isBase64 = !photoURL.startsWith('http');
+
+      return Container(
+        width: 72.w,
+        height: 72.h,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: AppColors.lightGrey,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(100),
+          child: isBase64
+              ? Image.memory(
+                  const Base64Decoder().convert(photoURL),
+                  fit: BoxFit.cover,
+                  width: 72.w,
+                  height: 72.h,
+                  errorBuilder: (context, error, stackTrace) =>
+                      _buildFallbackAvatar(firstName),
+                )
+              : Image.network(
+                  photoURL,
+                  fit: BoxFit.cover,
+                  width: 72.w,
+                  height: 72.h,
+                  errorBuilder: (context, error, stackTrace) =>
+                      _buildFallbackAvatar(firstName),
+                ),
+        ),
+      );
+    }
+
+    // Fallback: show initial letter
+    return Container(
+      width: 72.w,
+      height: 72.h,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.lightGrey,
+      ),
+      child: _buildFallbackAvatar(firstName),
+    );
+  }
+
+  Widget _buildFallbackAvatar(String firstName) {
+    return Center(
+      child: Text(
+        firstName.isNotEmpty ? firstName[0].toUpperCase() : '',
+        style: TextStyle(
+          fontSize: 24.sp,
+          fontWeight: FontWeight.bold,
+          color: AppColors.textPrimary,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const CustomAppBar(title: 'Personal Information'),
@@ -97,55 +343,32 @@ class _ProfileInformationScreenState extends State<ProfileInformationScreen> {
             children: [
               SizedBox(height: 12.h),
 
-              Container(
-                width: 72.w,
-                height: 72.h,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFF24AC69), // fallback background color
-                  image: (photoURL != null && photoURL.isNotEmpty)
-                      ? DecorationImage(
-                          image: NetworkImage(photoURL),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
-                ),
-                child: (photoURL == null || photoURL.isEmpty)
-                    ? Center(
-                        child: Text(
-                          firstName.isNotEmpty
-                              ? firstName[0].toUpperCase()
-                              : '',
-                          style: TextStyle(
-                            fontSize: 24.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      )
-                    : null,
-              ),
+              _buildProfileImage(),
 
               SizedBox(height: 8.h),
 
-              // // Edit Profile Button
-              // Container(
-              //   padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-              //   decoration: BoxDecoration(
-              //     color: AppColors.lightGrey,
-              //     borderRadius: BorderRadius.circular(100.r),
-              //   ),
-              //   child: Text(
-              //     'Edit Profile',
-              //     style: TextStyle(
-              //       color: AppColors.textPrimary.withOpacity(0.8),
-              //       fontSize: 10.sp,
-              //       fontWeight: FontWeight.w600,
-              //       height: 1.3,
-              //       letterSpacing: -0.01 * 10,
-              //     ),
-              //   ),
-              // ),
+              // Change Image Button
+              GestureDetector(
+                onTap: _isImageLoading ? null : _pickImage,
+                child: Container(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.lightGrey,
+                    borderRadius: BorderRadius.circular(100.r),
+                  ),
+                  child: Text(
+                    'Change Image',
+                    style: TextStyle(
+                      color: AppColors.textPrimary.withOpacity(0.8),
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w600,
+                      height: 1.3,
+                      letterSpacing: -0.01 * 10,
+                    ),
+                  ),
+                ),
+              ),
               SizedBox(height: 32.h),
 
               // First Name

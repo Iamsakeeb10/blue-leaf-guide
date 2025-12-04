@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
@@ -156,10 +157,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       height: 45.w,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFF24AC69),
+                        color: AppColors.lightGrey,
                         image: (photoURL != null && photoURL.isNotEmpty)
                             ? DecorationImage(
-                                image: NetworkImage(photoURL),
+                                image: (photoURL.startsWith('http'))
+                                    ? NetworkImage(photoURL)
+                                    : MemoryImage(base64Decode(photoURL))
+                                        as ImageProvider,
                                 fit: BoxFit.cover,
                               )
                             : null,
@@ -167,11 +171,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: (photoURL == null || photoURL.isEmpty)
                           ? Center(
                               child: Text(
-                                firstName[0].toUpperCase(),
+                                firstName.isNotEmpty
+                                    ? firstName[0].toUpperCase()
+                                    : '',
                                 style: TextStyle(
                                   fontSize: 18.sp,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                             )

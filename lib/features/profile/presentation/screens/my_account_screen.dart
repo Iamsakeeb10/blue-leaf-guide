@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:blue_leaf_guide/shared/widgets/custom_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -40,10 +41,13 @@ class MyAccountScreen extends StatelessWidget {
                 height: 72.h,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFF24AC69), // fallback background color
+                  color: AppColors.lightGrey, // fallback background color
                   image: (photoURL != null && photoURL.isNotEmpty)
                       ? DecorationImage(
-                          image: NetworkImage(photoURL),
+                          image: (photoURL.startsWith('http'))
+                              ? NetworkImage(photoURL)
+                              : MemoryImage(base64Decode(photoURL))
+                                  as ImageProvider,
                           fit: BoxFit.cover,
                         )
                       : null,
@@ -57,7 +61,7 @@ class MyAccountScreen extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 24.sp,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       )

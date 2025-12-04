@@ -1,7 +1,11 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:email_otp/email_otp.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -311,6 +315,66 @@ class AuthService {
       return {
         'success': false,
         'message': 'Failed to update profile. Please try again.',
+      };
+    }
+  }
+
+  /// Compress and convert image to base64
+  Future<String?> compressAndEncodeImage(String imagePath) async {
+    try {
+      final dir = Directory.systemTemp;
+      final targetPath =
+          '${dir.absolute.path}/temp_${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+      final result = await FlutterImageCompress.compressAndGetFile(
+        imagePath,
+        targetPath,
+        quality: 70,
+        minWidth: 600,
+        minHeight: 600,
+      );
+
+      if (result == null) return null;
+
+      // Check compressed size
+      final fileSize = await result.length();
+      final fileSizeInMB = fileSize / (1024 * 1024);
+
+      print('🟨 Compressed image size: ${fileSizeInMB.toStringAsFixed(2)} MB');
+
+      if (fileSizeInMB > 1) {
+        print('❌ Image size exceeds 1MB after compression');
+        return null;
+      }
+
+      // Convert to base64
+      final bytes = await result.readAsBytes();
+      final base64String = base64Encode(bytes);
+
+      return base64String;
+    } catch (e) {
+      print('❌ Error compressing image: $e');
+      return null;
+    }
+  }
+
+  /// Update user profile image
+  Future<Map<String, dynamic>> updateProfileImage({
+    required String uid,
+    required String imageBase64,
+  }) async {
+    try {
+      await _firestore.collection('users').doc(uid).update({
+        'photoURL': imageBase64,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      return {'success': true, 'message': 'Profile image updated successfully'};
+    } catch (e) {
+      print('Error updating profile image: $e');
+      return {
+        'success': false,
+        'message': 'Failed to update profile image. Please try again.',
       };
     }
   }

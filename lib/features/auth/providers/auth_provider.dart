@@ -251,6 +251,61 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  // Update user profile image
+  Future<Map<String, dynamic>> updateProfileImage(String imagePath) async {
+    if (_currentUser == null) {
+      return {
+        'success': false,
+        'message': 'User not found. Please sign in again.',
+      };
+    }
+
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      // Compress and encode image
+      final imageBase64 = await _authService.compressAndEncodeImage(imagePath);
+
+      if (imageBase64 == null) {
+        _isLoading = false;
+        notifyListeners();
+        return {
+          'success': false,
+          'message':
+              'Image size exceeds 1MB after compression. Please select a smaller image.',
+        };
+      }
+
+      final result = await _authService.updateProfileImage(
+        uid: _currentUser!.uid,
+        imageBase64: imageBase64,
+      );
+
+      _isLoading = false;
+
+      if (result['success']) {
+        // Update local user data
+        await _loadUserData();
+        notifyListeners();
+        return result;
+      } else {
+        _errorMessage = result['message'];
+        notifyListeners();
+        return result;
+      }
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'An error occurred. Please try again.';
+      notifyListeners();
+      return {
+        'success': false,
+        'message': 'An error occurred. Please try again.',
+      };
+    }
+  }
+
   // Change password
   Future<bool> changePassword({
     required String currentPassword,
