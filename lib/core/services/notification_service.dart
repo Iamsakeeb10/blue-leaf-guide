@@ -502,8 +502,8 @@ class NotificationService {
   /// Schedule automatic daily task reminder (always on, no toggle)
   Future<void> scheduleDailyTaskReminder() async {
     // Set default time: 9:00 AM
-    const int defaultHour = 20;
-    const int defaultMinute = 10;
+    const int defaultHour = 8;
+    const int defaultMinute = 0;
 
     await _notifications.cancel(_dailyTaskReminderNotificationId);
 
