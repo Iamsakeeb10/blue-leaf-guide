@@ -53,18 +53,24 @@ class CustomStepper extends StatelessWidget {
               height: stepSize,
               child: Stack(
                 children: [
-                  // Connector lines — base color only (no completion color yet)
+                  // Connector lines — color green if the step before is completed
                   Positioned.fill(
                     child: Row(
                       children: List.generate(totalSteps * 2 - 1, (index) {
                         if (index.isOdd) {
+                          // Line between step index/2 and step (index/2)+1
+                          final stepBefore = index ~/ 2;
+                          final isLinePassed = isCompleted(stepBefore);
+
                           return Container(
                             width: lineWidth,
                             height: lineHeight,
                             margin: EdgeInsets.symmetric(
                               vertical: (stepSize - lineHeight) / 2,
                             ),
-                            color: AppColors.timelineBorder,
+                            color: isLinePassed
+                                ? AppColors.timelinePrimary
+                                : AppColors.timelineBorder,
                           );
                         } else {
                           return SizedBox(width: stepSize);
