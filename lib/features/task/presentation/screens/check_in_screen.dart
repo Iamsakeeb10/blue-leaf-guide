@@ -257,6 +257,23 @@ class _CheckInScreenState extends State<CheckInScreen> {
     }
   }
 
+  String getPrefixIconForShortTitle(String shortTitle) {
+    print('Money Earned -- $shortTitle');
+    switch (shortTitle) {
+      case 'Money Earned':
+        return 'assets/icons/svg/dollar-new.svg'; // single icon
+
+      case 'Cards Passed Out':
+        return 'assets/icons/svg/business-card.svg';
+
+      case 'Client Serve':
+        return 'assets/icons/svg/user.svg';
+
+      default:
+        return 'assets/icons/svg/default.svg'; // fallback icon
+    }
+  }
+
   Widget _buildDynamicFields() {
     if (_dynamicGoals.isEmpty) {
       return const SizedBox.shrink();
@@ -276,8 +293,12 @@ class _CheckInScreenState extends State<CheckInScreen> {
                   hint: '0',
                   enabled: _isToday(),
                   keyboardType: TextInputType.number,
+                  prefixIconSvg: getPrefixIconForShortTitle(
+                    _dynamicGoals[i]['shortTitle'],
+                  ),
                 ),
               ),
+
               SizedBox(width: 12.w),
               Expanded(
                 child: CustomTextField.TextField(
@@ -286,6 +307,9 @@ class _CheckInScreenState extends State<CheckInScreen> {
                   hint: '0',
                   enabled: _isToday(),
                   keyboardType: TextInputType.number,
+                  prefixIconSvg: getPrefixIconForShortTitle(
+                    _dynamicGoals[i + 1]['shortTitle'],
+                  ),
                 ),
               ),
             ],
@@ -299,6 +323,9 @@ class _CheckInScreenState extends State<CheckInScreen> {
             hint: '0',
             enabled: _isToday(),
             keyboardType: TextInputType.number,
+            prefixIconSvg: getPrefixIconForShortTitle(
+              _dynamicGoals[i]['shortTitle'],
+            ),
           ),
         );
       }
