@@ -12,6 +12,8 @@ class ProfileItem extends StatelessWidget {
   final ValueChanged<bool>? onChanged;
   final bool showDivider;
   final bool isEditable;
+  final String? trailingIconPath;
+  final VoidCallback? onTrailingIconTap;
 
   const ProfileItem({
     super.key,
@@ -22,6 +24,8 @@ class ProfileItem extends StatelessWidget {
     this.onChanged,
     this.showDivider = true,
     this.isEditable = true,
+    this.trailingIconPath,
+    this.onTrailingIconTap,
   });
 
   @override
@@ -51,6 +55,21 @@ class ProfileItem extends StatelessWidget {
               onChanged: onChanged,
               isEnabled: isEditable,
             ),
+            if (trailingIconPath != null) ...[
+              SizedBox(width: 16.w),
+              GestureDetector(
+                onTap: onTrailingIconTap,
+                child: SvgPicture.asset(
+                  trailingIconPath!,
+                  width: 24.w,
+                  height: 24.w,
+                  colorFilter: ColorFilter.mode(
+                    AppColors.textPrimary.withOpacity(0.8),
+                    BlendMode.srcIn,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

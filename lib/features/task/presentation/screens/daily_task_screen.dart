@@ -268,40 +268,12 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
                 onChanged: (val) => _saveToggle(index, val),
                 showDivider: index != _tasks.length - 1,
                 isEditable: _isCurrentDateEditable,
+                trailingIconPath: 'assets/icons/svg/chevron-left.svg',
               );
             },
           ),
         ),
       ],
     );
-  }
-}
-
-// ===== Helper Function (Call Once During Setup/Debug) =====
-Future<bool> uploadStandaloneTemplateToFirestore() async {
-  final FirebaseFirestore firestore = FirebaseFirestore.instance;
-
-  final List<Map<String, String>> templateItems = [
-    {"icon": "assets/icons/svg/fb.svg", "title": "Review project plan"},
-    {"icon": "assets/icons/svg/insta.svg", "title": "Check emails"},
-    {"icon": "assets/icons/svg/tik.svg", "title": "Team standup meeting"},
-    {"icon": "assets/icons/svg/gallery.svg", "title": "Code review"},
-    {"icon": "assets/icons/svg/add.svg", "title": "Update documentation"},
-    {"icon": "assets/icons/svg/user-gradient.svg", "title": "Deploy updates"},
-  ];
-
-  try {
-    await firestore.collection('standalone').doc('default').set({
-      'items': templateItems,
-      'version': 1,
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
-
-    print('✅ Standalone task template uploaded successfully!');
-    return true;
-  } catch (e) {
-    print('❌ Error uploading standalone template: $e');
-    return false;
   }
 }
