@@ -14,7 +14,6 @@ class ProfileItem extends StatelessWidget {
   final bool isEditable;
   final String? trailingIconPath;
   final VoidCallback? onTrailingIconTap;
-
   const ProfileItem({
     super.key,
     required this.svgIconPath,
@@ -32,6 +31,7 @@ class ProfileItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final item = Opacity(
       opacity: isEditable ? 1 : 0.4,
+
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 12.h),
         child: Row(

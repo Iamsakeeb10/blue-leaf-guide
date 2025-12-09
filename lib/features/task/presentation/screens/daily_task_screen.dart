@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/services/notification_service.dart';
@@ -34,8 +35,7 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
     super.initState();
     final user = _auth.currentUser;
     if (user == null) {
-      // Handle unauthenticated state if needed
-      Navigator.of(context).pop(); // or show error
+      Navigator.of(context).pop();
       return;
     }
     _userId = user.uid;
@@ -51,22 +51,34 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
     if (!standaloneDoc.exists) {
       // Fallback to hardcoded tasks (for testing or first run)
       _tasks = [
-        {"icon": "assets/icons/svg/fb.svg", "title": "Post on Facebook"},
-        {"icon": "assets/icons/svg/insta.svg", "title": "Post on Instagram"},
-        {"icon": "assets/icons/svg/tik.svg", "title": "Post on TikTok"},
+        {
+          "icon": "assets/icons/svg/fb.svg",
+          "title": "Post on Facebook",
+          "url": "https://facebook.com",
+        },
+        {
+          "icon": "assets/icons/svg/insta.svg",
+          "title": "Post on Instagram",
+          "url": "https://instagram.com",
+        },
+        {
+          "icon": "assets/icons/svg/tik.svg",
+          "title": "Post on TikTok",
+          "url": "https://tiktok.com",
+        },
         {
           "icon": "assets/icons/svg/gallery.svg",
           "title": "Take picture of your work",
+          // No URL implies no action
         },
-        {
-          "icon": "assets/icons/svg/add.svg",
-          "title": "Post pictures of your work",
-        },
-        {"icon": "assets/icons/svg/user-gradient.svg", "title": "Client serve"},
       ];
     } else {
       final data = standaloneDoc.data()!;
       _tasks = List<Map<String, dynamic>>.from(data['items'] ?? []);
+      // Ensure existing items might have URLs, or we might need to patch data if it comes from firestore.
+      // For now, assuming firestore data structures might need manual update or code handling if missing.
+      // But user request implies hardcoded behavior or standard social media.
+      // Let's stick to the fallback update for now as per user instruction context usually implies local or default logic enhancement.
     }
 
     // Initialize switch values
@@ -176,6 +188,20 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
     return '${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]}, ${date.year}';
   }
 
+  Future<void> _launchUrl(String urlString) async {
+    print('🟨 Tap --');
+    final uri = Uri.parse(urlString);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not launch $urlString')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     String formattedDate = _formattedDateString(_selectedDate);
@@ -259,16 +285,20 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
             itemCount: _tasks.length,
             separatorBuilder: (_, __) => SizedBox(height: 4.h),
             itemBuilder: (context, index) {
+              final task = _tasks[index];
               return ProfileItem(
                 key: ValueKey('${_formatDate(_selectedDate)}-$index'),
-                svgIconPath: _tasks[index]["icon"]!,
+                svgIconPath: task["icon"]!,
                 iconBackgroundColor: Colors.blue.shade100,
-                title: _tasks[index]["title"]!,
+                title: task["title"]!,
                 value: _switchValues[index],
                 onChanged: (val) => _saveToggle(index, val),
                 showDivider: index != _tasks.length - 1,
                 isEditable: _isCurrentDateEditable,
                 trailingIconPath: 'assets/icons/svg/chevron-left.svg',
+                onTrailingIconTap: task["url"] != null
+                    ? () => _launchUrl(task["url"]!)
+                    : null,
               );
             },
           ),
