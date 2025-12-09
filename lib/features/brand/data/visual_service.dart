@@ -40,7 +40,12 @@ class VisualService {
 
       final mergedItems = <VisualItem>[];
 
-      for (var templateItem in templateItems) {
+      for (var tItem in templateItems) {
+        // Use local override for business_card to ensure new fields are present
+        final templateItem = tItem.id == 'business_card'
+            ? _getUpdatedBusinessCardTemplate()
+            : tItem;
+
         final userItemData = userItemsMap[templateItem.id];
 
         if (userItemData != null) {
@@ -92,6 +97,61 @@ class VisualService {
       print('Error fetching visual items: $e');
       return await _getTemplateVisualItems();
     }
+  }
+
+  // Temporary local override to ensure new Business Card fields are recognized
+  // even if the Firestore template is outdated.
+  VisualItem _getUpdatedBusinessCardTemplate() {
+    return VisualItem(
+      id: "business_card",
+      title: "Business Card",
+      sections: [
+        VisualSection(
+          subtitle: "Full Name",
+          isTextField: true,
+          fieldType: 'text',
+          hintText: "Tomeka Morgan",
+          userInputs: [],
+        ),
+        VisualSection(
+          subtitle: "Phone Number",
+          isTextField: true,
+          fieldType: 'text',
+          hintText: "+1 (508) 123-456",
+          userInputs: [],
+        ),
+        VisualSection(
+          subtitle: "Email Address",
+          isTextField: true,
+          fieldType: 'text',
+          hintText: "blueleaf.guide@gmail.com",
+          userInputs: [],
+        ),
+        VisualSection(
+          subtitle: "School Name (optional but helpful)",
+          isTextField: true,
+          fieldType: 'text',
+          hintText: "Blue Leaf Guide",
+          userInputs: [],
+        ),
+        VisualSection(
+          subtitle: "Select student category",
+          options: ["Cosmetology Student", "Barber Student"],
+          fieldType: 'chips',
+          selectedOptions: [],
+        ),
+        VisualSection(
+          subtitle: "Select Plan",
+          options: [
+            "Option A — Offer Services",
+            "Option B — Booking Instructions",
+            "Option C — A Quick Value Statement"
+          ],
+          fieldType: 'plan_selection',
+          selectedOptions: [],
+        ),
+      ],
+    );
   }
 
   Future<List<VisualItem>> _getTemplateVisualItems() async {
