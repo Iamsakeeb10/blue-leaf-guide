@@ -61,10 +61,51 @@ Future<bool> uploadVisualTemplateToFirestore() async {
         id: "business_card",
         title: "Business Card",
         sections: [
+          // Front Side Fields
           VisualSection(
-            subtitle: "Select style",
-            options: ["Classic", "Modern", "Minimal", "Creative"],
+            subtitle: "Full Name",
+            isTextField: true,
+            fieldType: 'text',
+            hintText: "Tomeka Morgan",
+            userInputs: [],
+          ),
+          VisualSection(
+            subtitle: "Phone Number",
+            isTextField: true,
+            fieldType: 'text',
+            hintText: "+1 (508) 123-456",
+            userInputs: [],
+          ),
+          VisualSection(
+            subtitle: "Email Address",
+            isTextField: true,
+            fieldType: 'text',
+            hintText: "blueleaf.guide@gmail.com",
+            userInputs: [],
+          ),
+          VisualSection(
+            subtitle: "School Name (optional but helpful)",
+            isTextField: true,
+            fieldType: 'text',
+            hintText: "Blue Leaf Guide",
+            userInputs: [],
+          ),
+          // Student Category
+          VisualSection(
+            subtitle: "Select student category",
+            options: ["Cosmetology Student", "Barber Student"],
             fieldType: 'chips',
+            selectedOptions: [],
+          ),
+          // Back Side Plan (stored as a section with options, though UI is custom)
+          VisualSection(
+            subtitle: "Select Plan",
+            options: [
+              "Option A — Offer Services",
+              "Option B — Booking Instructions",
+              "Option C — A Quick Value Statement"
+            ],
+            fieldType: 'plan_selection', // Custom field type marker
             selectedOptions: [],
           ),
         ],

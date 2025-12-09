@@ -36,6 +36,16 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
   // Create a working copy of the item
   late VisualItem _editableItem;
 
+  // Business Card specific controllers
+  late TextEditingController _nameController;
+  late TextEditingController _phoneController;
+  late TextEditingController _emailController;
+  late TextEditingController _schoolController;
+
+  // Business Card specific state
+  String? _selectedCategory;
+  String? _selectedPlan;
+
   @override
   void initState() {
     super.initState();
@@ -61,11 +71,17 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
           .toList(),
     );
 
+    // Initialize generic controllers
     _controllers = _editableItem.sections.map((section) {
       return TextEditingController(
         text: section.userInputs.isNotEmpty ? section.userInputs.first : '',
       );
     }).toList();
+
+    // Initialize Business Card specific controllers
+    if (_editableItem.id == 'business_card') {
+      _initBusinessCardState();
+    }
 
     for (var section in _editableItem.sections) {
       if (section.fieldType == 'color' && section.userInputs.isNotEmpty) {
@@ -82,7 +98,48 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
     for (var controller in _controllers) {
       controller.dispose();
     }
+    if (widget.item.id == 'business_card') {
+      _nameController.dispose();
+      _phoneController.dispose();
+      _emailController.dispose();
+      _schoolController.dispose();
+    }
     super.dispose();
+  }
+
+  void _initBusinessCardState() {
+    // defaults
+    String name = '';
+    String phone = '';
+    String email = '';
+    String school = '';
+
+    // Attempt to read from sections if they match expected structure
+    // Since structure might differ from old version, we check titles
+    for (var s in _editableItem.sections) {
+      if (s.subtitle == 'Full Name' && s.userInputs.isNotEmpty)
+        name = s.userInputs.first;
+      if (s.subtitle == 'Phone Number' && s.userInputs.isNotEmpty)
+        phone = s.userInputs.first;
+      if (s.subtitle == 'Email Address' && s.userInputs.isNotEmpty)
+        email = s.userInputs.first;
+      if (s.subtitle.startsWith('School Name') && s.userInputs.isNotEmpty)
+        school = s.userInputs.first;
+
+      if (s.subtitle == 'Select student category' &&
+          s.selectedOptions?.isNotEmpty == true) {
+        _selectedCategory = s.selectedOptions!.first;
+      }
+      if (s.subtitle == 'Select Plan' &&
+          s.selectedOptions?.isNotEmpty == true) {
+        _selectedPlan = s.selectedOptions!.first;
+      }
+    }
+
+    _nameController = TextEditingController(text: name);
+    _phoneController = TextEditingController(text: phone);
+    _emailController = TextEditingController(text: email);
+    _schoolController = TextEditingController(text: school);
   }
 
   void _handleBack() {
@@ -178,10 +235,15 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
     if (userId == null) return;
 
     // Update userInputs from controllers before saving
-    for (int i = 0; i < _editableItem.sections.length; i++) {
-      final section = _editableItem.sections[i];
-      if (section.isTextField && section.fieldType == 'text') {
-        section.userInputs = [_controllers[i].text];
+
+    if (_editableItem.id == 'business_card') {
+      _updateBusinessCardSections();
+    } else {
+      for (int i = 0; i < _editableItem.sections.length; i++) {
+        final section = _editableItem.sections[i];
+        if (section.isTextField && section.fieldType == 'text') {
+          section.userInputs = [_controllers[i].text];
+        }
       }
     }
 
@@ -265,12 +327,16 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
           );
 
           // Update controllers with fresh data
-          for (int i = 0; i < _editableItem.sections.length; i++) {
-            final section = _editableItem.sections[i];
-            if (section.isTextField && i < _controllers.length) {
-              _controllers[i].text = section.userInputs.isNotEmpty
-                  ? section.userInputs.first
-                  : '';
+          if (_editableItem.id == 'business_card') {
+            _initBusinessCardState(); // Re-sync state
+          } else {
+            for (int i = 0; i < _editableItem.sections.length; i++) {
+              final section = _editableItem.sections[i];
+              if (section.isTextField && i < _controllers.length) {
+                _controllers[i].text = section.userInputs.isNotEmpty
+                    ? section.userInputs.first
+                    : '';
+              }
             }
           }
 
@@ -292,6 +358,10 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
   }
 
   bool _isCompleteButtonEnabled() {
+    if (_editableItem.id == 'business_card') {
+      return _isBusinessCardComplete();
+    }
+
     for (int i = 0; i < _editableItem.sections.length; i++) {
       final section = _editableItem.sections[i];
 
@@ -313,6 +383,16 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
         }
       }
     }
+    return true;
+  }
+
+  bool _isBusinessCardComplete() {
+    if (_nameController.text.trim().isEmpty) return false;
+    if (_phoneController.text.trim().isEmpty) return false;
+    if (_emailController.text.trim().isEmpty) return false;
+    // School is optional
+    if (_selectedCategory == null) return false;
+    if (_selectedPlan == null) return false;
     return true;
   }
 
@@ -377,6 +457,16 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
   }
 
   bool _isSaveEnabled() {
+    if (_editableItem.id == 'business_card') {
+      // Allow save if any field has content
+      return _nameController.text.isNotEmpty ||
+          _phoneController.text.isNotEmpty ||
+          _emailController.text.isNotEmpty ||
+          _schoolController.text.isNotEmpty ||
+          _selectedCategory != null ||
+          _selectedPlan != null;
+    }
+
     // For Business Name, require the Name field specifically (Tagline optional)
     if (_editableItem.id == 'business_name') {
       for (int i = 0; i < _editableItem.sections.length; i++) {
@@ -758,7 +848,11 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
                           child: _buildContentColumn(),
                         ),
                       )
-                    : SingleChildScrollView(child: _buildContentColumn()),
+                    : SingleChildScrollView(
+                        child: _editableItem.id == 'business_card'
+                            ? _buildBusinessCardContent()
+                            : _buildContentColumn(),
+                      ),
               ),
 
               // Buttons
@@ -772,6 +866,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
 
   /// Extracted content column
   Widget _buildContentColumn() {
+    print('🟨 Editable item ${_editableItem.title}');
     return Column(
       crossAxisAlignment: hasColorFeature
           ? CrossAxisAlignment.center
@@ -800,26 +895,357 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
                 ? CrossAxisAlignment.center
                 : CrossAxisAlignment.start,
             children: [
-              if (_editableItem.title != "Color Palette")
-                Text(
-                  section.subtitle,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary.withOpacity(0.7),
-                    height: 1.4,
+              // Subtitle
+              if (_editableItem.title != "Color Palette" &&
+                  section.subtitle.isNotEmpty)
+                Padding(
+                  padding: EdgeInsets.only(bottom: 12.h),
+                  child: Text(
+                    section.subtitle,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: AppColors.textPrimary.withOpacity(0.7),
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: hasColorFeature
+                        ? TextAlign.center
+                        : TextAlign.start,
                   ),
-                  textAlign: hasColorFeature
-                      ? TextAlign.center
-                      : TextAlign.start,
                 ),
-              SizedBox(height: 12.h),
+
               _buildSectionContent(section, index),
               SizedBox(height: 24.h),
             ],
           );
-        }).toList(),
+        }),
       ],
+    );
+  }
+
+  void _updateBusinessCardSections() {
+    // Rebuild sections list with current state
+    _editableItem = VisualItem(
+      id: _editableItem.id,
+      title: _editableItem.title,
+      isCompleted: _editableItem.isCompleted,
+      sections: [
+        VisualSection(
+          subtitle: "Full Name",
+          isTextField: true,
+          fieldType: 'text',
+          hintText: "Tomeka Morgan",
+          userInputs: [_nameController.text],
+        ),
+        VisualSection(
+          subtitle: "Phone Number",
+          isTextField: true,
+          fieldType: 'text',
+          hintText: "+1 (508) 123-456",
+          userInputs: [_phoneController.text],
+        ),
+        VisualSection(
+          subtitle: "Email Address",
+          isTextField: true,
+          fieldType: 'text',
+          hintText: "blueleaf.guide@gmail.com",
+          userInputs: [_emailController.text],
+        ),
+        VisualSection(
+          subtitle: "School Name (optional but helpful)",
+          isTextField: true,
+          fieldType: 'text',
+          hintText: "Blue Leaf Guide",
+          userInputs: [_schoolController.text],
+        ),
+        VisualSection(
+          subtitle: "Select student category",
+          options: ["Cosmetology Student", "Barber Student"],
+          fieldType: 'chips',
+          selectedOptions: _selectedCategory != null
+              ? [_selectedCategory!]
+              : [],
+        ),
+        VisualSection(
+          subtitle: "Select Plan",
+          options: [
+            "Option A — Offer Services",
+            "Option B — Booking Instructions",
+            "Option C — A Quick Value Statement",
+          ],
+          fieldType: 'plan_selection',
+          selectedOptions: _selectedPlan != null ? [_selectedPlan!] : [],
+        ),
+      ],
+    );
+  }
+
+  // --- Business Card Specific UI ---
+
+  Widget _buildBusinessCardContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Front Side Header
+        Text(
+          "Business Card (Front Side)",
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        SizedBox(height: 24.h),
+
+        // Fields
+        _buildLabeledTextField("Full Name", "Tomeka Morgan", _nameController),
+        _buildLabeledTextField(
+          "Phone Number",
+          "+1 (508) 123-456",
+          _phoneController,
+        ),
+        _buildLabeledTextField(
+          "Email Address",
+          "blueleaf.guide@gmail.com",
+          _emailController,
+        ),
+        _buildLabeledTextField(
+          "School Name (optional but helpful)",
+          "Blue Leaf Guide",
+          _schoolController,
+        ),
+
+        // Student Category
+        Text(
+          "Select student category",
+          style: TextStyle(
+            fontSize: 14.sp,
+            color: AppColors.textPrimary.withOpacity(0.7),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        SizedBox(height: 12.h),
+        Wrap(
+          spacing: 8.w,
+          children: ["Cosmetology Student", "Barber Student"].map((cat) {
+            final isSelected = _selectedCategory == cat;
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedCategory = cat;
+                });
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xFFEFE5FA)
+                      : const Color(0xFF090F05).withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(100.r),
+                ),
+                child: Text(
+                  cat,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: AppColors.textPrimary.withOpacity(0.7),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        SizedBox(height: 32.h),
+
+        // Back Side Header
+        Text(
+          "Business Card (Back Side)",
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        SizedBox(height: 24.h),
+
+        // Plan Cards
+        _buildPlanCard("Option A — Offer Services", [
+          "Silk press",
+          "Blowouts",
+          "Haircuts",
+          "Color services",
+          "Barbering services",
+        ]),
+        _buildPlanCard("Option B — Booking Instructions", [
+          "Scan to book your appointment",
+          "Follow me on Instagram for work & specials",
+        ]),
+        _buildPlanCard("Option C — A Quick Value Statement", [
+          "Thank you for supporting my education",
+          "Every service helps me grow as a future professional",
+        ]),
+      ],
+    );
+  }
+
+  Widget _buildLabeledTextField(
+    String label,
+    String hint,
+    TextEditingController controller,
+  ) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 24.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14.sp,
+              color: AppColors.textPrimary.withOpacity(0.7),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          SizedBox(height: 12.h),
+          TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: TextStyle(
+                fontSize: 12.sp,
+                color: AppColors.textPrimary.withOpacity(0.3),
+                fontWeight: FontWeight.w500,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.r),
+                borderSide: BorderSide(
+                  color: AppColors.neutral50.withOpacity(0.2),
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(100.r),
+                borderSide: BorderSide(
+                  color: AppColors.neutral50.withOpacity(0.05),
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(100.r),
+                borderSide: BorderSide(color: AppColors.brand500, width: 1.5),
+              ),
+              contentPadding: EdgeInsets.all(14.w),
+            ),
+            onChanged: (val) {
+              setState(() {});
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlanCard(String title, List<String> bullets) {
+    final isSelected = _selectedPlan == title;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedPlan = title;
+        });
+      },
+      child: Container(
+        margin: EdgeInsets.only(bottom: 16.h),
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: Color(0xFFF7F7F7),
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(
+            color: Color(0x1A090F05), // #090F051A
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Title Row + Radio Circle
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary.withOpacity(0.8),
+                  ),
+                ),
+
+                // -----------------------------
+                // Radio (Selected / Unselected)
+                // -----------------------------
+                Container(
+                  width: 20.w,
+                  height: 20.w,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isSelected ? AppColors.brand500 : Colors.transparent,
+                    border: !isSelected
+                        ? Border.all(
+                            color: const Color(0xFFE8EFFF), // Brand-50
+                            width: 2,
+                          )
+                        : null,
+                  ),
+                  child: isSelected
+                      ? Center(
+                          child: Container(
+                            width: 10.w,
+                            height: 10.w,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white,
+                            ),
+                          ),
+                        )
+                      : null,
+                ),
+              ],
+            ),
+
+            SizedBox(height: 8.h),
+
+            // Bullets
+            ...bullets.map(
+              (b) => Padding(
+                padding: EdgeInsets.only(bottom: 4.h),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "• ",
+                      style: TextStyle(
+                        color: AppColors.textPrimary.withOpacity(0.6),
+                      ),
+                    ),
+                    SizedBox(width: 4.w),
+                    Expanded(
+                      child: Text(
+                        b,
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          color: AppColors.textPrimary.withOpacity(0.7),
+                          fontWeight: FontWeight.w500,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
