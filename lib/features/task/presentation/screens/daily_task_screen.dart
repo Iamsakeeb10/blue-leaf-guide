@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -43,48 +45,46 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
   }
 
   Future<void> _loadData() async {
-    // 1. Load task definitions from 'standalone/default'
     final standaloneDoc = await _firestore
         .collection('standalone')
         .doc('default')
         .get();
+
     if (!standaloneDoc.exists) {
-      // Fallback to hardcoded tasks (for testing or first run)
+      // Fallback to hardcoded tasks
       _tasks = [
         {
           "icon": "assets/icons/svg/fb.svg",
           "title": "Post on Facebook",
-          "url": "https://facebook.com",
+          "url": "https://www.facebook.com",
         },
         {
           "icon": "assets/icons/svg/insta.svg",
           "title": "Post on Instagram",
-          "url": "https://instagram.com",
+          "url": "https://www.instagram.com",
         },
         {
           "icon": "assets/icons/svg/tik.svg",
           "title": "Post on TikTok",
-          "url": "https://tiktok.com",
+          "url": "https://www.tiktok.com",
         },
         {
           "icon": "assets/icons/svg/gallery.svg",
           "title": "Take picture of your work",
-          // No URL implies no action
+          "action": "camera",
         },
+        {
+          "icon": "assets/icons/svg/add.svg",
+          "title": "Post pictures of your work",
+        },
+        {"icon": "assets/icons/svg/user-gradient.svg", "title": "Client serve"},
       ];
     } else {
       final data = standaloneDoc.data()!;
       _tasks = List<Map<String, dynamic>>.from(data['items'] ?? []);
-      // Ensure existing items might have URLs, or we might need to patch data if it comes from firestore.
-      // For now, assuming firestore data structures might need manual update or code handling if missing.
-      // But user request implies hardcoded behavior or standard social media.
-      // Let's stick to the fallback update for now as per user instruction context usually implies local or default logic enhancement.
     }
 
-    // Initialize switch values
     _switchValues = List.generate(_tasks.length, (_) => false);
-
-    // 2. Load user toggle state for selected date
     await _loadUserTogglesForDate(_selectedDate);
 
     if (mounted) {
@@ -105,7 +105,6 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
 
     if (doc.exists) {
       final toggles = List<dynamic>.from(doc.data()?['toggles'] ?? []);
-      // Ensure correct length and deep copy
       _switchValues = List.generate(_tasks.length, (i) {
         if (i < toggles.length) return toggles[i] as bool;
         return false;
@@ -116,7 +115,6 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
   }
 
   Future<void> _saveToggle(int index, bool value) async {
-    // Update the state with a new list reference
     setState(() {
       _switchValues = List.from(_switchValues)..[index] = value;
     });
@@ -134,19 +132,14 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
             'updatedAt': FieldValue.serverTimestamp(),
           });
 
-      // Check if all tasks are completed AND it's today's date
       if (_isCurrentDateEditable && _switchValues.every((val) => val == true)) {
-        // Check if notification was already sent today
         final prefs = await SharedPreferences.getInstance();
         final today = _formatDate(DateTime.now());
         final notificationKey = 'daily_task_notification_$today';
         final notificationSent = prefs.getBool(notificationKey) ?? false;
 
         if (!notificationSent) {
-          // All tasks completed - show notification
           await _notificationService.showDailyTaskCompleteNotification(_userId);
-
-          // Mark as sent for today
           await prefs.setBool(notificationKey, true);
         }
       }
@@ -163,7 +156,7 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
       _selectedDate.month,
       _selectedDate.day,
     );
-    return selected.isAtSameMomentAs(today); // Only today is editable
+    return selected.isAtSameMomentAs(today);
   }
 
   String _formatDate(DateTime date) {
@@ -189,17 +182,134 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
   }
 
   Future<void> _launchUrl(String urlString) async {
-    print('🟨 Tap --');
-    final uri = Uri.parse(urlString);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
+    try {
+      print('🔗 Launching URL: $urlString');
+      final uri = Uri.parse(urlString);
+
+      if (await canLaunchUrl(uri)) {
+        final launched = await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+        if (!launched && mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Failed to open $urlString')));
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Cannot open $urlString')));
+        }
+      }
+    } catch (e) {
+      print('❌ Error launching URL: $e');
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Could not launch $urlString')));
+        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
       }
     }
+  }
+
+  Future<void> _takePicture() async {
+    print('📸 Camera button tapped');
+
+    final hasPermission = await _requestPermission();
+    if (!hasPermission) {
+      print('❌ Camera permission denied');
+      return;
+    }
+
+    final ImagePicker picker = ImagePicker();
+    try {
+      print('📸 Opening camera...');
+      final XFile? pickedFile = await picker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      if (pickedFile != null) {
+        print("✅ Camera capture success: ${pickedFile.path}");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Photo captured successfully!')),
+          );
+        }
+      } else {
+        print("ℹ️ Camera cancelled by user");
+      }
+    } catch (e) {
+      print("❌ Error picking image: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Camera error: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<bool> _requestPermission() async {
+    final permission = Permission.camera;
+    final status = await permission.status;
+
+    if (status.isGranted) {
+      print('✅ Camera permission already granted');
+      return true;
+    }
+
+    if (status.isDenied) {
+      print('⚠️ Camera permission denied, requesting...');
+      final result = await permission.request();
+
+      if (result.isGranted) {
+        print('✅ Camera permission granted');
+        return true;
+      }
+
+      if (result.isPermanentlyDenied) {
+        _showPermissionDeniedDialog('Camera');
+        return false;
+      }
+
+      return false;
+    }
+
+    if (status.isPermanentlyDenied) {
+      _showPermissionDeniedDialog('Camera');
+      return false;
+    }
+
+    return false;
+  }
+
+  void _showPermissionDeniedDialog(String permissionName) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('$permissionName Permission Required'),
+        content: Text(
+          '$permissionName permission is required to take photos. '
+          'Please enable it in app settings.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              openAppSettings();
+            },
+            child: const Text('Open Settings'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -237,7 +347,7 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
                     builder: (_) => CustomDatePickerDialog(
                       initialDate: _selectedDate,
                       firstDate: DateTime(2020),
-                      lastDate: todayNormalized, // ← normalized today
+                      lastDate: todayNormalized,
                     ),
                   );
 
@@ -286,6 +396,30 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
             separatorBuilder: (_, __) => SizedBox(height: 4.h),
             itemBuilder: (context, index) {
               final task = _tasks[index];
+
+              // Determine the action - all items show arrow icon
+              VoidCallback? onTrailingTap;
+
+              if (task["url"] != null && (task["url"] as String).isNotEmpty) {
+                // Has URL - open in browser
+                onTrailingTap = () {
+                  print('🔗 Arrow tapped for URL: ${task["title"]}');
+                  _launchUrl(task["url"]!);
+                };
+              } else if (task["action"] == "camera") {
+                // Has camera action - open camera
+                onTrailingTap = () {
+                  print('📸 Arrow tapped for camera: ${task["title"]}');
+                  _takePicture();
+                };
+              } else if (index == _tasks.length - 1) {
+                // Last item without URL or action - open camera by default
+                onTrailingTap = () {
+                  print('📸 Arrow tapped (last item): ${task["title"]}');
+                  _takePicture();
+                };
+              }
+
               return ProfileItem(
                 key: ValueKey('${_formatDate(_selectedDate)}-$index'),
                 svgIconPath: task["icon"]!,
@@ -295,10 +429,9 @@ class _DailyTaskScreenState extends State<DailyTaskScreen> {
                 onChanged: (val) => _saveToggle(index, val),
                 showDivider: index != _tasks.length - 1,
                 isEditable: _isCurrentDateEditable,
-                trailingIconPath: 'assets/icons/svg/chevron-left.svg',
-                onTrailingIconTap: task["url"] != null
-                    ? () => _launchUrl(task["url"]!)
-                    : null,
+                trailingIconPath:
+                    'assets/icons/svg/chevron-left.svg', // Always show arrow
+                onTrailingIconTap: onTrailingTap,
               );
             },
           ),
