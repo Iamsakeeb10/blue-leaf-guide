@@ -24,6 +24,7 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   DateTime _selectedDate = DateTime.now();
+  bool _isAllYear = false;
   List<Map<String, dynamic>> _goalTemplates = [];
   bool _isLoadingTemplates = true;
 
@@ -425,15 +426,23 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
     }
   }
 
+
   void _showMonthYearPicker() async {
-    final result = await showDialog<DateTime>(
+    final result = await showDialog<PickerResult>(
       context: context,
-      builder: (context) => MonthYearPickerDialog(initialDate: _selectedDate),
+      // Pass current selection. If _isAllYear, pass now? or keep last selected?
+      builder: (context) => MonthYearPickerDialog(initialDate: _selectedDate ?? DateTime.now()),
     );
 
     if (result != null) {
       setState(() {
-        _selectedDate = result;
+        if (result.year == -1) {
+          _isAllYear = true;
+        } else {
+          _isAllYear = false;
+          // Ensure month is valid
+          _selectedDate = DateTime(result.year, result.month ?? 1);
+        }
       });
     }
   }
@@ -445,7 +454,9 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
     }
 
     final userId = _auth.currentUser!.uid;
-    final monthKey = _getMonthKey(_selectedDate);
+    // If all year, send special key? Or modify MonthlyGoalsList?
+    // Let's use "ALL" as key if all year.
+    final monthKey = _isAllYear ? "ALL" : _getMonthKey(_selectedDate!);
 
     return Column(
       children: [
@@ -459,7 +470,9 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    DateFormat('MMMM, yyyy').format(_selectedDate),
+                    _isAllYear 
+                      ? "All Goals" 
+                      : DateFormat('MMMM, yyyy').format(_selectedDate!),
                     style: TextStyle(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w600,
@@ -478,7 +491,7 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
                     borderRadius: BorderRadius.circular(100.r),
                   ),
                   padding: EdgeInsets.all(10.w),
-                  child: SvgPicture.asset(
+                  child: SvgPicture.asset( // Removed const
                     'assets/icons/svg/filter.svg',
                     width: 24.w,
                     height: 24.w,

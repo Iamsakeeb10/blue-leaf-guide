@@ -117,6 +117,10 @@ class _RewardsScreenState extends State<RewardsScreen> {
     final currentYear = DateTime.now().year;
     final years = List.generate(10, (index) => currentYear - index);
 
+    // Add logic to include "All Year" logic?
+    // The previous implementation utilized AlertDialog with ListView.
+    // I can pretend "All Year" is year -1.
+
     final selectedYear = await showDialog<int>(
       context: context,
       builder: (context) => AlertDialog(
@@ -125,9 +129,25 @@ class _RewardsScreenState extends State<RewardsScreen> {
           width: double.maxFinite,
           child: ListView.builder(
             shrinkWrap: true,
-            itemCount: years.length,
+            itemCount: years.length + 1, // +1 for "All Year"
             itemBuilder: (context, index) {
-              final year = years[index];
+              if (index == 0) {
+                return ListTile(
+                  title: Text(
+                    "All Year",
+                    style: TextStyle(
+                      fontWeight: _selectedTaskYear == -1
+                          ? FontWeight.w600
+                          : FontWeight.w400,
+                      color: _selectedTaskYear == -1
+                          ? AppColors.brand500
+                          : AppColors.textPrimary,
+                    ),
+                  ),
+                  onTap: () => Navigator.pop(context, -1),
+                );
+              }
+              final year = years[index - 1];
               return ListTile(
                 title: Text(
                   year.toString(),
@@ -149,10 +169,20 @@ class _RewardsScreenState extends State<RewardsScreen> {
     );
 
     if (selectedYear != null && selectedYear != _selectedTaskYear) {
-      setState(() {
-        _selectedTaskYear = selectedYear;
-        _selectedDate = DateTime(_selectedTaskYear, _selectedTaskMonth, 1);
-      });
+      if (selectedYear == -1) {
+        setState(() {
+          _selectedTaskYear = -1;
+          // When all year, we don't care about _selectedDate month, but we need meaningful _selectedDate?
+          // Actually build method uses _selectedDate for monthKey IF not -1.
+          // But I will update build method to use _selectedTaskYear == -1 check.
+          // So I can leave _selectedDate as is or minimal update.
+        });
+      } else {
+        setState(() {
+          _selectedTaskYear = selectedYear;
+          _selectedDate = DateTime(_selectedTaskYear, _selectedTaskMonth, 1);
+        });
+      }
     }
   }
 
@@ -548,14 +578,17 @@ class _RewardsScreenState extends State<RewardsScreen> {
 
   // ignore: unused_element
   void _showMonthYearPicker() async {
-    final result = await showDialog<DateTime>(
+    final result = await showDialog<PickerResult>(
       context: context,
       builder: (context) => MonthYearPickerDialog(initialDate: _selectedDate),
     );
 
     if (result != null) {
       setState(() {
-        _selectedDate = result;
+        // If "All Year" (-1), let's just default to now or ignore for this unused method.
+        if (result.year != -1 && result.month != null) {
+          _selectedDate = DateTime(result.year, result.month!);
+        }
       });
     }
   }
@@ -577,7 +610,9 @@ class _RewardsScreenState extends State<RewardsScreen> {
   @override
   Widget build(BuildContext context) {
     final userId = _auth.currentUser!.uid;
-    final monthKey = _getMonthKey(_selectedDate);
+    final monthKey = _selectedTaskYear == -1
+        ? "ALL"
+        : _getMonthKey(_selectedDate);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -804,17 +839,31 @@ class _RewardsScreenState extends State<RewardsScreen> {
                   Row(
                     children: [
                       GestureDetector(
-                        onTap: _showTaskMonthPicker,
+                        onTap: _showTaskYearPicker,
+
                         child: _buildDropdown(
-                          DateFormat('MMMM').format(
-                            DateTime(_selectedTaskYear, _selectedTaskMonth),
-                          ),
+                          _selectedTaskYear == -1
+                              ? "All Year"
+                              : _selectedTaskYear.toString(),
                         ),
                       ),
                       SizedBox(width: 8.w),
-                      GestureDetector(
-                        onTap: _showTaskYearPicker,
-                        child: _buildDropdown(_selectedTaskYear.toString()),
+                      IgnorePointer(
+                        ignoring: _selectedTaskYear == -1,
+                        child: GestureDetector(
+                          onTap: _showTaskMonthPicker,
+                          child: _buildDropdown(
+                            isDisabled: _selectedTaskYear == -1,
+                            _selectedTaskYear == -1
+                                ? "Select"
+                                : DateFormat('MMMM').format(
+                                    DateTime(
+                                      _selectedTaskYear,
+                                      _selectedTaskMonth,
+                                    ),
+                                  ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -1012,12 +1061,16 @@ class _RewardsScreenState extends State<RewardsScreen> {
     );
   }
 
-  Widget _buildDropdown(String text) {
+  Widget _buildDropdown(String text, {bool isDisabled = false}) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 9.h),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: AppColors.textPrimary.withOpacity(0.05)),
+        border: Border.all(
+          color: isDisabled
+              ? AppColors.textPrimary.withOpacity(0.05) // 10% opacity border
+              : AppColors.textPrimary.withOpacity(0.05),
+        ),
         borderRadius: BorderRadius.circular(100.r),
       ),
       child: Row(
@@ -1025,13 +1078,21 @@ class _RewardsScreenState extends State<RewardsScreen> {
           Text(
             text,
             style: TextStyle(
-              color: AppColors.textPrimary.withOpacity(0.8),
+              color: isDisabled
+                  ? AppColors.textPrimary.withOpacity(0.1) // 10% opacity text
+                  : AppColors.textPrimary.withOpacity(0.8),
               fontSize: 12.sp,
               fontWeight: FontWeight.w600,
             ),
           ),
           SizedBox(width: 4.w),
-          Icon(Icons.keyboard_arrow_down, size: 16.sp, color: Colors.black),
+          Icon(
+            Icons.keyboard_arrow_down,
+            size: 16.sp,
+            color: isDisabled
+                ? AppColors.textPrimary.withOpacity(0.1) // 10% opacity icon
+                : Colors.black,
+          ),
         ],
       ),
     );

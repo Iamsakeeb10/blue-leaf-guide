@@ -47,14 +47,18 @@ class _MonthlyGoalsListState extends State<MonthlyGoalsList> {
   Widget build(BuildContext context) {
     final isScrollable = !(widget.shrinkWrap ?? false);
 
+    Query<Map<String, dynamic>> query = FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.userId)
+        .collection('monthly_goals')
+        .where('isActive', isEqualTo: true);
+
+    if (widget.monthKey != 'ALL') {
+      query = query.where('month', isEqualTo: widget.monthKey);
+    }
+
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.userId)
-          .collection('monthly_goals')
-          .where('month', isEqualTo: widget.monthKey)
-          .where('isActive', isEqualTo: true)
-          .snapshots(),
+      stream: query.snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Center(
