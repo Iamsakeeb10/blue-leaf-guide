@@ -212,7 +212,7 @@ class _TextFieldState extends State<TextField> {
                     borderSide: BorderSide(
                       color:
                           widget.disabledBorderColor ??
-                          AppColors.tint.withOpacity(0.2),
+                          AppColors.textPrimary.withOpacity(0.05),
                       width: 1.25.w,
                     ),
                   ),

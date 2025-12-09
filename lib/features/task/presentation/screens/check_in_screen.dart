@@ -48,6 +48,12 @@ class _CheckInScreenState extends State<CheckInScreen> {
   // Dynamic goal controllers
   Map<String, TextEditingController> dynamicControllers = {};
 
+  // New Static Fields Controllers
+  final TextEditingController _attendHairShowController =
+      TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
+  final TextEditingController _salonNameController = TextEditingController();
+
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -61,6 +67,9 @@ class _CheckInScreenState extends State<CheckInScreen> {
     for (var controller in reflectionControllers.values) {
       controller.dispose();
     }
+    _attendHairShowController.dispose();
+    _locationController.dispose();
+    _salonNameController.dispose();
     for (var controller in dynamicControllers.values) {
       controller.dispose();
     }
@@ -128,6 +137,11 @@ class _CheckInScreenState extends State<CheckInScreen> {
         reflectionControllers['additionalNotes']?.text =
             data['additionalNotes'] ?? '';
 
+        _attendHairShowController.text = (data['attendHairShow'] ?? '')
+            .toString();
+        _locationController.text = data['location'] ?? '';
+        _salonNameController.text = data['salonName'] ?? '';
+
         final dynamicData =
             data['dynamicFields'] as Map<String, dynamic>? ?? {};
         for (var entry in dynamicData.entries) {
@@ -139,6 +153,9 @@ class _CheckInScreenState extends State<CheckInScreen> {
         for (var controller in reflectionControllers.values) {
           controller.clear();
         }
+        _attendHairShowController.clear();
+        _locationController.clear();
+        _salonNameController.clear();
         for (var controller in dynamicControllers.values) {
           controller.clear();
         }
@@ -181,6 +198,9 @@ class _CheckInScreenState extends State<CheckInScreen> {
                 reflectionControllers['challengesAndLessons']?.text ?? '',
             'additionalNotes':
                 reflectionControllers['additionalNotes']?.text ?? '',
+            'attendHairShow': int.tryParse(_attendHairShowController.text) ?? 0,
+            'location': _locationController.text.trim(),
+            'salonName': _salonNameController.text.trim(),
             'dynamicFields': dynamicFieldsData,
             'date': _selectedDate,
             'createdAt': FieldValue.serverTimestamp(),
@@ -449,6 +469,94 @@ class _CheckInScreenState extends State<CheckInScreen> {
 
           _buildDynamicFields(),
           if (_dynamicGoals.isNotEmpty) SizedBox(height: 12.h),
+
+          // --------------------------------------------------------
+          // 🔥 NEW: Extra Static Fields
+          // --------------------------------------------------------
+          // 1. Attend hair show or class (Dropdown style)
+          GestureDetector(
+            onTap: _isToday()
+                ? () async {
+                    final selected = await showModalBottomSheet<int>(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return Container(
+                          height: 250.h,
+                          child: Column(
+                            children: [
+                              Padding(
+                                padding: EdgeInsets.all(16.w),
+                                child: Text(
+                                  "Select Count",
+                                  style: TextStyle(
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: ListView.builder(
+                                  itemCount: 11, // 0 to 10
+                                  itemBuilder: (context, index) {
+                                    return ListTile(
+                                      title: Center(child: Text('$index')),
+                                      onTap: () {
+                                        Navigator.pop(context, index);
+                                      },
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+
+                    if (selected != null) {
+                      setState(() {
+                        _attendHairShowController.text = selected.toString();
+                      });
+                    }
+                  }
+                : null,
+            child: AbsorbPointer(
+              child: CustomTextField.TextField(
+                controller: _attendHairShowController,
+                label: 'Attend hair show or class',
+                hint: '0',
+                enabled: _isToday(),
+                prefixIconSvg: 'assets/icons/svg/pen.svg',
+                // Suffix icon as widget for simple IconData
+                suffixIcon: Icon(
+                  Icons.keyboard_arrow_down,
+                  size: 20.r,
+                  color: AppColors.textPrimary.withOpacity(0.5),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 12.h),
+
+          // 2. Location
+          CustomTextField.TextField(
+            controller: _locationController,
+            label: 'Location',
+            hint: 'Location here',
+            enabled: _isToday(),
+            prefixIconSvg: 'assets/icons/svg/pin.svg',
+          ),
+          SizedBox(height: 12.h),
+
+          // 3. Name of Salon/Spa/Barbershop
+          CustomTextField.TextField(
+            controller: _salonNameController,
+            label: 'Name of Salon/Spa/Barbershop you visited',
+            hint: 'Name of Salon/Spa/Barbershop',
+            enabled: _isToday(),
+            prefixIconSvg: 'assets/icons/svg/comb.svg',
+          ),
+          SizedBox(height: 20.h),
 
           // --------------------------------------------------------
           // 🔥 STATIC REFLECTION FIELDS (FULLY UPDATED)
