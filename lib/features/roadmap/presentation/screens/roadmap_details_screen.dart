@@ -518,7 +518,7 @@ class _RoadmapDetailsScreenState extends State<RoadmapDetailsScreen> {
                 padding: EdgeInsets.symmetric(vertical: 14.h),
               ),
               child: Text(
-                'Cancel',
+                'Skip',
                 style: TextStyle(
                   color: AppColors.textPrimary.withOpacity(0.5),
                   fontSize: 15.sp,
