@@ -239,7 +239,7 @@ class CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
                   onPressed: () {
                     Navigator.of(context).pop(_selectedDate);
                   },
-                  text: 'Confirm',
+                  text: 'View Activity',
                   height: 54.h,
                   borderRadius: BorderRadius.circular(32.r),
                   fontSize: 15.sp,

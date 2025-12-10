@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../shared/widgets/custom_popup_menu.dart';
 
 class MonthlyGoalsList extends StatefulWidget {
   final String userId;
@@ -210,36 +211,62 @@ class _MonthlyGoalsListState extends State<MonthlyGoalsList> {
                           ],
                         ),
                       ),
-                      PopupMenuButton<String>(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16.r),
-                        padding: EdgeInsets.zero,
-                        icon: Icon(
+
+                      // PopupMenuButton<String>(
+                      //   color: Colors.white,
+                      //   borderRadius: BorderRadius.circular(16.r),
+                      //   padding: EdgeInsets.zero,
+                      //   icon: Icon(
+                      //     Icons.more_vert,
+                      //     size: 20.w,
+                      //     color: AppColors.textPrimary.withOpacity(0.6),
+                      //   ),
+                      //   shape: RoundedRectangleBorder(
+                      //     borderRadius: BorderRadius.circular(12.r),
+                      //   ),
+                      //   onSelected: (value) {
+                      //     if (value == 'edit') {
+                      //       widget.onEditGoal(goalId, fullTitle, target);
+                      //     } else if (value == 'delete') {
+                      //       widget.onDeleteGoal(goalId);
+                      //     }
+                      //   },
+                      //   itemBuilder: (context) => [
+                      //     const PopupMenuItem(
+                      //       value: 'edit',
+                      //       child: Text('Edit'),
+                      //     ),
+                      //     PopupMenuItem(
+                      //       value: 'delete',
+                      //       child: Text(
+                      //         'Delete',
+                      //         style: TextStyle(color: Colors.red),
+                      //       ),
+                      //     ),
+                      //   ],
+                      // ),
+                      CustomPopupMenu(
+                        customIcon: Icon(
                           Icons.more_vert,
                           size: 20.w,
                           color: AppColors.textPrimary.withOpacity(0.6),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        onSelected: (value) {
-                          if (value == 'edit') {
-                            widget.onEditGoal(goalId, fullTitle, target);
-                          } else if (value == 'delete') {
-                            widget.onDeleteGoal(goalId);
-                          }
-                        },
-                        itemBuilder: (context) => [
-                          const PopupMenuItem(
-                            value: 'edit',
-                            child: Text('Edit'),
+                        offset: Offset(-20.w, 0.h),
+                        menuWidth: 140.w,
+
+                        items: [
+                          PopupMenuItemData(
+                            text: "Edit",
+                            onPressed: () {
+                              widget.onEditGoal(goalId, fullTitle, target);
+                            },
                           ),
-                          PopupMenuItem(
-                            value: 'delete',
-                            child: Text(
-                              'Delete',
-                              style: TextStyle(color: Colors.red),
-                            ),
+                          PopupMenuItemData(
+                            text: "Delete",
+                            textColor: Colors.red,
+                            onPressed: () {
+                              widget.onDeleteGoal(goalId);
+                            },
                           ),
                         ],
                       ),
