@@ -48,6 +48,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
+    final emailExists = await authProvider.checkEmailExists(
+      emailController.text.trim(),
+    );
+
+    if (emailExists && mounted) {
+      _showError('Email already exist. Please log in.');
+      return;
+    }
+
     final success = await authProvider.sendSignUpOTP(
       emailController.text.trim(),
     );

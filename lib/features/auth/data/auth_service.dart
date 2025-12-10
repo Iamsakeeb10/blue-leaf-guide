@@ -640,4 +640,18 @@ class AuthService {
       };
     }
   }
+
+  // Check if email already exists
+  Future<bool> checkEmailExists(String email) async {
+    try {
+      final result = await _firestore
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .get();
+      return result.docs.isNotEmpty;
+    } catch (e) {
+      print('Error checking email existence: $e');
+      return false;
+    }
+  }
 }

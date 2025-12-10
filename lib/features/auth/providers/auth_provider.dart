@@ -537,4 +537,21 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // Check if email exists
+  Future<bool> checkEmailExists(String email) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final exists = await _authService.checkEmailExists(email);
+      _isLoading = false;
+      notifyListeners();
+      return exists;
+    } catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
 }
