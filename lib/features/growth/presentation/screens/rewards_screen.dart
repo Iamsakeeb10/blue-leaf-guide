@@ -57,8 +57,138 @@ class _RewardsScreenState extends State<RewardsScreen> {
         : Future.value(0);
   }
 
-  // Add this method to show month picker
-  void _showTaskMonthPicker() async {
+  // Add Keys for anchoring menus
+  final GlobalKey _taskYearKey = GlobalKey();
+  final GlobalKey _taskMonthKey = GlobalKey();
+
+  // Helper method to show inline custom menu
+  void _showInlineMenu({
+    required GlobalKey key,
+    required List<Map<String, dynamic>> items,
+    required Function(dynamic value) onSelected,
+    double? width,
+  }) {
+    final RenderBox renderBox =
+        key.currentContext?.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+    final offset = renderBox.localToGlobal(Offset.zero);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final menuWidth = width ?? 140.w;
+
+    // Calculate left position
+    double leftPosition = offset.dx;
+    if (leftPosition + menuWidth > screenWidth - 16.w) {
+      leftPosition = screenWidth - menuWidth - 16.w;
+    }
+
+    OverlayEntry? overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () {
+          overlayEntry?.remove();
+        },
+        child: Stack(
+          children: [
+            Positioned.fill(child: Container(color: Colors.transparent)),
+            Positioned(
+              left: leftPosition,
+              top: offset.dy + size.height + 4.h,
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  width: menuWidth,
+                  constraints: BoxConstraints(maxHeight: 250.h),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                        spreadRadius: 0,
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16.r),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: List.generate(items.length, (index) {
+                        final item = items[index];
+                        final isLast = index == items.length - 1;
+                        final isSelected = item['isSelected'] as bool;
+
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            InkWell(
+                              onTap: () {
+                                overlayEntry?.remove();
+                                onSelected(item['value']);
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 16.w,
+                                  vertical: 12.h,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      item['text'] as String,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 14.sp,
+                                        color: isSelected
+                                            ? AppColors.brand500
+                                            : AppColors.textPrimary.withOpacity(
+                                                0.8,
+                                              ),
+                                      ),
+                                    ),
+                                    if (isSelected)
+                                      SvgPicture.asset(
+                                        'assets/icons/svg/tick.svg',
+                                        width: 16.w,
+                                        height: 16.h,
+                                      )
+                                    else
+                                      SizedBox(width: 16.w),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            if (!isLast)
+                              Divider(
+                                height: 1.h,
+                                thickness: 1.h,
+                                color: AppColors.textPrimary.withOpacity(0.05),
+                                indent: 0,
+                                endIndent: 0,
+                              ),
+                          ],
+                        );
+                      }),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    Overlay.of(context).insert(overlayEntry);
+  }
+
+  void _showTaskMonthPicker() {
     final months = [
       'January',
       'February',
@@ -74,116 +204,63 @@ class _RewardsScreenState extends State<RewardsScreen> {
       'December',
     ];
 
-    final selectedMonth = await showDialog<int>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Select Month'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: months.length,
-            itemBuilder: (context, index) {
-              return ListTile(
-                title: Text(
-                  months[index],
-                  style: TextStyle(
-                    fontWeight: (index + 1) == _selectedTaskMonth
-                        ? FontWeight.w600
-                        : FontWeight.w400,
-                    color: (index + 1) == _selectedTaskMonth
-                        ? AppColors.brand500
-                        : AppColors.textPrimary,
-                  ),
-                ),
-                onTap: () => Navigator.pop(context, index + 1),
-              );
-            },
-          ),
-        ),
-      ),
-    );
+    final items = List.generate(months.length, (index) {
+      return {
+        'text': months[index],
+        'value': index + 1,
+        'isSelected': (index + 1) == _selectedTaskMonth,
+      };
+    });
 
-    if (selectedMonth != null && selectedMonth != _selectedTaskMonth) {
-      setState(() {
-        _selectedTaskMonth = selectedMonth;
-        _selectedDate = DateTime(_selectedTaskYear, _selectedTaskMonth, 1);
-      });
-    }
+    _showInlineMenu(
+      key: _taskMonthKey,
+      items: items,
+      width: 160.w,
+      onSelected: (value) {
+        if (value != _selectedTaskMonth) {
+          setState(() {
+            _selectedTaskMonth = value as int;
+            _selectedDate = DateTime(_selectedTaskYear, _selectedTaskMonth, 1);
+          });
+        }
+      },
+    );
   }
 
-  // Add this method to show year picker for task section
-  void _showTaskYearPicker() async {
+  void _showTaskYearPicker() {
     final currentYear = DateTime.now().year;
     final years = List.generate(10, (index) => currentYear - index);
 
-    // Add logic to include "All Year" logic?
-    // The previous implementation utilized AlertDialog with ListView.
-    // I can pretend "All Year" is year -1.
-
-    final selectedYear = await showDialog<int>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Select Year'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: years.length + 1, // +1 for "All Year"
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                return ListTile(
-                  title: Text(
-                    "All Year",
-                    style: TextStyle(
-                      fontWeight: _selectedTaskYear == -1
-                          ? FontWeight.w600
-                          : FontWeight.w400,
-                      color: _selectedTaskYear == -1
-                          ? AppColors.brand500
-                          : AppColors.textPrimary,
-                    ),
-                  ),
-                  onTap: () => Navigator.pop(context, -1),
-                );
-              }
-              final year = years[index - 1];
-              return ListTile(
-                title: Text(
-                  year.toString(),
-                  style: TextStyle(
-                    fontWeight: year == _selectedTaskYear
-                        ? FontWeight.w600
-                        : FontWeight.w400,
-                    color: year == _selectedTaskYear
-                        ? AppColors.brand500
-                        : AppColors.textPrimary,
-                  ),
-                ),
-                onTap: () => Navigator.pop(context, year),
-              );
-            },
-          ),
-        ),
+    final List<Map<String, dynamic>> items = [
+      {'text': 'All Year', 'value': -1, 'isSelected': _selectedTaskYear == -1},
+      ...years.map(
+        (year) => {
+          'text': year.toString(),
+          'value': year,
+          'isSelected': year == _selectedTaskYear,
+        },
       ),
-    );
+    ];
 
-    if (selectedYear != null && selectedYear != _selectedTaskYear) {
-      if (selectedYear == -1) {
-        setState(() {
-          _selectedTaskYear = -1;
-          // When all year, we don't care about _selectedDate month, but we need meaningful _selectedDate?
-          // Actually build method uses _selectedDate for monthKey IF not -1.
-          // But I will update build method to use _selectedTaskYear == -1 check.
-          // So I can leave _selectedDate as is or minimal update.
-        });
-      } else {
-        setState(() {
-          _selectedTaskYear = selectedYear;
-          _selectedDate = DateTime(_selectedTaskYear, _selectedTaskMonth, 1);
-        });
-      }
-    }
+    _showInlineMenu(
+      key: _taskYearKey,
+      items: items,
+      width: 140.w,
+      onSelected: (value) {
+        if (value != _selectedTaskYear) {
+          setState(() {
+            _selectedTaskYear = value as int;
+            if (_selectedTaskYear != -1) {
+              _selectedDate = DateTime(
+                _selectedTaskYear,
+                _selectedTaskMonth,
+                1,
+              );
+            }
+          });
+        }
+      },
+    );
   }
 
   // Add this method to fetch chart data
@@ -861,6 +938,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
                         onTap: _showTaskYearPicker,
 
                         child: _buildDropdown(
+                          key: _taskYearKey,
                           _selectedTaskYear == -1
                               ? "All Year"
                               : _selectedTaskYear.toString(),
@@ -872,6 +950,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
                         child: GestureDetector(
                           onTap: _showTaskMonthPicker,
                           child: _buildDropdown(
+                            key: _taskMonthKey,
                             isDisabled: _selectedTaskYear == -1,
                             _selectedTaskYear == -1
                                 ? "Select"
@@ -1080,8 +1159,9 @@ class _RewardsScreenState extends State<RewardsScreen> {
     );
   }
 
-  Widget _buildDropdown(String text, {bool isDisabled = false}) {
+  Widget _buildDropdown(String text, {Key? key, bool isDisabled = false}) {
     return Container(
+      key: key,
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 9.h),
       decoration: BoxDecoration(
         color: Colors.white,
