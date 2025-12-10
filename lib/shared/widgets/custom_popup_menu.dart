@@ -33,6 +33,14 @@ class _CustomPopupMenuState extends State<CustomPopupMenu> {
     final RenderBox renderBox = context.findRenderObject() as RenderBox;
     final size = renderBox.size;
     final offset = renderBox.localToGlobal(Offset.zero);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final menuWidth = widget.menuWidth ?? 140.w;
+
+    // Calculate left position, ensuring menu doesn't overflow screen
+    double leftPosition = offset.dx + widget.offset.dx;
+    if (leftPosition + menuWidth > screenWidth - 16.w) {
+      leftPosition = screenWidth - menuWidth - 16.w;
+    }
 
     _overlayEntry = OverlayEntry(
       builder: (context) => GestureDetector(
@@ -44,25 +52,17 @@ class _CustomPopupMenuState extends State<CustomPopupMenu> {
             Positioned.fill(child: Container(color: Colors.transparent)),
             // Menu
             Positioned(
-              left: offset.dx + widget.offset.dx,
+              left: leftPosition,
               top: offset.dy + size.height + widget.offset.dy,
-              child: CompositedTransformFollower(
-                link: _layerLink,
-                showWhenUnlinked: false,
-                offset: Offset(
-                  widget.offset.dx,
-                  size.height + widget.offset.dy,
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: _CustomMenuContent(
-                    items: widget.items,
-                    onItemPressed: (index) {
-                      _hideMenu();
-                      widget.items[index].onPressed();
-                    },
-                    menuWidth: widget.menuWidth,
-                  ),
+              child: Material(
+                color: Colors.transparent,
+                child: _CustomMenuContent(
+                  items: widget.items,
+                  onItemPressed: (index) {
+                    _hideMenu();
+                    widget.items[index].onPressed();
+                  },
+                  menuWidth: widget.menuWidth,
                 ),
               ),
             ),

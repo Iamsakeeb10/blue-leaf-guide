@@ -211,40 +211,7 @@ class _MonthlyGoalsListState extends State<MonthlyGoalsList> {
                           ],
                         ),
                       ),
-
-                      // PopupMenuButton<String>(
-                      //   color: Colors.white,
-                      //   borderRadius: BorderRadius.circular(16.r),
-                      //   padding: EdgeInsets.zero,
-                      //   icon: Icon(
-                      //     Icons.more_vert,
-                      //     size: 20.w,
-                      //     color: AppColors.textPrimary.withOpacity(0.6),
-                      //   ),
-                      //   shape: RoundedRectangleBorder(
-                      //     borderRadius: BorderRadius.circular(12.r),
-                      //   ),
-                      //   onSelected: (value) {
-                      //     if (value == 'edit') {
-                      //       widget.onEditGoal(goalId, fullTitle, target);
-                      //     } else if (value == 'delete') {
-                      //       widget.onDeleteGoal(goalId);
-                      //     }
-                      //   },
-                      //   itemBuilder: (context) => [
-                      //     const PopupMenuItem(
-                      //       value: 'edit',
-                      //       child: Text('Edit'),
-                      //     ),
-                      //     PopupMenuItem(
-                      //       value: 'delete',
-                      //       child: Text(
-                      //         'Delete',
-                      //         style: TextStyle(color: Colors.red),
-                      //       ),
-                      //     ),
-                      //   ],
-                      // ),
+                      SizedBox(width: 16.w),
                       CustomPopupMenu(
                         customIcon: Icon(
                           Icons.more_vert,
@@ -253,16 +220,15 @@ class _MonthlyGoalsListState extends State<MonthlyGoalsList> {
                         ),
                         offset: Offset(-20.w, 0.h),
                         menuWidth: 140.w,
-
                         items: [
                           PopupMenuItemData(
-                            text: "Edit",
+                            text: 'Edit',
                             onPressed: () {
                               widget.onEditGoal(goalId, fullTitle, target);
                             },
                           ),
                           PopupMenuItemData(
-                            text: "Delete",
+                            text: 'Delete',
                             textColor: Colors.red,
                             onPressed: () {
                               widget.onDeleteGoal(goalId);
@@ -272,6 +238,7 @@ class _MonthlyGoalsListState extends State<MonthlyGoalsList> {
                       ),
                     ],
                   ),
+                  SizedBox(height: 16.h),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(30.r),
                     child: LinearProgressIndicator(
