@@ -790,34 +790,53 @@ class _RewardsScreenState extends State<RewardsScreen> {
                   ),
                   SizedBox(height: 20.h),
                   SizedBox(height: 20.h),
-                  Center(
+                  Container(
+                    padding: EdgeInsets.all(10.w),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16.r),
+                      border: Border.all(
+                        color: const Color(
+                          0x090F050D,
+                        ), // your neutral 5% opacity border
+                        width: 1,
+                      ),
+                    ),
                     child: Column(
                       children: [
-                        Text(
-                          'Average goal completion rate',
-                          style: TextStyle(
-                            color: AppColors.textPrimary.withOpacity(0.7),
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
+                        Center(
+                          child: Column(
+                            children: [
+                              Text(
+                                'Average goal completion rate',
+                                style: TextStyle(
+                                  color: AppColors.textPrimary.withOpacity(0.7),
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              SizedBox(height: 8.h),
+                              _isLoadingChartData
+                                  ? const CircularProgressIndicator()
+                                  : Text(
+                                      _formatPercentage(
+                                        _calculateAverage(_chartValues),
+                                      ),
+                                      style: TextStyle(
+                                        color: AppColors.textPrimary
+                                            .withOpacity(0.8),
+                                        fontSize: 20.sp,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                            ],
                           ),
                         ),
-                        SizedBox(height: 8.h),
-                        if (_isLoadingChartData)
-                          const CircularProgressIndicator()
-                        else
-                          Text(
-                            _formatPercentage(_calculateAverage(_chartValues)),
-                            style: TextStyle(
-                              color: AppColors.textPrimary.withOpacity(0.8),
-                              fontSize: 20.sp,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                        SizedBox(height: 24.h),
+                        _buildBarChart(),
                       ],
                     ),
                   ),
-                  SizedBox(height: 24.h),
-                  _buildBarChart(),
                 ],
               ),
             ),
@@ -1008,7 +1027,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
               _buildAxisLabel('0%'),
             ],
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: 6.w),
           // Bars
           Expanded(
             child: Row(
@@ -1028,12 +1047,12 @@ class _RewardsScreenState extends State<RewardsScreen> {
                         ),
                         SizedBox(height: 8.h),
                         Transform.rotate(
-                          angle: -0.785398, // -45 degrees in radians
+                          angle: -1.2217,
                           child: Text(
                             months[index],
                             style: TextStyle(
                               color: Colors.grey[600],
-                              fontSize: 10.sp,
+                              fontSize: 9.sp,
                               fontWeight: FontWeight.w400,
                             ),
                           ),
