@@ -341,48 +341,35 @@ class _RewardsScreenState extends State<RewardsScreen> {
     }
   }
 
+  // Add Key for anchoring year picker menu
+  final GlobalKey _chartYearKey = GlobalKey();
+
   // Add this method to show year picker dialog
-  void _showYearPicker() async {
+  void _showYearPicker() {
     final currentYear = DateTime.now().year;
     final years = List.generate(10, (index) => currentYear - index);
 
-    final selectedYear = await showDialog<int>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Select Year'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: years.length,
-            itemBuilder: (context, index) {
-              final year = years[index];
-              return ListTile(
-                title: Text(
-                  year.toString(),
-                  style: TextStyle(
-                    fontWeight: year == _selectedYear
-                        ? FontWeight.w600
-                        : FontWeight.w400,
-                    color: year == _selectedYear
-                        ? AppColors.brand500
-                        : AppColors.textPrimary,
-                  ),
-                ),
-                onTap: () => Navigator.pop(context, year),
-              );
-            },
-          ),
-        ),
-      ),
-    );
+    final List<Map<String, dynamic>> items = years.map((year) {
+      return {
+        'text': year.toString(),
+        'value': year,
+        'isSelected': year == _selectedYear,
+      };
+    }).toList();
 
-    if (selectedYear != null && selectedYear != _selectedYear) {
-      setState(() {
-        _selectedYear = selectedYear;
-      });
-      await _fetchYearlyChartData();
-    }
+    _showInlineMenu(
+      key: _chartYearKey,
+      items: items,
+      width: 140.w,
+      onSelected: (value) async {
+        if (value != _selectedYear) {
+          setState(() {
+            _selectedYear = value as int;
+          });
+          await _fetchYearlyChartData();
+        }
+      },
+    );
   }
 
   Future<bool> _isBrandBuildCompleted() async {
@@ -842,6 +829,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
                       GestureDetector(
                         onTap: _showYearPicker,
                         child: Container(
+                          key: _chartYearKey,
                           padding: EdgeInsets.symmetric(
                             horizontal: 12.w,
                             vertical: 9.h,
