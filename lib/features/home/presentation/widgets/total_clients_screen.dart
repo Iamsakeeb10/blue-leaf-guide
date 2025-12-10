@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/button.dart';
+import '../../../../shared/widgets/custom_popup_menu.dart';
 import '../../data/client_service.dart';
 
 class TotalClientsScreen extends StatelessWidget {
@@ -255,17 +256,16 @@ class TotalClientsScreen extends StatelessWidget {
                 child: Padding(
                   padding: EdgeInsets.only(right: 8.w),
                   child: Transform.translate(
-                    offset: Offset(0, -10.h),
-                    child: Theme(
-                      data: Theme.of(
-                        context,
-                      ).copyWith(canvasColor: Colors.white),
-                      child: PopupMenuButton<String>(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16.r),
-                        padding: EdgeInsets.zero,
-                        onSelected: (value) {
-                          if (value == 'edit') {
+                    offset: Offset(-5.w, -10.h),
+                    child: // In _buildClientCard method, replace the PopupMenuButton with:
+                    CustomPopupMenu(
+                      iconPath:
+                          'assets/icons/svg/more.svg', // Replace with your actual path
+                      items: [
+                        PopupMenuItemData(
+                          text: 'Edit',
+                          textColor: AppColors.textPrimary.withOpacity(0.8),
+                          onPressed: () {
                             context.push(
                               '/add-client',
                               extra: {
@@ -273,45 +273,16 @@ class TotalClientsScreen extends StatelessWidget {
                                 'clientData': client,
                               },
                             );
-                          } else if (value == 'delete') {
+                          },
+                        ),
+                        PopupMenuItemData(
+                          text: 'Delete',
+                          textColor: AppColors.errorRed,
+                          onPressed: () {
                             _showDeleteDialog(context, clientId);
-                          }
-                        },
-                        itemBuilder: (context) => [
-                          PopupMenuItem(
-                            value: 'edit',
-                            child: Row(
-                              children: [
-                                Text(
-                                  'Edit',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 14.sp,
-                                    color: AppColors.textPrimary.withOpacity(
-                                      0.8,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          PopupMenuItem(
-                            value: 'delete',
-                            child: Row(
-                              children: [
-                                Text(
-                                  'Delete',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 14.sp,
-                                    color: AppColors.errorRed,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                          },
+                        ),
+                      ],
                     ),
                   ),
                 ),
