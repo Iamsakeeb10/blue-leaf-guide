@@ -194,9 +194,20 @@ class _OTPScreenState extends State<OTPScreen> {
               SizedBox(height: 32.h),
               Center(
                 child: TextButton(
-                  onPressed: _secondsRemaining > 0 || authProvider.isLoading
-                      ? null
-                      : _handleResend,
+                  onPressed: () {
+                    if (_secondsRemaining > 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Please wait ${_secondsRemaining}s before requesting a new code.',
+                          ),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                    } else {
+                      _handleResend();
+                    }
+                  },
                   child: Text(
                     "Didn't receive a code?",
                     style: TextStyle(
