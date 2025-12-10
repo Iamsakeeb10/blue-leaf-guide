@@ -15,7 +15,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/custom_date_picker_dialog.dart';
 import '../../../../shared/widgets/button.dart';
 import '../../../../shared/widgets/custom_appbar.dart';
-import '../../../../shared/widgets/stand_alone_dropdown.dart';
+import '../../../../shared/widgets/custom_popup_menu.dart';
 import '../../../../shared/widgets/text_field.dart' as custom;
 import '../../data/client_service.dart';
 import '../widgets/image_source_bottom_sheet.dart';
@@ -538,14 +538,83 @@ class _AddClientScreenState extends State<AddClientScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: StandaloneDropdown(
-                      value: clientType,
-                      label: 'Client Type',
-                      hint: 'Select Client Type',
-                      items: clientTypes,
-                      onChanged: (value) {
-                        setState(() => clientType = value);
-                      },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Label
+                        Padding(
+                          padding: EdgeInsets.only(bottom: 8.h),
+                          child: Text(
+                            'Client Type',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textPrimary.withOpacity(0.8),
+                            ),
+                          ),
+                        ),
+
+                        // Dropdown Button
+                        SelectablePopupMenu(
+                          customIcon: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 14.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(100.r),
+                              border: Border.all(
+                                color: AppColors.textPrimary.withOpacity(0.05),
+                                width: 1.25,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    (clientType == null ||
+                                            clientType == 'Client type')
+                                        ? 'Client Type'
+                                        : clientType!,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color:
+                                          (clientType == null ||
+                                              clientType == 'Client type')
+                                          ? Color(0xFF999999)
+                                          : AppColors.textPrimary.withOpacity(
+                                              0.9,
+                                            ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 8.w),
+                                Icon(
+                                  Icons.keyboard_arrow_down,
+                                  size: 24.r,
+                                  color: AppColors.textPrimary.withOpacity(0.5),
+                                ),
+                              ],
+                            ),
+                          ),
+                          offset: Offset(0, 8),
+                          menuWidth:
+                              null, // Will use the width of the trigger button
+                          items: clientTypes.map((type) {
+                            return SelectableMenuItemData(
+                              text: type,
+                              isSelected: clientType == type,
+                              onPressed: () {
+                                setState(() => clientType = type);
+                              },
+                            );
+                          }).toList(),
+                        ),
+                      ],
                     ),
                   ),
                   SizedBox(width: 12.w),

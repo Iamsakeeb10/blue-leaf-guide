@@ -251,6 +251,43 @@ class TotalClientsScreen extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               _buildProfileImage(client['profileImage']),
+
+              // Align(
+              //   alignment: Alignment.topRight,
+              //   child: Padding(
+              //     padding: EdgeInsets.only(right: 8.w),
+              //     child: Transform.translate(
+              //       offset: Offset(-5.w, -10.h),
+              //       child: // In _buildClientCard method, replace the PopupMenuButton with:
+              //       CustomPopupMenu(
+              //         iconPath:
+              //             'assets/icons/svg/more.svg', // Replace with your actual path
+              //         items: [
+              //           PopupMenuItemData(
+              //             text: 'Edit',
+              //             textColor: AppColors.textPrimary.withOpacity(0.8),
+              //             onPressed: () {
+              //               context.push(
+              //                 '/add-client',
+              //                 extra: {
+              //                   'clientId': clientId,
+              //                   'clientData': client,
+              //                 },
+              //               );
+              //             },
+              //           ),
+              //           PopupMenuItemData(
+              //             text: 'Delete',
+              //             textColor: AppColors.errorRed,
+              //             onPressed: () {
+              //               _showDeleteDialog(context, clientId);
+              //             },
+              //           ),
+              //         ],
+              //       ),
+              //     ),
+              //   ),
+              // ),
               Align(
                 alignment: Alignment.topRight,
                 child: Padding(
@@ -259,12 +296,14 @@ class TotalClientsScreen extends StatelessWidget {
                     offset: Offset(-5.w, -10.h),
                     child: // In _buildClientCard method, replace the PopupMenuButton with:
                     CustomPopupMenu(
-                      iconPath:
-                          'assets/icons/svg/more.svg', // Replace with your actual path
+                      iconPath: 'assets/icons/svg/more.svg',
+                      offset: Offset(-100, 8), // Adjust position
+                      menuWidth: 140.w, // Custom width
                       items: [
                         PopupMenuItemData(
                           text: 'Edit',
                           textColor: AppColors.textPrimary.withOpacity(0.8),
+
                           onPressed: () {
                             context.push(
                               '/add-client',
