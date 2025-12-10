@@ -32,6 +32,14 @@ class AuthService {
       emailTheme: EmailTheme.v6,
       expiry: 5 * 60 * 1000, // 5 minutes
     );
+
+    EmailOTP.setSMTP(
+      host: 'smtp.gmail.com',
+      emailPort: EmailPort.port587, // TLS
+      secureType: SecureType.tls,
+      username: 'shakibshovon.10@gmail.com', // Your Gmail address
+      password: 'slae hwga xxdz vvro', // Your 16-char App Password
+    );
   }
 
   /// Send OTP to email and store in Firestore
@@ -266,7 +274,8 @@ class AuthService {
 
       // Determine if the current image is a custom uploaded image (Base64)
       // We assume URLs start with 'http'. If it's not empty and doesn't start with http, it's likely Base64.
-      bool hasCustomImage = currentPhotoURL != null &&
+      bool hasCustomImage =
+          currentPhotoURL != null &&
           currentPhotoURL.isNotEmpty &&
           !currentPhotoURL.startsWith('http');
 
@@ -290,10 +299,10 @@ class AuthService {
       }
 
       // Save/update Firestore user document
-      await _firestore.collection('users').doc(uid).set(
-            userData,
-            SetOptions(merge: true),
-          );
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .set(userData, SetOptions(merge: true));
 
       // Save login state
       await _saveLoginState(uid);
