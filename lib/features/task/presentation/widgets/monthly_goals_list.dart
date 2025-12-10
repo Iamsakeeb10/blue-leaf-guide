@@ -93,34 +93,36 @@ class _MonthlyGoalsListState extends State<MonthlyGoalsList> {
 
         if (goals.isEmpty) {
           return Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 40.h),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.track_changes,
-                    size: 64.w,
-                    color: AppColors.textPrimary.withOpacity(0.2),
-                  ),
-                  SizedBox(height: 16.h),
-                  Text(
-                    'No goals yet',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary.withOpacity(0.5),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 40.h),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.track_changes,
+                      size: 64.w,
+                      color: AppColors.textPrimary.withOpacity(0.2),
                     ),
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    'Add your first monthly goal',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      color: AppColors.textPrimary.withOpacity(0.4),
+                    SizedBox(height: 16.h),
+                    Text(
+                      'No goals yet',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary.withOpacity(0.5),
+                      ),
                     ),
-                  ),
-                ],
+                    SizedBox(height: 8.h),
+                    Text(
+                      'Add your first monthly goal',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: AppColors.textPrimary.withOpacity(0.4),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
