@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/button.dart';
+import '../../../../shared/widgets/custom_dialog.dart';
 import '../../../../shared/widgets/text_field.dart' as CustomTextField;
 import '../widgets/edit_goal_dialog.dart';
 import '../widgets/monthly_goals_list.dart';
@@ -375,19 +376,13 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
 
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Goal'),
-        content: const Text('Are you sure you want to delete this goal?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
+      builder: (context) => CustomDialog(
+        title: 'Delete Goal',
+        subtitle: 'Are you sure you want to delete this goal?',
+        primaryButtonText: 'Delete',
+        primaryButtonOnPressed: () => Navigator.pop(context, true),
+        secondaryButtonText: 'Cancel',
+        secondaryButtonOnPressed: () => Navigator.pop(context, false),
       ),
     );
 
@@ -426,12 +421,12 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
     }
   }
 
-
   void _showMonthYearPicker() async {
     final result = await showDialog<PickerResult>(
       context: context,
       // Pass current selection. If _isAllYear, pass now? or keep last selected?
-      builder: (context) => MonthYearPickerDialog(initialDate: _selectedDate ?? DateTime.now()),
+      builder: (context) =>
+          MonthYearPickerDialog(initialDate: _selectedDate ?? DateTime.now()),
     );
 
     if (result != null) {
@@ -470,9 +465,9 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _isAllYear 
-                      ? "All Goals" 
-                      : DateFormat('MMMM, yyyy').format(_selectedDate!),
+                    _isAllYear
+                        ? "All Goals"
+                        : DateFormat('MMMM, yyyy').format(_selectedDate!),
                     style: TextStyle(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w600,
@@ -491,7 +486,8 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
                     borderRadius: BorderRadius.circular(100.r),
                   ),
                   padding: EdgeInsets.all(10.w),
-                  child: SvgPicture.asset( // Removed const
+                  child: SvgPicture.asset(
+                    // Removed const
                     'assets/icons/svg/filter.svg',
                     width: 24.w,
                     height: 24.w,

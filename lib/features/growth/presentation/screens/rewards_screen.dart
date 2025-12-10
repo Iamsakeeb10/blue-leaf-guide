@@ -7,6 +7,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../shared/widgets/custom_dialog.dart';
 import '../../../../shared/widgets/month_year_picker_dialog.dart';
 import '../../../task/presentation/widgets/edit_goal_dialog.dart';
 import '../../../task/presentation/widgets/monthly_goals_list.dart';
@@ -68,6 +69,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
     required Function(dynamic value) onSelected,
     double? width,
   }) {
+    final overlayScrollController = ScrollController();
     final RenderBox renderBox =
         key.currentContext?.findRenderObject() as RenderBox;
     final size = renderBox.size;
@@ -114,71 +116,76 @@ class _RewardsScreenState extends State<RewardsScreen> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16.r),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: List.generate(items.length, (index) {
-                          final item = items[index];
-                          final isLast = index == items.length - 1;
-                          final isSelected = item['isSelected'] as bool;
-                          final isDisabled =
-                              item['isDisabled'] as bool? ?? false;
+                    child: Scrollbar(
+                      controller: overlayScrollController,
+                      thumbVisibility: true,
+                      child: SingleChildScrollView(
+                        controller: overlayScrollController,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: List.generate(items.length, (index) {
+                            final item = items[index];
+                            final isLast = index == items.length - 1;
+                            final isSelected = item['isSelected'] as bool;
+                            final isDisabled =
+                                item['isDisabled'] as bool? ?? false;
 
-                          return Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              InkWell(
-                                onTap: isDisabled
-                                    ? null
-                                    : () {
-                                        overlayEntry?.remove();
-                                        onSelected(item['value']);
-                                      },
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 16.w,
-                                    vertical: 12.h,
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        item['text'] as String,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 14.sp,
-                                          color: isDisabled
-                                              ? Colors.black
-                                              : AppColors.textPrimary
-                                                    .withOpacity(0.8),
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                InkWell(
+                                  onTap: isDisabled
+                                      ? null
+                                      : () {
+                                          overlayEntry?.remove();
+                                          onSelected(item['value']);
+                                        },
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 16.w,
+                                      vertical: 12.h,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          item['text'] as String,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 14.sp,
+                                            color: isDisabled
+                                                ? Colors.black
+                                                : AppColors.textPrimary
+                                                      .withOpacity(0.8),
+                                          ),
                                         ),
-                                      ),
-                                      if (isSelected)
-                                        SvgPicture.asset(
-                                          'assets/icons/svg/tick.svg',
-                                          width: 16.w,
-                                          height: 16.h,
-                                        )
-                                      else
-                                        SizedBox(width: 16.w),
-                                    ],
+                                        if (isSelected)
+                                          SvgPicture.asset(
+                                            'assets/icons/svg/tick.svg',
+                                            width: 16.w,
+                                            height: 16.h,
+                                          )
+                                        else
+                                          SizedBox(width: 16.w),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                              if (!isLast)
-                                Divider(
-                                  height: 1.h,
-                                  thickness: 1.h,
-                                  color: AppColors.textPrimary.withOpacity(
-                                    0.05,
+                                if (!isLast)
+                                  Divider(
+                                    height: 1.h,
+                                    thickness: 1.h,
+                                    color: AppColors.textPrimary.withOpacity(
+                                      0.05,
+                                    ),
+                                    indent: 0,
+                                    endIndent: 0,
                                   ),
-                                  indent: 0,
-                                  endIndent: 0,
-                                ),
-                            ],
-                          );
-                        }),
+                              ],
+                            );
+                          }),
+                        ),
                       ),
                     ),
                   ),
@@ -607,19 +614,13 @@ class _RewardsScreenState extends State<RewardsScreen> {
 
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Goal'),
-        content: const Text('Are you sure you want to delete this goal?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
+      builder: (context) => CustomDialog(
+        title: 'Delete Goal',
+        subtitle: 'Are you sure you want to delete this goal?',
+        primaryButtonText: 'Delete',
+        primaryButtonOnPressed: () => Navigator.pop(context, true),
+        secondaryButtonText: 'Cancel',
+        secondaryButtonOnPressed: () => Navigator.pop(context, false),
       ),
     );
 
