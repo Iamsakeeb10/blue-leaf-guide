@@ -43,6 +43,133 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
     5: 'attended',
   };
 
+  final GlobalKey _goalTemplateKey = GlobalKey();
+
+  void _showGoalTemplateMenu(Function(String) onSelected) {
+    final overlayScrollController = ScrollController();
+    final RenderBox renderBox =
+        _goalTemplateKey.currentContext?.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+    final offset = renderBox.localToGlobal(Offset.zero);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final menuWidth = 240.w;
+    final menuHeight = 250.h;
+
+    // Calculate centered position
+    double leftPosition = (screenWidth - menuWidth) / 2;
+    double topPosition = (screenHeight - menuHeight) / 2;
+
+    OverlayEntry? overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () {
+          overlayEntry?.remove();
+        },
+        child: Stack(
+          children: [
+            Positioned.fill(child: Container(color: Colors.transparent)),
+            Positioned(
+              left: leftPosition,
+              top: topPosition,
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  width: menuWidth,
+                  constraints: BoxConstraints(maxHeight: menuHeight),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                        spreadRadius: 0,
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16.r),
+                    child: Scrollbar(
+                      controller: overlayScrollController,
+                      thumbVisibility: true,
+                      child: SingleChildScrollView(
+                        controller: overlayScrollController,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: List.generate(_goalTemplates.length, (
+                            index,
+                          ) {
+                            final template = _goalTemplates[index];
+                            final isLast = index == _goalTemplates.length - 1;
+
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                InkWell(
+                                  onTap: () {
+                                    overlayEntry?.remove();
+                                    onSelected(template['id'] as String);
+                                  },
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 16.w,
+                                      vertical: 12.h,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        SvgPicture.asset(
+                                          'assets/icons/svg/goal-picker.svg',
+                                          width: 16.w,
+                                          height: 16.h,
+                                        ),
+                                        SizedBox(width: 12.w),
+                                        Expanded(
+                                          child: Text(
+                                            template['fullTitle'] as String,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 14.sp,
+                                              color: AppColors.textPrimary
+                                                  .withOpacity(0.8),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                if (!isLast)
+                                  Divider(
+                                    height: 1.h,
+                                    thickness: 1.h,
+                                    color: AppColors.textPrimary.withOpacity(
+                                      0.05,
+                                    ),
+                                    indent: 0,
+                                    endIndent: 0,
+                                  ),
+                              ],
+                            );
+                          }),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    Overlay.of(context).insert(overlayEntry);
+  }
+
   String _getMonthKey(DateTime date) {
     return DateFormat('yyyy-MM').format(date);
   }
@@ -122,68 +249,65 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
 
                 SizedBox(height: 12.h),
 
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(100.r),
-                    border: Border.all(
-                      color: AppColors.neutral50.withOpacity(0.05),
+                GestureDetector(
+                  onTap: () {
+                    _showGoalTemplateMenu((templateId) {
+                      setDialogState(() {
+                        selectedTemplateId = templateId;
+                      });
+                    });
+                  },
+                  child: Container(
+                    key: _goalTemplateKey,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(100.r),
+                      border: Border.all(
+                        color: AppColors.neutral50.withOpacity(0.05),
+                      ),
                     ),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: selectedTemplateId,
-                      isExpanded: true,
-                      hint: Row(
-                        children: [
-                          SvgPicture.asset(
-                            'assets/icons/svg/goal-picker.svg',
-                            width: 20.w,
-                            height: 20.h,
-                          ),
-                          SizedBox(width: 12.w),
-                          Text(
-                            'Goal Name',
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 14.h,
+                    ),
+                    child: Row(
+                      children: [
+                        SvgPicture.asset(
+                          'assets/icons/svg/goal-picker.svg',
+                          width: 20.w,
+                          height: 20.h,
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Text(
+                            selectedTemplateId == null
+                                ? 'Goal Name'
+                                : _goalTemplates.firstWhere(
+                                        (t) => t['id'] == selectedTemplateId,
+                                        orElse: () => {
+                                          'fullTitle': 'Goal Name',
+                                        },
+                                      )['fullTitle']
+                                      as String,
                             style: TextStyle(
                               fontSize: 14.sp,
-                              color: AppColors.textPrimary.withOpacity(0.3),
+                              color: selectedTemplateId == null
+                                  ? AppColors.textPrimary.withOpacity(0.3)
+                                  : AppColors.textPrimary.withOpacity(0.8),
                             ),
                           ),
-                        ],
-                      ),
-                      selectedItemBuilder: (context) {
-                        return _goalTemplates.map((template) {
-                          return Row(
-                            children: [
-                              Text(
-                                template['fullTitle'],
-                                style: TextStyle(fontSize: 14.sp),
-                              ),
-                            ],
-                          );
-                        }).toList();
-                      },
-                      padding: EdgeInsets.symmetric(horizontal: 14.w),
-                      borderRadius: BorderRadius.circular(16.r),
-                      items: _goalTemplates.map((template) {
-                        return DropdownMenuItem<String>(
-                          value: template['id'],
-                          child: Text(
-                            template['fullTitle'],
-                            style: TextStyle(fontSize: 14.sp),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setDialogState(() {
-                          selectedTemplateId = value;
-                        });
-                      },
+                        ),
+                        Icon(
+                          Icons.keyboard_arrow_down,
+                          size: 20.sp,
+                          color: AppColors.textPrimary.withOpacity(0.5),
+                        ),
+                      ],
                     ),
                   ),
                 ),
 
-                SizedBox(height: 4.h),
+                SizedBox(height: 12.h),
 
                 /// Target Number Field
                 CustomTextField.TextField(
