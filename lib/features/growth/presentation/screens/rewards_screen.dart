@@ -121,15 +121,19 @@ class _RewardsScreenState extends State<RewardsScreen> {
                           final item = items[index];
                           final isLast = index == items.length - 1;
                           final isSelected = item['isSelected'] as bool;
+                          final isDisabled =
+                              item['isDisabled'] as bool? ?? false;
 
                           return Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               InkWell(
-                                onTap: () {
-                                  overlayEntry?.remove();
-                                  onSelected(item['value']);
-                                },
+                                onTap: isDisabled
+                                    ? null
+                                    : () {
+                                        overlayEntry?.remove();
+                                        onSelected(item['value']);
+                                      },
                                 child: Container(
                                   padding: EdgeInsets.symmetric(
                                     horizontal: 16.w,
@@ -144,8 +148,10 @@ class _RewardsScreenState extends State<RewardsScreen> {
                                         style: TextStyle(
                                           fontWeight: FontWeight.w500,
                                           fontSize: 14.sp,
-                                          color: AppColors.textPrimary
-                                              .withOpacity(0.8),
+                                          color: isDisabled
+                                              ? Colors.black
+                                              : AppColors.textPrimary
+                                                    .withOpacity(0.8),
                                         ),
                                       ),
                                       if (isSelected)
@@ -203,13 +209,17 @@ class _RewardsScreenState extends State<RewardsScreen> {
       'December',
     ];
 
-    final items = List.generate(months.length, (index) {
-      return {
-        'text': months[index],
-        'value': index + 1,
-        'isSelected': (index + 1) == _selectedTaskMonth,
-      };
-    });
+    final items = [
+      {'text': 'Select', 'value': 0, 'isSelected': false, 'isDisabled': true},
+      ...List.generate(months.length, (index) {
+        return {
+          'text': months[index],
+          'value': index + 1,
+          'isSelected': (index + 1) == _selectedTaskMonth,
+          'isDisabled': false,
+        };
+      }),
+    ];
 
     _showInlineMenu(
       key: _taskMonthKey,
