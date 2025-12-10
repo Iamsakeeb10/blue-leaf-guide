@@ -118,67 +118,66 @@ class _RewardsScreenState extends State<RewardsScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: List.generate(items.length, (index) {
-                        final item = items[index];
-                        final isLast = index == items.length - 1;
-                        final isSelected = item['isSelected'] as bool;
+                          final item = items[index];
+                          final isLast = index == items.length - 1;
+                          final isSelected = item['isSelected'] as bool;
 
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            InkWell(
-                              onTap: () {
-                                overlayEntry?.remove();
-                                onSelected(item['value']);
-                              },
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 16.w,
-                                  vertical: 12.h,
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      item['text'] as String,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 14.sp,
-                                        color: isSelected
-                                            ? AppColors.brand500
-                                            : AppColors.textPrimary.withOpacity(
-                                                0.8,
-                                              ),
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              InkWell(
+                                onTap: () {
+                                  overlayEntry?.remove();
+                                  onSelected(item['value']);
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 16.w,
+                                    vertical: 12.h,
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        item['text'] as String,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 14.sp,
+                                          color: AppColors.textPrimary
+                                              .withOpacity(0.8),
+                                        ),
                                       ),
-                                    ),
-                                    if (isSelected)
-                                      SvgPicture.asset(
-                                        'assets/icons/svg/tick.svg',
-                                        width: 16.w,
-                                        height: 16.h,
-                                      )
-                                    else
-                                      SizedBox(width: 16.w),
-                                  ],
+                                      if (isSelected)
+                                        SvgPicture.asset(
+                                          'assets/icons/svg/tick.svg',
+                                          width: 16.w,
+                                          height: 16.h,
+                                        )
+                                      else
+                                        SizedBox(width: 16.w),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                            if (!isLast)
-                              Divider(
-                                height: 1.h,
-                                thickness: 1.h,
-                                color: AppColors.textPrimary.withOpacity(0.05),
-                                indent: 0,
-                                endIndent: 0,
-                              ),
-                          ],
-                        );
-                      }),
+                              if (!isLast)
+                                Divider(
+                                  height: 1.h,
+                                  thickness: 1.h,
+                                  color: AppColors.textPrimary.withOpacity(
+                                    0.05,
+                                  ),
+                                  indent: 0,
+                                  endIndent: 0,
+                                ),
+                            ],
+                          );
+                        }),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
             ),
           ],
         ),
