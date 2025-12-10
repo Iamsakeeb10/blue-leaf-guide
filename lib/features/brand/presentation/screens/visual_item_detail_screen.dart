@@ -530,7 +530,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
         SizedBox(
           width: double.infinity,
           child: TextButton(
-            onPressed: () => context.pop(), // Cancel/Go Back returns null
+            onPressed: () => context.pop(_editableItem), // Return original item
             style: TextButton.styleFrom(
               backgroundColor: Colors.transparent,
               shape: RoundedRectangleBorder(
@@ -571,7 +571,7 @@ class _VisualItemDetailScreenState extends State<VisualItemDetailScreen> {
         SizedBox(
           width: double.infinity,
           child: TextButton(
-            onPressed: () => context.pop(),
+            onPressed: () => context.pop(_editableItem), // Return original item
             style: TextButton.styleFrom(
               backgroundColor: Colors.transparent,
               shape: RoundedRectangleBorder(

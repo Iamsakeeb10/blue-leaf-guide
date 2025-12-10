@@ -460,8 +460,6 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                                     strategyItems[itemIndex] = updatedItem;
                                   }
                                 });
-
-                                _maybeAdvanceStep();
                               }
                             },
                           );
@@ -497,8 +495,6 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                                       visualItems[itemIndex] = updatedItem;
                                     }
                                   });
-
-                                  _maybeAdvanceStep();
                                 }
                               }
                             },
@@ -535,8 +531,6 @@ class _BuildBrandScreenState extends State<BuildBrandScreen> {
                                       marketingItems[itemIndex] = updatedItem;
                                     }
                                   });
-
-                                  _maybeAdvanceStep();
                                 }
                               }
                             },
