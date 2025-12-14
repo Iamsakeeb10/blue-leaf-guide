@@ -63,7 +63,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
     // Validate form first
     if (!_formKey.currentState!.validate()) {
-      return; // Errors will show under the TextField automatically
+      return;
     }
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -77,7 +77,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     if (success && mounted) {
       _showSuccessDialog();
     } else if (mounted) {
-      // Only show SnackBar for network/server errors
       _showError(authProvider.errorMessage ?? 'Failed to reset password');
     }
   }
@@ -206,6 +205,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
+    final canPop = GoRouter.of(context).canPop();
 
     if (_isVerifying) {
       return Scaffold(
@@ -230,82 +230,92 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     }
 
     if (_verifiedEmail == null) {
-      return const SizedBox(); // Dialog will handle the error state
+      return const SizedBox();
     }
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: const CustomAppBar(title: 'Reset Password'),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 36.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(height: 60.h),
-                Center(
-                  child: Text(
-                    'Create New Password',
-                    style: TextStyle(
-                      fontSize: 24.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                      height: 1.3,
+    // Wrap with PopScope to handle hardware back button
+    return PopScope(
+      canPop: canPop,
+      onPopInvoked: (didPop) async {
+        if (!didPop && !canPop) {
+          // Hardware back was pressed but can't pop, navigate to sign-in
+          context.go('/sign-in');
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: CustomAppBar(title: 'Reset Password', hideBackButton: !canPop),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 36.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(height: 60.h),
+                  Center(
+                    child: Text(
+                      'Create New Password',
+                      style: TextStyle(
+                        fontSize: 24.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                        height: 1.3,
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(height: 32.h),
-                Form(
-                  key: _formKey,
-                  child: CustomTextField.TextField(
-                    controller: passwordController,
-                    label: '',
-                    hint: 'Create New Password',
-                    obscureText: _obscurePassword,
-                    textInputAction: TextInputAction.done,
-                    prefixIconSvg: 'assets/icons/svg/lock.svg',
-                    suffixIconSvg: _obscurePassword
-                        ? 'assets/icons/svg/eye-closed.svg'
-                        : null,
-                    onSuffixIconTap: _togglePasswordVisibility,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a password';
-                      }
-                      if (value.length < 4) {
-                        return 'Password must be at least 4 characters';
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-                SizedBox(height: 12.h),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Create a password with at least 4 characters',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w500,
-                      height: 1.4,
-                      color: AppColors.textSecondary.withOpacity(0.7),
+                  SizedBox(height: 32.h),
+                  Form(
+                    key: _formKey,
+                    child: CustomTextField.TextField(
+                      controller: passwordController,
+                      label: '',
+                      hint: 'Create New Password',
+                      obscureText: _obscurePassword,
+                      textInputAction: TextInputAction.done,
+                      prefixIconSvg: 'assets/icons/svg/lock.svg',
+                      suffixIconSvg: _obscurePassword
+                          ? 'assets/icons/svg/eye-closed.svg'
+                          : null,
+                      onSuffixIconTap: _togglePasswordVisibility,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a password';
+                        }
+                        if (value.length < 4) {
+                          return 'Password must be at least 4 characters';
+                        }
+                        return null;
+                      },
                     ),
                   ),
-                ),
-                SizedBox(height: 24.h),
-                Button(
-                  onPressed: _handleResetPassword,
-                  text: 'Done',
-                  height: 54.h,
-                  borderRadius: BorderRadius.circular(32.r),
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w600,
-                  textColor: Colors.white,
-                  backgroundColor: AppColors.brand500,
-                  isLoading: authProvider.isLoading,
-                ),
-              ],
+                  SizedBox(height: 12.h),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Create a password with at least 4 characters',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w500,
+                        height: 1.4,
+                        color: AppColors.textSecondary.withOpacity(0.7),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 24.h),
+                  Button(
+                    onPressed: _handleResetPassword,
+                    text: 'Done',
+                    height: 54.h,
+                    borderRadius: BorderRadius.circular(32.r),
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                    textColor: Colors.white,
+                    backgroundColor: AppColors.brand500,
+                    isLoading: authProvider.isLoading,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
