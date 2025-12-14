@@ -27,6 +27,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   Future<void> _handleSendResetEmail() async {
+    FocusScope.of(context).unfocus();
+
     final email = emailController.text.trim();
 
     if (email.isEmpty) {
@@ -42,6 +44,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     }
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    final emailExists = await authProvider.checkEmailExists(email);
+
+    if (!emailExists && mounted) {
+      _showError('Email does not exist. Please sign up.');
+      return;
+    }
+
     final success = await authProvider.sendPasswordResetEmail(email);
 
     if (success && mounted) {

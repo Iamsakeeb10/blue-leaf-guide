@@ -31,6 +31,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   Future<void> _handleContinue() async {
+    FocusScope.of(context).unfocus();
+
     if (emailController.text.trim().isEmpty) {
       _showError('Please enter your email');
       return;
