@@ -1,4 +1,5 @@
 import 'package:blue_leaf_guide/shared/widgets/custom_appbar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -17,20 +18,51 @@ class ChangePasswordScreen extends StatefulWidget {
 class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final TextEditingController passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   Future<void> _handleContinue() async {
     FocusScope.of(context).unfocus();
 
-    if (passwordController.text.isEmpty) {
+    final currentPassword = passwordController.text.trim();
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (currentPassword.isEmpty) {
       _showError('Please enter your current password');
       return;
     }
 
-    // Pass current password to next screen
-    context.push(
-      '/confirm-change-password',
-      extra: {'currentPassword': passwordController.text},
-    );
+    if (user == null || user.email == null) {
+      _showError('No logged-in user found. Please log in again.');
+      return;
+    }
+
+    setState(() => _isLoading = true); // Start loading
+
+    try {
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+
+      // Reauthenticate
+      await user.reauthenticateWithCredential(credential);
+
+      // Password is correct, go to next screen
+      context.push(
+        '/confirm-change-password',
+        extra: {'currentPassword': currentPassword},
+      );
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'wrong-password') {
+        _showError('Incorrect current password');
+      } else {
+        _showError('Failed to verify password. ${e.message}');
+      }
+    } catch (e) {
+      _showError('An unexpected error occurred. Try again.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false); // Stop loading
+    }
   }
 
   void _showError(String message) {
@@ -114,6 +146,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 fontWeight: FontWeight.w600,
                 textColor: Colors.white,
                 backgroundColor: AppColors.brand500,
+                isLoading: _isLoading,
               ),
 
               SizedBox(height: 12.h),
