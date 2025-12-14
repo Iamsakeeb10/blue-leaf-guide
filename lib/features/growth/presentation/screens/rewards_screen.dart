@@ -8,7 +8,6 @@ import 'package:intl/intl.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/custom_dialog.dart';
-import '../../../../shared/widgets/month_year_picker_dialog.dart';
 import '../../../task/presentation/widgets/edit_goal_dialog.dart';
 import '../../../task/presentation/widgets/monthly_goals_list.dart';
 
@@ -651,21 +650,21 @@ class _RewardsScreenState extends State<RewardsScreen> {
   }
 
   // ignore: unused_element
-  void _showMonthYearPicker() async {
-    final result = await showDialog<PickerResult>(
-      context: context,
-      builder: (context) => MonthYearPickerDialog(initialDate: _selectedDate),
-    );
+  // void _showMonthYearPicker() async {
+  //   final result = await showDialog<PickerResult>(
+  //     context: context,
+  //     builder: (context) => MonthYearPickerDialog(initialDate: _selectedDate),
+  //   );
 
-    if (result != null) {
-      setState(() {
-        // If "All Year" (-1), let's just default to now or ignore for this unused method.
-        if (result.year != -1 && result.month != null) {
-          _selectedDate = DateTime(result.year, result.month!);
-        }
-      });
-    }
-  }
+  //   if (result != null) {
+  //     setState(() {
+  //       // If "All Year" (-1), let's just default to now or ignore for this unused method.
+  //       if (result.year != -1 && result.month != null) {
+  //         _selectedDate = DateTime(result.year, result.month!);
+  //       }
+  //     });
+  //   }
+  // }
 
   double _calculateAverage(List<double> values) {
     final validValues = values.where((v) => v >= 0).toList();

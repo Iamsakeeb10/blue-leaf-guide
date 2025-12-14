@@ -47,10 +47,6 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
 
   void _showGoalTemplateMenu(Function(String) onSelected) {
     final overlayScrollController = ScrollController();
-    final RenderBox renderBox =
-        _goalTemplateKey.currentContext?.findRenderObject() as RenderBox;
-    final size = renderBox.size;
-    final offset = renderBox.localToGlobal(Offset.zero);
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final menuWidth = 240.w;
@@ -203,6 +199,25 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
         const SnackBar(content: Text('Loading goal templates...')),
       );
       return;
+    }
+
+    if (!_isAllYear) {
+      final now = DateTime.now();
+      final currentMonthKey = _getMonthKey(now);
+      final selectedMonthKey = _getMonthKey(_selectedDate);
+
+      if (selectedMonthKey.compareTo(currentMonthKey) < 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Oops! Goals can’t be set for past dates. Try setting one for today.',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+        return;
+      }
     }
 
     String? selectedTemplateId;
@@ -546,22 +561,21 @@ class _MonthlyGoalScreenState extends State<MonthlyGoalScreen> {
   }
 
   void _showMonthYearPicker() async {
+    final now = DateTime.now();
+
     final result = await showDialog<PickerResult>(
       context: context,
-      // Pass current selection. If _isAllYear, pass now? or keep last selected?
-      builder: (context) =>
-          MonthYearPickerDialog(initialDate: _selectedDate ?? DateTime.now()),
+      builder: (context) => MonthYearPickerDialog(
+        initialDate: _selectedDate,
+        maxYear: now.year,
+        maxMonth: now.month,
+      ),
     );
 
     if (result != null) {
       setState(() {
-        if (result.year == -1) {
-          _isAllYear = true;
-        } else {
-          _isAllYear = false;
-          // Ensure month is valid
-          _selectedDate = DateTime(result.year, result.month ?? 1);
-        }
+        _isAllYear = result.year == -1;
+        _selectedDate = DateTime(result.year, result.month ?? 1);
       });
     }
   }
