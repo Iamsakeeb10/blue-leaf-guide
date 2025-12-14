@@ -170,7 +170,7 @@ class AuthProvider with ChangeNotifier {
       }
     } catch (e) {
       _isLoading = false;
-      _errorMessage = 'An error occurred. Please try again.';
+      _errorMessage = e.toString();
       notifyListeners();
       return false;
     }

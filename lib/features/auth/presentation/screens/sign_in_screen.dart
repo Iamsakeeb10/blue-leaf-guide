@@ -31,6 +31,9 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Future<void> _handleSignIn() async {
+    // ✅ Hide keyboard
+    FocusScope.of(context).unfocus();
+
     if (emailController.text.trim().isEmpty) {
       _showError('Please enter your email');
       return;
@@ -49,7 +52,6 @@ class _SignInScreenState extends State<SignInScreen> {
     );
 
     if (success && mounted) {
-      // Navigate to dashboard or home screen
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Signed in successfully!'),

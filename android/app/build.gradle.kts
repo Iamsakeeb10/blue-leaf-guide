@@ -15,7 +15,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.blue_leaf_guide"
-        minSdk = flutter.minSdkVersion
+        minSdk = 23
         targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
