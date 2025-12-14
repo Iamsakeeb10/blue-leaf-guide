@@ -32,6 +32,8 @@ class _SetupAccountScreenState extends State<SetupAccountScreen> {
   }
 
   Future<void> _handleDone() async {
+    FocusScope.of(context).unfocus();
+
     if (firstNameController.text.trim().isEmpty) {
       _showError('Please enter your first name');
       return;

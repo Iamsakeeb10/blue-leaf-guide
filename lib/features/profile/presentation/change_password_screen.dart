@@ -19,6 +19,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   bool _obscurePassword = true;
 
   Future<void> _handleContinue() async {
+    FocusScope.of(context).unfocus();
+
     if (passwordController.text.isEmpty) {
       _showError('Please enter your current password');
       return;

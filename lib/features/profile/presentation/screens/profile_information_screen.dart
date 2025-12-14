@@ -90,10 +90,7 @@ class _ProfileInformationScreenState extends State<ProfileInformationScreen> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result['message']),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(result['message']), backgroundColor: Colors.red),
       );
       // Reset selected image path on failure
       setState(() => _selectedImagePath = null);
@@ -178,6 +175,8 @@ class _ProfileInformationScreenState extends State<ProfileInformationScreen> {
   }
 
   Future<void> _handleSave() async {
+    FocusScope.of(context).unfocus();
+
     if (firstNameController.text.trim().isEmpty) {
       _showError('Please enter your first name');
       return;
@@ -351,8 +350,10 @@ class _ProfileInformationScreenState extends State<ProfileInformationScreen> {
               GestureDetector(
                 onTap: _isImageLoading ? null : _pickImage,
                 child: Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 6.h,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.lightGrey,
                     borderRadius: BorderRadius.circular(100.r),

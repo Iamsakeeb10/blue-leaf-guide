@@ -58,6 +58,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   }
 
   Future<void> _handleResetPassword() async {
+    FocusScope.of(context).unfocus();
+
     final password = passwordController.text;
 
     if (password.isEmpty) {

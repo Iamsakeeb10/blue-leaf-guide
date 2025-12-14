@@ -28,6 +28,8 @@ class _ConfirmChangePasswordScreenState
   bool _obscureConfirmPassword = true;
 
   Future<void> _handleContinue() async {
+    FocusScope.of(context).unfocus();
+
     if (newPasswordController.text.length < 4) {
       _showError('Password must be at least 4 characters');
       return;

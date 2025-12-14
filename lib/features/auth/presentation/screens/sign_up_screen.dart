@@ -54,6 +54,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
       emailController.text.trim(),
     );
 
+    print('🟨 Email Exist $emailExists');
+
     if (emailExists && mounted) {
       _showError('Email already exist. Please log in.');
       return;
