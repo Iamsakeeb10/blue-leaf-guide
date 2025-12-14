@@ -26,18 +26,13 @@ class _ConfirmChangePasswordScreenState
 
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
+  final _formKey = GlobalKey<FormState>();
 
   Future<void> _handleContinue() async {
     FocusScope.of(context).unfocus();
 
-    if (newPasswordController.text.length < 4) {
-      _showError('Password must be at least 4 characters');
-      return;
-    }
-
-    if (newPasswordController.text != confirmPasswordController.text) {
-      _showError('Passwords do not match');
-      return;
+    if (!_formKey.currentState!.validate()) {
+      return; // Inline validation failed
     }
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -54,7 +49,7 @@ class _ConfirmChangePasswordScreenState
           backgroundColor: Colors.green,
         ),
       );
-      // Navigate back to profile or settings screen
+
       Navigator.of(context).popUntil(
         (route) => route.isFirst || route.settings.name == '/my-account',
       );
@@ -88,41 +83,67 @@ class _ConfirmChangePasswordScreenState
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // New Password Field
-              CustomTextField.TextField(
-                controller: newPasswordController,
-                label: '',
-                hint: 'Create New Password',
-                obscureText: _obscureNewPassword,
-                textInputAction: TextInputAction.next,
-                prefixIconSvg: 'assets/icons/svg/lock.svg',
-                suffixIconSvg: _obscureNewPassword
-                    ? 'assets/icons/svg/eye-closed.svg'
-                    : null,
-                onSuffixIconTap: () {
-                  setState(() {
-                    _obscureNewPassword = !_obscureNewPassword;
-                  });
-                },
-              ),
+              Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    // New Password
+                    CustomTextField.TextField(
+                      controller: newPasswordController,
+                      label: '',
+                      hint: 'Create New Password',
+                      obscureText: _obscureNewPassword,
+                      textInputAction: TextInputAction.next,
+                      prefixIconSvg: 'assets/icons/svg/lock.svg',
+                      suffixIconSvg: _obscureNewPassword
+                          ? 'assets/icons/svg/eye-closed.svg'
+                          : null,
+                      onSuffixIconTap: () {
+                        setState(() {
+                          _obscureNewPassword = !_obscureNewPassword;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter a new password';
+                        }
+                        if (value.length < 4) {
+                          return 'Password must be at least 4 characters';
+                        }
+                        return null;
+                      },
+                    ),
 
-              SizedBox(height: 16.h),
+                    SizedBox(height: 16.h),
 
-              // Confirm Password Field
-              CustomTextField.TextField(
-                controller: confirmPasswordController,
-                label: '',
-                hint: 'Confirm New Password',
-                obscureText: _obscureConfirmPassword,
-                textInputAction: TextInputAction.done,
-                prefixIconSvg: 'assets/icons/svg/lock.svg',
-                suffixIconSvg: _obscureConfirmPassword
-                    ? 'assets/icons/svg/eye-closed.svg'
-                    : null,
-                onSuffixIconTap: () {
-                  setState(() {
-                    _obscureConfirmPassword = !_obscureConfirmPassword;
-                  });
-                },
+                    // Confirm Password
+                    CustomTextField.TextField(
+                      controller: confirmPasswordController,
+                      label: '',
+                      hint: 'Confirm New Password',
+                      obscureText: _obscureConfirmPassword,
+                      textInputAction: TextInputAction.done,
+                      prefixIconSvg: 'assets/icons/svg/lock.svg',
+                      suffixIconSvg: _obscureConfirmPassword
+                          ? 'assets/icons/svg/eye-closed.svg'
+                          : null,
+                      onSuffixIconTap: () {
+                        setState(() {
+                          _obscureConfirmPassword = !_obscureConfirmPassword;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please confirm your new password';
+                        }
+                        if (value != newPasswordController.text) {
+                          return 'Passwords do not match';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
               ),
 
               SizedBox(height: 12.h),

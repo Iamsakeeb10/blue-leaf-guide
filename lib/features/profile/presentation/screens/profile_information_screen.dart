@@ -29,6 +29,7 @@ class _ProfileInformationScreenState extends State<ProfileInformationScreen> {
 
   String? _selectedImagePath;
   bool _isImageLoading = false;
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -177,14 +178,8 @@ class _ProfileInformationScreenState extends State<ProfileInformationScreen> {
   Future<void> _handleSave() async {
     FocusScope.of(context).unfocus();
 
-    if (firstNameController.text.trim().isEmpty) {
-      _showError('Please enter your first name');
-      return;
-    }
-
-    if (lastNameController.text.trim().isEmpty) {
-      _showError('Please enter your last name');
-      return;
+    if (!_formKey.currentState!.validate()) {
+      return; // Errors will show under fields
     }
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -372,27 +367,42 @@ class _ProfileInformationScreenState extends State<ProfileInformationScreen> {
               ),
               SizedBox(height: 32.h),
 
-              // First Name
-              CustomTextField.TextField(
-                controller: firstNameController,
-                label: '',
-                hint: 'First Name',
-                keyboardType: TextInputType.name,
-                textInputAction: TextInputAction.next,
-                prefixIconSvg: 'assets/icons/svg/user.svg',
+              Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    CustomTextField.TextField(
+                      controller: firstNameController,
+                      label: '',
+                      hint: 'First Name',
+                      keyboardType: TextInputType.name,
+                      textInputAction: TextInputAction.next,
+                      prefixIconSvg: 'assets/icons/svg/user.svg',
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter your first name';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 12.h),
+                    CustomTextField.TextField(
+                      controller: lastNameController,
+                      label: '',
+                      hint: 'Last Name',
+                      keyboardType: TextInputType.name,
+                      textInputAction: TextInputAction.next,
+                      prefixIconSvg: 'assets/icons/svg/user.svg',
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter your last name';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
               ),
-              SizedBox(height: 12.h),
-
-              // Last Name
-              CustomTextField.TextField(
-                controller: lastNameController,
-                label: '',
-                hint: 'Last Name',
-                keyboardType: TextInputType.name,
-                textInputAction: TextInputAction.next,
-                prefixIconSvg: 'assets/icons/svg/user.svg',
-              ),
-
               SizedBox(height: 32.h),
 
               // Save Button

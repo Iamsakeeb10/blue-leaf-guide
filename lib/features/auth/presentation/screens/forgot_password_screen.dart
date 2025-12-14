@@ -19,6 +19,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final emailController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
@@ -29,20 +30,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Future<void> _handleSendResetEmail() async {
     FocusScope.of(context).unfocus();
 
+    // Validate form first
+    if (!_formKey.currentState!.validate()) {
+      return; // Errors will show under the TextField automatically
+    }
+
     final email = emailController.text.trim();
-
-    if (email.isEmpty) {
-      _showError('Please enter your email address');
-      return;
-    }
-
-    // Basic email validation
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    if (!emailRegex.hasMatch(email)) {
-      _showError('Please enter a valid email address');
-      return;
-    }
-
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     final emailExists = await authProvider.checkEmailExists(email);
@@ -57,6 +50,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (success && mounted) {
       _showSuccessDialog();
     } else if (mounted) {
+      // Only show SnackBar for network/server errors
       _showError(authProvider.errorMessage ?? 'Failed to send reset email');
     }
   }
@@ -162,13 +156,28 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
               ),
               SizedBox(height: 32.h),
-              CustomTextField.TextField(
-                controller: emailController,
-                label: '',
-                hint: 'Email',
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.done,
-                prefixIconSvg: 'assets/icons/svg/mail.svg',
+              Form(
+                key: _formKey,
+                child: CustomTextField.TextField(
+                  controller: emailController,
+                  label: '',
+                  hint: 'Email',
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.done,
+                  prefixIconSvg: 'assets/icons/svg/mail.svg',
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your email address';
+                    }
+                    final emailRegex = RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    );
+                    if (!emailRegex.hasMatch(value)) {
+                      return 'Please enter a valid email address';
+                    }
+                    return null;
+                  },
+                ),
               ),
               SizedBox(height: 24.h),
               Button(

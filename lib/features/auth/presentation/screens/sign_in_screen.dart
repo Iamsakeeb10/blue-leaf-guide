@@ -23,6 +23,8 @@ class _SignInScreenState extends State<SignInScreen> {
   final passwordController = TextEditingController();
   bool _obscurePassword = true;
 
+  final _formKey = GlobalKey<FormState>();
+
   @override
   void dispose() {
     emailController.dispose();
@@ -31,16 +33,10 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Future<void> _handleSignIn() async {
-    // ✅ Hide keyboard
     FocusScope.of(context).unfocus();
 
-    if (emailController.text.trim().isEmpty) {
-      _showError('Please enter your email');
-      return;
-    }
-
-    if (passwordController.text.isEmpty) {
-      _showError('Please enter your password');
+    if (!_formKey.currentState!.validate()) {
+      // If any field has error, it will show below TextField
       return;
     }
 
@@ -58,9 +54,9 @@ class _SignInScreenState extends State<SignInScreen> {
           backgroundColor: Colors.green,
         ),
       );
-
       context.go('/home');
     } else if (mounted) {
+      // Only network/server error
       _showError(authProvider.errorMessage ?? 'Failed to sign in');
     }
   }
@@ -127,31 +123,59 @@ class _SignInScreenState extends State<SignInScreen> {
                       children: [
                         const OnboardingTitle(text: 'Sign In'),
                         SizedBox(height: 32.h),
-                        CustomTextField.TextField(
-                          controller: emailController,
-                          label: '',
-                          hint: 'Email',
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
-                          prefixIconSvg: 'assets/icons/svg/mail.svg',
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              CustomTextField.TextField(
+                                controller: emailController,
+                                label: '',
+                                hint: 'Email',
+                                keyboardType: TextInputType.emailAddress,
+                                textInputAction: TextInputAction.next,
+                                prefixIconSvg: 'assets/icons/svg/mail.svg',
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'Please enter your email';
+                                  }
+                                  if (!RegExp(
+                                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                                  ).hasMatch(value)) {
+                                    return 'Please enter a valid email';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              SizedBox(height: 12.h),
+                              CustomTextField.TextField(
+                                controller: passwordController,
+                                label: '',
+                                hint: 'Password',
+                                obscureText: _obscurePassword,
+                                textInputAction: TextInputAction.done,
+                                prefixIconSvg: 'assets/icons/svg/lock.svg',
+                                suffixIconSvg: _obscurePassword
+                                    ? 'assets/icons/svg/eye-closed.svg'
+                                    : null,
+                                onSuffixIconTap: () {
+                                  setState(
+                                    () => _obscurePassword = !_obscurePassword,
+                                  );
+                                },
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your password';
+                                  }
+                                  if (value.length < 6) {
+                                    return 'Password must be at least 6 characters';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ],
+                          ),
                         ),
-                        SizedBox(height: 12.h),
-                        CustomTextField.TextField(
-                          controller: passwordController,
-                          label: '',
-                          hint: 'Password',
-                          obscureText: _obscurePassword,
-                          textInputAction: TextInputAction.done,
-                          prefixIconSvg: 'assets/icons/svg/lock.svg',
-                          suffixIconSvg: _obscurePassword
-                              ? 'assets/icons/svg/eye-closed.svg'
-                              : null, // Use null to trigger icon fallback
-                          onSuffixIconTap: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                        ),
+
                         Align(
                           alignment: Alignment.center,
                           child: TextButton(

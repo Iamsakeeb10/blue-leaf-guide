@@ -19,24 +19,24 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final TextEditingController passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
+  final _formKey = GlobalKey<FormState>();
 
   Future<void> _handleContinue() async {
     FocusScope.of(context).unfocus();
 
+    if (!_formKey.currentState!.validate()) {
+      return; // Inline error shown
+    }
+
     final currentPassword = passwordController.text.trim();
     final user = FirebaseAuth.instance.currentUser;
 
-    if (currentPassword.isEmpty) {
-      _showError('Please enter your current password');
-      return;
-    }
-
     if (user == null || user.email == null) {
-      _showError('No logged-in user found. Please log in again.');
+      _showError('Session expired. Please log in again.');
       return;
     }
 
-    setState(() => _isLoading = true); // Start loading
+    setState(() => _isLoading = true);
 
     try {
       final credential = EmailAuthProvider.credential(
@@ -44,10 +44,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         password: currentPassword,
       );
 
-      // Reauthenticate
       await user.reauthenticateWithCredential(credential);
 
-      // Password is correct, go to next screen
       context.push(
         '/confirm-change-password',
         extra: {'currentPassword': currentPassword},
@@ -56,12 +54,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       if (e.code == 'wrong-password') {
         _showError('Incorrect current password');
       } else {
-        _showError('Failed to verify password. ${e.message}');
+        _showError(e.message ?? 'Password verification failed');
       }
-    } catch (e) {
-      _showError('An unexpected error occurred. Try again.');
+    } catch (_) {
+      _showError('Something went wrong. Please try again.');
     } finally {
-      if (mounted) setState(() => _isLoading = false); // Stop loading
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -89,21 +87,30 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Password Field
-              CustomTextField.TextField(
-                controller: passwordController,
-                label: '',
-                hint: 'Current Password',
-                obscureText: _obscurePassword,
-                textInputAction: TextInputAction.done,
-                prefixIconSvg: 'assets/icons/svg/lock.svg',
-                suffixIconSvg: _obscurePassword
-                    ? 'assets/icons/svg/eye-closed.svg'
-                    : null,
-                onSuffixIconTap: () {
-                  setState(() {
-                    _obscurePassword = !_obscurePassword;
-                  });
-                },
+              Form(
+                key: _formKey,
+                child: CustomTextField.TextField(
+                  controller: passwordController,
+                  label: '',
+                  hint: 'Current Password',
+                  obscureText: _obscurePassword,
+                  textInputAction: TextInputAction.done,
+                  prefixIconSvg: 'assets/icons/svg/lock.svg',
+                  suffixIconSvg: _obscurePassword
+                      ? 'assets/icons/svg/eye-closed.svg'
+                      : null,
+                  onSuffixIconTap: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter your current password';
+                    }
+                    return null;
+                  },
+                ),
               ),
 
               // Forgot Password

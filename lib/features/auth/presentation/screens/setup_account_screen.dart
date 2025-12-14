@@ -22,6 +22,7 @@ class _SetupAccountScreenState extends State<SetupAccountScreen> {
   final lastNameController = TextEditingController();
   final passwordController = TextEditingController();
   bool _obscurePassword = true;
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
@@ -34,19 +35,8 @@ class _SetupAccountScreenState extends State<SetupAccountScreen> {
   Future<void> _handleDone() async {
     FocusScope.of(context).unfocus();
 
-    if (firstNameController.text.trim().isEmpty) {
-      _showError('Please enter your first name');
-      return;
-    }
-
-    if (lastNameController.text.trim().isEmpty) {
-      _showError('Please enter your last name');
-      return;
-    }
-
-    if (passwordController.text.length < 4) {
-      _showError('Password must be at least 4 characters');
-      return;
+    if (!_formKey.currentState!.validate()) {
+      return; // Validation errors will show under each field automatically
     }
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -58,16 +48,12 @@ class _SetupAccountScreenState extends State<SetupAccountScreen> {
     );
 
     if (success && mounted) {
-      // Navigate to dashboard or home screen
-      // For now, show success message
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Account created successfully!'),
           backgroundColor: Colors.green,
         ),
       );
-
-      // TODO: Navigate to your dashboard/home screen
       context.go('/sign-in');
     } else if (mounted) {
       _showError(authProvider.errorMessage ?? 'Failed to create account');
@@ -101,39 +87,67 @@ class _SetupAccountScreenState extends State<SetupAccountScreen> {
                 padding: EdgeInsets.symmetric(horizontal: 20.w),
                 child: Column(
                   children: [
-                    CustomTextField.TextField(
-                      controller: firstNameController,
-                      label: 'First Name',
-                      hint: 'First Name',
-                      keyboardType: TextInputType.name,
-                      textInputAction: TextInputAction.next,
-                      prefixIconSvg: 'assets/icons/svg/user.svg',
-                    ),
-                    SizedBox(height: 12.h),
-                    CustomTextField.TextField(
-                      controller: lastNameController,
-                      label: 'Last Name',
-                      hint: 'Last Name',
-                      keyboardType: TextInputType.name,
-                      textInputAction: TextInputAction.next,
-                      prefixIconSvg: 'assets/icons/svg/user.svg',
-                    ),
-                    SizedBox(height: 12.h),
-                    CustomTextField.TextField(
-                      controller: passwordController,
-                      label: 'Password',
-                      hint: 'Password',
-                      obscureText: _obscurePassword,
-                      textInputAction: TextInputAction.done,
-                      prefixIconSvg: 'assets/icons/svg/lock.svg',
-                      suffixIconSvg: _obscurePassword
-                          ? 'assets/icons/svg/eye-closed.svg'
-                          : null, // Use null to trigger icon fallback
-                      onSuffixIconTap: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          CustomTextField.TextField(
+                            controller: firstNameController,
+                            label: 'First Name',
+                            hint: 'First Name',
+                            keyboardType: TextInputType.name,
+                            textInputAction: TextInputAction.next,
+                            prefixIconSvg: 'assets/icons/svg/user.svg',
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Please enter your first name';
+                              }
+                              return null;
+                            },
+                          ),
+                          SizedBox(height: 12.h),
+                          CustomTextField.TextField(
+                            controller: lastNameController,
+                            label: 'Last Name',
+                            hint: 'Last Name',
+                            keyboardType: TextInputType.name,
+                            textInputAction: TextInputAction.next,
+                            prefixIconSvg: 'assets/icons/svg/user.svg',
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Please enter your last name';
+                              }
+                              return null;
+                            },
+                          ),
+                          SizedBox(height: 12.h),
+                          CustomTextField.TextField(
+                            controller: passwordController,
+                            label: 'Password',
+                            hint: 'Password',
+                            obscureText: _obscurePassword,
+                            textInputAction: TextInputAction.done,
+                            prefixIconSvg: 'assets/icons/svg/lock.svg',
+                            suffixIconSvg: _obscurePassword
+                                ? 'assets/icons/svg/eye-closed.svg'
+                                : null,
+                            onSuffixIconTap: () {
+                              setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              );
+                            },
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter a password';
+                              }
+                              if (value.length < 4) {
+                                return 'Password must be at least 4 characters';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                     SizedBox(height: 12.h),
                     Align(

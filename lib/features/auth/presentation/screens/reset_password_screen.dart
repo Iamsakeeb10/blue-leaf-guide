@@ -23,6 +23,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   bool _obscurePassword = true;
   bool _isVerifying = true;
   String? _verifiedEmail;
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -60,19 +61,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Future<void> _handleResetPassword() async {
     FocusScope.of(context).unfocus();
 
-    final password = passwordController.text;
-
-    if (password.isEmpty) {
-      _showError('Please enter a password');
-      return;
-    }
-
-    if (password.length < 6) {
-      _showError('Password must be at least 6 characters');
-      return;
+    // Validate form first
+    if (!_formKey.currentState!.validate()) {
+      return; // Errors will show under the TextField automatically
     }
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final password = passwordController.text;
+
     final success = await authProvider.confirmPasswordReset(
       code: widget.resetCode,
       newPassword: password,
@@ -81,6 +77,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     if (success && mounted) {
       _showSuccessDialog();
     } else if (mounted) {
+      // Only show SnackBar for network/server errors
       _showError(authProvider.errorMessage ?? 'Failed to reset password');
     }
   }
@@ -259,17 +256,29 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   ),
                 ),
                 SizedBox(height: 32.h),
-                CustomTextField.TextField(
-                  controller: passwordController,
-                  label: '',
-                  hint: 'Create New Password',
-                  obscureText: _obscurePassword,
-                  textInputAction: TextInputAction.done,
-                  prefixIconSvg: 'assets/icons/svg/lock.svg',
-                  suffixIconSvg: _obscurePassword
-                      ? 'assets/icons/svg/eye-closed.svg'
-                      : null, // Use null to trigger icon fallback
-                  onSuffixIconTap: _togglePasswordVisibility,
+                Form(
+                  key: _formKey,
+                  child: CustomTextField.TextField(
+                    controller: passwordController,
+                    label: '',
+                    hint: 'Create New Password',
+                    obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.done,
+                    prefixIconSvg: 'assets/icons/svg/lock.svg',
+                    suffixIconSvg: _obscurePassword
+                        ? 'assets/icons/svg/eye-closed.svg'
+                        : null,
+                    onSuffixIconTap: _togglePasswordVisibility,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a password';
+                      }
+                      if (value.length < 4) {
+                        return 'Password must be at least 4 characters';
+                      }
+                      return null;
+                    },
+                  ),
                 ),
                 SizedBox(height: 12.h),
                 Align(
