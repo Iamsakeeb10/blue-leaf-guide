@@ -61,7 +61,7 @@ final GoRouter router = GoRouter(
     final isGoingToHome = loc == '/home';
 
     // If logged in and trying to access auth screens, redirect to home
-    if (isLoggedIn && isGoingToAuth) {
+    if (isLoggedIn && isGoingToAuth && loc != '/forgot-password') {
       return '/home';
     }
 
