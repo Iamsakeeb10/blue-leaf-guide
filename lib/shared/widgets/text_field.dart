@@ -195,14 +195,14 @@ class _TextFieldState extends State<TextField> {
                   errorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(100.r),
                     borderSide: BorderSide(
-                      color: AppColors.danger,
+                      color: AppColors.errorRed,
                       width: 1.25.w,
                     ),
                   ),
                   focusedErrorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(100.r),
                     borderSide: BorderSide(
-                      color: AppColors.danger,
+                      color: AppColors.errorRed,
                       width: 1.25.w,
                     ),
                   ),
