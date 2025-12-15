@@ -195,7 +195,10 @@ class _AddClientScreenState extends State<AddClientScreen> {
         return CustomDatePickerDialog(
           initialDate: DateTime.now(),
           firstDate: DateTime(1900),
-          lastDate: DateTime.now(),
+          lastDate: DateTime.now().add(
+            const Duration(days: 3650),
+          ), // future 10 years
+          disablePastDates: true, // ENABLE: only current & future dates
         );
       },
     );

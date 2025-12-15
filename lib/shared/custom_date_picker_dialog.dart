@@ -8,11 +8,13 @@ class CustomDatePickerDialog extends StatefulWidget {
   final DateTime initialDate;
   final DateTime firstDate;
   final DateTime lastDate;
+  final bool disablePastDates;
 
   const CustomDatePickerDialog({
     required this.initialDate,
     required this.firstDate,
     required this.lastDate,
+    this.disablePastDates = false,
   });
 
   @override
@@ -95,6 +97,7 @@ class CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
 
   bool _isDateDisabled(DateTime date) {
     if (date.year == 0) return true; // Empty cell
+    if (widget.disablePastDates && date.isBefore(DateTime.now())) return true;
     return date.isBefore(widget.firstDate) || date.isAfter(widget.lastDate);
   }
 
