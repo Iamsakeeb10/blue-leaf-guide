@@ -7,7 +7,7 @@ class ChatApiService {
           BaseOptions(
             baseUrl: "http://54.144.185.224:5678",
             connectTimeout: const Duration(seconds: 10),
-            receiveTimeout: const Duration(seconds: 10),
+            receiveTimeout: const Duration(seconds: 60),
             headers: {
               "Content-Type": "application/json",
               "X-API-Key": "e\$G@AhcsQRW\$w!iHI\$\$\$)Asv",

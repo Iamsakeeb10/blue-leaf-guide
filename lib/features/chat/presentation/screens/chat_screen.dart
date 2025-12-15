@@ -19,7 +19,7 @@ class ChatMessage {
 }
 
 class ChatScreen extends StatefulWidget {
-  final int? chatId; // Pass this from history to load existing chat
+  final int? chatId;
 
   const ChatScreen({super.key, this.chatId});
 
@@ -52,7 +52,6 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     if (widget.chatId != null) {
-      // Load existing chat
       await _loadChatHistory(widget.chatId!);
     }
   }
@@ -93,40 +92,6 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  Future<void> _createNewChat() async {
-    if (_userId == null) return;
-
-    setState(() => _isSending = true);
-
-    try {
-      final response = await ChatApiService.newChat(userId: _userId!);
-
-      if (response['error'] == true) {
-        _showError('Failed to create chat');
-        setState(() => _isSending = false);
-        return;
-      }
-
-      final chatId = ChatApiService.extractChatId(response);
-      if (chatId == null) {
-        _showError('Invalid chat ID received');
-        setState(() => _isSending = false);
-        return;
-      }
-
-      setState(() {
-        _currentChatId = chatId;
-        _isSending = false;
-      });
-
-      // Load the initial messages
-      await _loadChatHistory(chatId);
-    } catch (e) {
-      _showError('Error creating chat: $e');
-      setState(() => _isSending = false);
-    }
-  }
-
   Future<void> _sendMessage() async {
     if (_controller.text.trim().isEmpty) return;
     if (_userId == null) return;
@@ -134,13 +99,101 @@ class _ChatScreenState extends State<ChatScreen> {
     final messageText = _controller.text.trim();
     _controller.clear();
 
-    // If no chat exists, create one first
+    // If no chat exists, create one with the user's actual message
     if (_currentChatId == null) {
-      await _createNewChat();
-      if (_currentChatId == null) return;
+      // Add user message to UI immediately
+      setState(() {
+        _messages.add(ChatMessage(text: messageText, isUser: true));
+        _isSending = true;
+      });
+
+      _scrollToBottom();
+
+      try {
+        // Create new chat but ignore the "Hello!" message
+        final newChatResponse = await ChatApiService.newChat(userId: _userId!);
+
+        if (newChatResponse['error'] == true) {
+          _showError('Failed to create chat');
+          setState(() {
+            _messages.removeLast(); // Remove the optimistic message
+            _isSending = false;
+          });
+          return;
+        }
+
+        final chatId = ChatApiService.extractChatId(newChatResponse);
+        if (chatId == null) {
+          _showError('Invalid chat ID received');
+          setState(() {
+            _messages.removeLast();
+            _isSending = false;
+          });
+          return;
+        }
+
+        _currentChatId = chatId;
+
+        // Now send the actual user message
+        final response = await ChatApiService.sendMessage(
+          userId: _userId!,
+          chatId: _currentChatId!,
+          message: messageText,
+        );
+
+        if (response['error'] == true) {
+          _showError('Failed to send message');
+          setState(() {
+            _messages.removeLast();
+            _isSending = false;
+          });
+          return;
+        }
+
+        // Extract messages but filter out the initial "Hello!" exchange
+        final allMessages = ChatApiService.extractMessages(response);
+
+        // Filter to only show messages that are NOT the initial greeting
+        final filteredMessages = allMessages.where((m) {
+          final content = (m['content'] ?? '').toLowerCase();
+          return content != 'hello!' &&
+              content != 'hi there! how can i help you today?' &&
+              content != 'hi! how can i help you today?';
+        }).toList();
+
+        setState(() {
+          _messages = filteredMessages.map((m) {
+            return ChatMessage(
+              text: m['content'] ?? '',
+              isUser: m['role'] == 'user',
+              timestamp:
+                  DateTime.tryParse(m['createdAt'] ?? '') ?? DateTime.now(),
+            );
+          }).toList();
+          _isSending = false;
+        });
+
+        _scrollToBottom();
+
+        // Save to Firestore with the actual user message as title
+        await _firestoreService.saveChatSession(
+          chatId: _currentChatId!,
+          title: _firestoreService.generateChatTitle(messageText),
+          lastMessageTime: DateTime.now(),
+        );
+      } catch (e) {
+        _showError('Error sending message: $e');
+        setState(() {
+          if (_messages.isNotEmpty && _messages.last.isUser) {
+            _messages.removeLast();
+          }
+          _isSending = false;
+        });
+      }
+      return;
     }
 
-    // Add user message to UI immediately
+    // Existing chat - normal flow
     setState(() {
       _messages.add(ChatMessage(text: messageText, isUser: true));
       _isSending = true;
@@ -157,15 +210,16 @@ class _ChatScreenState extends State<ChatScreen> {
 
       if (response['error'] == true) {
         _showError('Failed to send message');
-        setState(() => _isSending = false);
+        setState(() {
+          _messages.removeLast();
+          _isSending = false;
+        });
         return;
       }
 
-      // Extract all messages from response
       final messages = ChatApiService.extractMessages(response);
 
       setState(() {
-        // Replace messages with server response
         _messages = messages.map((m) {
           return ChatMessage(
             text: m['content'] ?? '',
@@ -179,27 +233,23 @@ class _ChatScreenState extends State<ChatScreen> {
 
       _scrollToBottom();
 
-      // Save to Firestore (only if it's the first user message)
-      if (_messages.length == 2) {
+      // Update last message time
+      final session = await _firestoreService.getChatSession(_currentChatId!);
+      if (session != null) {
         await _firestoreService.saveChatSession(
           chatId: _currentChatId!,
-          title: _firestoreService.generateChatTitle(messageText),
+          title: session.title,
           lastMessageTime: DateTime.now(),
         );
-      } else {
-        // Update last message time
-        final session = await _firestoreService.getChatSession(_currentChatId!);
-        if (session != null) {
-          await _firestoreService.saveChatSession(
-            chatId: _currentChatId!,
-            title: session.title,
-            lastMessageTime: DateTime.now(),
-          );
-        }
       }
     } catch (e) {
       _showError('Error sending message: $e');
-      setState(() => _isSending = false);
+      setState(() {
+        if (_messages.isNotEmpty && _messages.last.isUser) {
+          _messages.removeLast();
+        }
+        _isSending = false;
+      });
     }
   }
 
@@ -246,19 +296,13 @@ class _ChatScreenState extends State<ChatScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                /// ---------- MESSAGES OR WELCOME SCREEN ----------
                 Expanded(
                   child: _messages.isEmpty
                       ? _buildWelcomeScreen()
                       : _buildMessagesList(),
                 ),
-
-                /// ---------- 4 BOXES (only show when no messages) ----------
                 if (_messages.isEmpty) _buildFeatureBoxes(),
-
                 SizedBox(height: _messages.isEmpty ? 12.h : 8.h),
-
-                /// ---------- INPUT BAR ----------
                 _buildInputBar(),
               ],
             ),
@@ -272,7 +316,6 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            /// PNG ICON
             Image.asset(
               "assets/images/gemini-chat.png",
               width: 72.w,
@@ -280,8 +323,6 @@ class _ChatScreenState extends State<ChatScreen> {
               fit: BoxFit.contain,
             ),
             SizedBox(height: 24.h),
-
-            /// Title
             Text(
               "Welcome to Your AI Tutor",
               textAlign: TextAlign.center,
@@ -292,10 +333,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 height: 1.3,
               ),
             ),
-
             SizedBox(height: 8.h),
-
-            /// Subtitle with max width
             ConstrainedBox(
               constraints: BoxConstraints(maxWidth: 300.w),
               child: Text(
@@ -322,7 +360,6 @@ class _ChatScreenState extends State<ChatScreen> {
       itemCount: _messages.length + (_isSending ? 1 : 0),
       itemBuilder: (context, index) {
         if (index == _messages.length) {
-          // Show loading indicator for AI response
           return _buildAILoadingMessage();
         }
         final message = _messages[index];
@@ -369,7 +406,6 @@ class _ChatScreenState extends State<ChatScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// Gemini icon
           Image.asset(
             "assets/images/gemini-chat.png",
             width: 35.w,
@@ -377,8 +413,6 @@ class _ChatScreenState extends State<ChatScreen> {
             fit: BoxFit.contain,
           ),
           SizedBox(width: 12.w),
-
-          /// Message text
           Flexible(
             child: Padding(
               padding: EdgeInsets.only(top: 0.h),
@@ -404,7 +438,6 @@ class _ChatScreenState extends State<ChatScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// Gemini icon
           Image.asset(
             "assets/images/gemini-chat.png",
             width: 35.w,
@@ -412,15 +445,9 @@ class _ChatScreenState extends State<ChatScreen> {
             fit: BoxFit.contain,
           ),
           SizedBox(width: 12.w),
-
-          /// Loading indicator
           Padding(
             padding: EdgeInsets.only(top: 8.h),
-            child: SizedBox(
-              width: 20.w,
-              height: 20.w,
-              child: const CircularProgressIndicator(strokeWidth: 2),
-            ),
+            child: _TypingIndicator(),
           ),
         ],
       ),
@@ -508,7 +535,6 @@ class _ChatScreenState extends State<ChatScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              /// Multi-line TextField
               Flexible(
                 child: TextField(
                   controller: _controller,
@@ -528,7 +554,6 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                 ),
               ),
-
               Container(
                 width: 40.w,
                 height: 40.w,
@@ -539,10 +564,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   height: 20.w,
                 ),
               ),
-
               SizedBox(width: 10.w),
-
-              /// Send button
               GestureDetector(
                 onTap: _isSending ? null : _sendMessage,
                 child: Container(
@@ -576,6 +598,66 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// Animated typing indicator with three dots
+class _TypingIndicator extends StatefulWidget {
+  @override
+  State<_TypingIndicator> createState() => _TypingIndicatorState();
+}
+
+class _TypingIndicatorState extends State<_TypingIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(3, (index) {
+        return AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            final delay = index * 0.2;
+            final value = (_controller.value - delay) % 1.0;
+            final opacity = value < 0.5
+                ? Curves.easeIn.transform(value * 2)
+                : Curves.easeOut.transform((1.0 - value) * 2);
+
+            return Padding(
+              padding: EdgeInsets.symmetric(horizontal: 2.w),
+              child: Opacity(
+                opacity: 0.3 + (opacity * 0.7),
+                child: Container(
+                  width: 8.w,
+                  height: 8.w,
+                  decoration: BoxDecoration(
+                    color: AppColors.textPrimary,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      }),
     );
   }
 }

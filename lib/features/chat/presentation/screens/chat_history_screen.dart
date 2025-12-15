@@ -173,8 +173,8 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
   Widget _buildHistoryCard(ChatSessionModel item, {required bool showBorder}) {
     return GestureDetector(
       onTap: () {
-        // Navigate to chat screen with chatId
-        context.push('/chat/${item.chatId}');
+        // Navigate to chat screen with chatId using extra
+        context.push('/chat', extra: item.chatId);
       },
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: 16.w),
@@ -192,14 +192,12 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Gemini icon
             Image.asset(
               'assets/images/gemini-chat.png',
               width: 35.w,
               height: 35.w,
               fit: BoxFit.contain,
             ),
-
             SizedBox(width: 12.w),
             Expanded(
               child: Column(
@@ -231,7 +229,6 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
               ),
             ),
             SizedBox(width: 8.w),
-            // 3-dot menu
             PopupMenuButton<String>(
               icon: Icon(
                 Icons.more_vert,
