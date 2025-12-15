@@ -243,7 +243,14 @@ final GoRouter router = GoRouter(
       path: '/notification-list',
       builder: (context, state) => const NotificationListScreen(),
     ),
-    GoRoute(path: '/chat', builder: (context, state) => const ChatScreen()),
+    GoRoute(
+      path: '/chat',
+      builder: (context, state) {
+        final chatId = state.extra as int?;
+        return ChatScreen(chatId: chatId);
+      },
+    ),
+
     GoRoute(
       path: '/chat-history',
       builder: (context, state) => const ChatHistoryScreen(),
