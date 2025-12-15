@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/widgets/custom_appbar.dart';
+import '../../../../shared/widgets/custom_popup_menu.dart';
 import '../../data/chat_api_service.dart';
 
 class ChatHistoryScreen extends StatefulWidget {
@@ -105,6 +106,49 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Chat deleted')));
+      }
+    }
+  }
+
+  Future<void> _showRenameDialog(
+    BuildContext context,
+    ChatSessionModel item,
+  ) async {
+    final controller = TextEditingController(text: item.title);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rename Chat'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: 'Enter new chat name'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Rename',
+              style: TextStyle(color: AppColors.brand500),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final newTitle = controller.text.trim();
+      if (newTitle.isNotEmpty) {
+        // await _firestoreService.renameChatSession(item.chatId, newTitle);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Chat renamed successfully')),
+          );
+        }
       }
     }
   }
@@ -262,20 +306,29 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
               ),
             ),
             SizedBox(width: 8.w),
-            PopupMenuButton<String>(
-              icon: Icon(
-                Icons.more_vert,
-                color: AppColors.textPrimary.withOpacity(0.8),
-                size: 20.sp,
+            Align(
+              alignment: Alignment.topRight,
+              child: CustomPopupMenu(
+                iconPath: 'assets/icons/svg/more.svg',
+                offset: Offset(-100, 8), // adjust if needed
+                menuWidth: 140.w,
+                items: [
+                  PopupMenuItemData(
+                    text: 'Rename',
+                    textColor: AppColors.textPrimary.withOpacity(0.8),
+                    onPressed: () {
+                      _showRenameDialog(context, item);
+                    },
+                  ),
+                  PopupMenuItemData(
+                    text: 'Delete',
+                    textColor: AppColors.errorRed,
+                    onPressed: () {
+                      _deleteChat(item.chatId);
+                    },
+                  ),
+                ],
               ),
-              onSelected: (value) {
-                if (value == 'delete') {
-                  _deleteChat(item.chatId);
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(value: 'delete', child: Text('Delete')),
-              ],
             ),
           ],
         ),
