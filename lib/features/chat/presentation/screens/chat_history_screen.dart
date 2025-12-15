@@ -9,7 +9,7 @@ import '../../../../main.dart';
 import '../../../../shared/widgets/custom_appbar.dart';
 import '../../../../shared/widgets/custom_dialog.dart';
 import '../../../../shared/widgets/custom_popup_menu.dart';
-import '../../data/chat_api_service.dart';
+import '../../data/chat_firestore_service.dart';
 
 class ChatHistoryScreen extends StatefulWidget {
   const ChatHistoryScreen({super.key});

@@ -74,14 +74,7 @@ class _ChatScreenState extends State<ChatScreen> {
       final messages = ChatApiService.extractMessages(response);
       setState(() {
         _currentChatId = chatId;
-        _messages = messages.map((m) {
-          return ChatMessage(
-            text: m['content'] ?? '',
-            isUser: m['role'] == 'user',
-            timestamp:
-                DateTime.tryParse(m['createdAt'] ?? '') ?? DateTime.now(),
-          );
-        }).toList();
+        _messages = _mapMessages(messages);
         _isLoading = false;
       });
 
@@ -90,6 +83,16 @@ class _ChatScreenState extends State<ChatScreen> {
       _showError('Error loading chat: $e');
       setState(() => _isLoading = false);
     }
+  }
+
+  List<ChatMessage> _mapMessages(List<Map<String, dynamic>> messages) {
+    return messages.map((m) {
+      return ChatMessage(
+        text: m['content'] ?? m['message'] ?? m['text'] ?? m['response'] ?? '',
+        isUser: m['role'] == 'user',
+        timestamp: DateTime.tryParse(m['createdAt'] ?? '') ?? DateTime.now(),
+      );
+    }).toList();
   }
 
   Future<void> _sendMessage() async {
@@ -137,24 +140,34 @@ class _ChatScreenState extends State<ChatScreen> {
 
         _currentChatId = chatId;
 
-        // Extract messages from the new chat response
-        final allMessages = ChatApiService.extractMessages(newChatResponse);
+        // Fetch the full history (including the AI response) immediately
+        // because newChat response might not contain the message content
+        final historyResponse = await ChatApiService.loadHistory(
+          userId: _userId!,
+          chatId: chatId,
+        );
+
+        if (historyResponse['error'] == true) {
+          // Fallback: use what we have (likely just the user message without AI reply yet)
+          // But actually we should try to show what we can or wait.
+          final partialMessages = ChatApiService.extractMessages(
+            newChatResponse,
+          );
+          _messages = _mapMessages(partialMessages);
+        } else {
+          final historyMessages = ChatApiService.extractMessages(
+            historyResponse,
+          );
+          _messages = _mapMessages(historyMessages);
+        }
 
         setState(() {
-          _messages = allMessages.map((m) {
-            return ChatMessage(
-              text: m['content'] ?? '',
-              isUser: m['role'] == 'user',
-              timestamp:
-                  DateTime.tryParse(m['createdAt'] ?? '') ?? DateTime.now(),
-            );
-          }).toList();
           _isSending = false;
         });
 
         _scrollToBottom();
 
-        // Save to Firestore with the actual user message as title
+        // Save to Firestore (Title generation is fine)
         await _firestoreService.saveChatSession(
           chatId: _currentChatId!,
           title: _firestoreService.generateChatTitle(messageText),
@@ -199,14 +212,7 @@ class _ChatScreenState extends State<ChatScreen> {
       final messages = ChatApiService.extractMessages(response);
 
       setState(() {
-        _messages = messages.map((m) {
-          return ChatMessage(
-            text: m['content'] ?? '',
-            isUser: m['role'] == 'user',
-            timestamp:
-                DateTime.tryParse(m['createdAt'] ?? '') ?? DateTime.now(),
-          );
-        }).toList();
+        _messages = _mapMessages(messages);
         _isSending = false;
       });
 
@@ -379,11 +385,62 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  // Widget _buildAIMessage(String text) {
+  //   return Padding(
+  //     padding: EdgeInsets.only(bottom: 16.h),
+  //     child: Row(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Image.asset(
+  //           "assets/images/gemini-chat.png",
+  //           width: 35.w,
+  //           height: 35.w,
+  //           fit: BoxFit.contain,
+  //         ),
+  //         SizedBox(width: 12.w),
+  //         Flexible(
+  //           child: Padding(
+  //             padding: EdgeInsets.only(top: 0.h),
+  //             child: Text(
+  //               text,
+  //               style: TextStyle(
+  //                 fontSize: 12.sp,
+  //                 fontWeight: FontWeight.w500,
+  //                 color: AppColors.textPrimary.withOpacity(0.8),
+  //                 height: 1.4,
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   Widget _buildAIMessage(String text) {
+    // Text style to measure
+    final textStyle = TextStyle(
+      fontSize: 12.sp,
+      fontWeight: FontWeight.w500,
+      height: 1.4,
+    );
+
+    // Measure the text width
+    final textSpan = TextSpan(text: text, style: textStyle);
+    final textPainter = TextPainter(
+      text: textSpan,
+      maxLines: 1,
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: 250.w); // Set max width of the message bubble
+
+    final isSingleLine = textPainter.didExceedMaxLines == false;
+
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: isSingleLine
+            ? CrossAxisAlignment.center
+            : CrossAxisAlignment.start,
         children: [
           Image.asset(
             "assets/images/gemini-chat.png",
@@ -397,11 +454,8 @@ class _ChatScreenState extends State<ChatScreen> {
               padding: EdgeInsets.only(top: 0.h),
               child: Text(
                 text,
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w500,
+                style: textStyle.copyWith(
                   color: AppColors.textPrimary.withOpacity(0.8),
-                  height: 1.4,
                 ),
               ),
             ),
