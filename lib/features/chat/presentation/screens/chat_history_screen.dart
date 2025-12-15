@@ -167,6 +167,39 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
           );
         },
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 36.w), // spacing from sides
+        child: SizedBox(
+          width: double.infinity,
+          height: 50.h,
+          child: ElevatedButton(
+            onPressed: () => context.push('/new-chat'), // navigate to new chat
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.brand500,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(32.r),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.add, size: 24.r, color: Colors.white),
+                SizedBox(width: 8.w),
+
+                Text(
+                  'New Chat',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
