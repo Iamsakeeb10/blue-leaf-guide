@@ -312,7 +312,8 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
     return GestureDetector(
       onTap: () {
         // Navigate to chat screen with chatId using extra
-        context.push('/chat', extra: item.chatId);
+        // context.push('/chat', extra: item.chatId);
+        context.pushReplacement('/chat', extra: item.chatId);
       },
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: 16.w),
