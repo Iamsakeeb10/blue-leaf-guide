@@ -107,6 +107,23 @@ class ChatApiService {
     return _post({"userId": userId, "chatId": chatId.toString(), "action": "history"});
   }
 
+  /// LIST CHATS
+  static Future<Map<String, dynamic>> listChats({required String userId}) {
+    return _post({"userId": userId, "action": "listChats"});
+  }
+
+  /// DELETE CHAT
+  static Future<Map<String, dynamic>> deleteChat({
+    required String userId,
+    required int chatId,
+  }) {
+    return _post({
+      "userId": userId,
+      "chatId": chatId.toString(),
+      "action": "deleteChat",
+    });
+  }
+
   /// Helper to extract chatId from response
   static int? extractChatId(Map<String, dynamic> res) {
     // Case 1: backend sends chatId directly

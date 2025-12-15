@@ -9,7 +9,9 @@ import '../../../../main.dart';
 import '../../../../shared/widgets/custom_appbar.dart';
 import '../../../../shared/widgets/custom_dialog.dart';
 import '../../../../shared/widgets/custom_popup_menu.dart';
+import '../../data/chat_api_service.dart';
 import '../../data/chat_firestore_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ChatHistoryScreen extends StatefulWidget {
   const ChatHistoryScreen({super.key});
@@ -94,13 +96,32 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
         primaryButtonOnPressed: () async {
           Navigator.of(context).pop(); // Close the dialog first
 
+          // Create a flag to track success
+          bool apiSuccess = false;
+
+          // Delete from API first (source of truth for existence)
+          try {
+            final userId = FirebaseAuth.instance.currentUser?.uid;
+            if (userId != null) {
+              await ChatApiService.deleteChat(userId: userId, chatId: chatId);
+              apiSuccess = true;
+            }
+          } catch (e) {
+            debugPrint("Error deleting chat from API: $e");
+            // If API delete fails, we might still want to delete locally or warn user?
+            // For now, proceed to delete local data so it's consistent at least locally
+          }
+
+          // Delete from Firestore (local customizations)
           await _firestoreService.deleteChatSession(chatId);
 
           if (mounted) {
+            setState(() {}); // Refresh the list
+            
             scaffoldMessengerKey.currentState?.showSnackBar(
               const SnackBar(
                 content: Text(
-                  'Chat deleted successsfully...',
+                  'Chat deleted successfully',
                   style: TextStyle(color: Colors.white),
                 ),
                 backgroundColor: AppColors.errorRed,
@@ -201,15 +222,19 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
       if (newTitle.isNotEmpty && newTitle != item.title) {
         await _firestoreService.updateChatTitle(item.chatId, newTitle);
 
-        scaffoldMessengerKey.currentState?.showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Chat renamed successfully',
-              style: TextStyle(color: Colors.white),
-            ),
-            backgroundColor: AppColors.timelinePrimary,
-          ),
-        );
+        if (mounted) {
+           setState(() {}); // Refresh list to reflect changes if needed
+           
+           scaffoldMessengerKey.currentState?.showSnackBar(
+             const SnackBar(
+               content: Text(
+                 'Chat renamed successfully',
+                 style: TextStyle(color: Colors.white),
+               ),
+               backgroundColor: AppColors.timelinePrimary,
+             ),
+           );
+        }
       }
     }
   }
@@ -219,54 +244,101 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: CustomAppBar(title: 'Chat History'),
-      body: StreamBuilder<List<ChatSessionModel>>(
-        stream: _firestoreService.getChatSessions(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: ChatApiService.listChats(
+          userId: FirebaseAuth.instance.currentUser?.uid ?? '',
+        ),
+        builder: (context, apiSnapshot) {
+          if (apiSnapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+          // Note: We don't block fully on error, we try to show what we can or empty
+          if (apiSnapshot.hasError) {
+             debugPrint("Error loading chats API: ${apiSnapshot.error}");
           }
 
-          final sessions = snapshot.data ?? [];
+          final apiData = apiSnapshot.data;
+          final List<dynamic> rawApiChats = (apiData != null && apiData['chats'] is List) 
+              ? apiData['chats'] 
+              : [];
 
-          if (sessions.isEmpty) {
-            return _buildEmptyState();
-          }
+          return StreamBuilder<List<ChatSessionModel>>(
+            stream: _firestoreService.getChatSessions(),
+            builder: (context, streamSnapshot) {
+              final firestoreChats = streamSnapshot.data ?? [];
+              
+              // Merge Logic
+              final Map<int, ChatSessionModel> firestoreMap = {
+                for (var item in firestoreChats) item.chatId: item
+              };
 
-          final grouped = _groupChatHistoryByDate(sessions);
+              final List<ChatSessionModel> mergedChats = [];
+              
+              for (var rawChat in rawApiChats) {
+                 if (rawChat is! Map) continue;
+                 
+                 // Fix: Try to get chatId from direct key first, then fallback
+                 final int? chatId = int.tryParse(rawChat['chatId'].toString()) ?? 
+                                     ChatApiService.extractChatId({'messages': [rawChat]}) ?? 
+                                     int.tryParse(rawChat['id'].toString());
 
-          return ListView.builder(
-            padding: EdgeInsets.only(
-              top: 20.0.h,
-              bottom: MediaQuery.of(context).padding.bottom,
-            ),
-            itemCount: grouped.length,
-            itemBuilder: (context, groupIndex) {
-              final label = grouped.keys.elementAt(groupIndex);
-              final items = grouped[label]!;
+                 if (chatId == null || chatId == 0) continue;
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary.withOpacity(0.7),
+                 final apiTitle = rawChat['title'] as String?;
+                 // Try to parse time, or default to now
+                 final apiTimeStr = rawChat['createdAt'] ?? rawChat['updatedAt'];
+                 final apiTime = DateTime.tryParse(apiTimeStr ?? '') ?? DateTime.now();
+
+                 final localData = firestoreMap[chatId];
+                 
+                 mergedChats.add(ChatSessionModel(
+                   chatId: chatId,
+                   title: localData?.title ?? apiTitle ?? 'Chat $chatId', 
+                   lastMessageTime: apiTime, 
+                 ));
+              }
+              
+              // Sort by date desc
+              mergedChats.sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
+
+              if (mergedChats.isEmpty) {
+                return _buildEmptyState();
+              }
+
+              final grouped = _groupChatHistoryByDate(mergedChats);
+
+              return ListView.builder(
+                padding: EdgeInsets.only(
+                  top: 20.0.h,
+                  bottom: MediaQuery.of(context).padding.bottom + 80.h, // Add padding for FAB
+                ),
+                itemCount: grouped.length,
+                itemBuilder: (context, groupIndex) {
+                  final label = grouped.keys.elementAt(groupIndex);
+                  final items = grouped[label]!;
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        child: Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary.withOpacity(0.7),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  ...List.generate(items.length, (index) {
-                    final isLast = index == items.length - 1;
-                    return _buildHistoryCard(items[index], showBorder: !isLast);
-                  }),
-                ],
+                      ...List.generate(items.length, (index) {
+                        final isLast = index == items.length - 1;
+                        return _buildHistoryCard(items[index], showBorder: !isLast);
+                      }),
+                    ],
+                  );
+                },
               );
             },
           );
@@ -279,7 +351,11 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
           width: double.infinity,
           height: 50.h,
           child: ElevatedButton(
-            onPressed: () => context.push('/chat'), // navigate to new chat
+            onPressed: () {
+               context.push('/chat').then((_) {
+                 if (mounted) setState(() {}); // Refresh list
+               });
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.brand500,
               shape: RoundedRectangleBorder(
@@ -311,9 +387,11 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
   Widget _buildHistoryCard(ChatSessionModel item, {required bool showBorder}) {
     return GestureDetector(
       onTap: () {
-        // Navigate to chat screen with chatId using extra
-        // context.push('/chat', extra: item.chatId);
-        context.pushReplacement('/chat', extra: item.chatId);
+        // Use push instead of pushReplacement to keep history in stack
+        // and refresh when returning
+        context.push('/chat', extra: item.chatId).then((_) {
+          if (mounted) setState(() {});
+        });
       },
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: 16.w),
