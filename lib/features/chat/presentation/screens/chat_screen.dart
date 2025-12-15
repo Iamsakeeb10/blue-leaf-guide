@@ -438,16 +438,30 @@ class _ChatScreenState extends State<ChatScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Image.asset(
-            "assets/images/gemini-chat.png",
-            width: 35.w,
-            height: 35.w,
-            fit: BoxFit.contain,
-          ),
-          SizedBox(width: 12.w),
-          Padding(
-            padding: EdgeInsets.only(top: 8.h),
-            child: _TypingIndicator(),
+          Container(
+            padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+            decoration: BoxDecoration(
+              color: const Color(0x090F050D),
+              borderRadius: BorderRadius.circular(50),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const _TypingIndicator(),
+
+                SizedBox(width: 8.w),
+
+                Text(
+                  'Generating',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: AppColors.textPrimary.withOpacity(0.8),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -602,22 +616,30 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 }
 
-// Animated typing indicator with three dots
 class _TypingIndicator extends StatefulWidget {
+  const _TypingIndicator({super.key});
+
   @override
   State<_TypingIndicator> createState() => _TypingIndicatorState();
-}
+} // ✅ MISSING BRACE FIXED
 
 class _TypingIndicatorState extends State<_TypingIndicator>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+  late final AnimationController _controller;
+
+  final List<double> _sizes = [3, 4, 5];
+  final List<Color> _colors = [
+    Color(0xFF6292FD),
+    Color(0xFF447DFD),
+    Color(0xFF155DFC),
+  ];
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1400),
+      duration: const Duration(milliseconds: 1200),
     )..repeat();
   }
 
@@ -637,19 +659,20 @@ class _TypingIndicatorState extends State<_TypingIndicator>
           builder: (context, child) {
             final delay = index * 0.2;
             final value = (_controller.value - delay) % 1.0;
+
             final opacity = value < 0.5
                 ? Curves.easeIn.transform(value * 2)
-                : Curves.easeOut.transform((1.0 - value) * 2);
+                : Curves.easeOut.transform((1 - value) * 2);
 
             return Padding(
-              padding: EdgeInsets.symmetric(horizontal: 2.w),
+              padding: EdgeInsets.symmetric(horizontal: 3.w),
               child: Opacity(
                 opacity: 0.3 + (opacity * 0.7),
                 child: Container(
-                  width: 8.w,
-                  height: 8.w,
+                  width: _sizes[index].w,
+                  height: _sizes[index].w,
                   decoration: BoxDecoration(
-                    color: AppColors.textPrimary,
+                    color: _colors[index],
                     shape: BoxShape.circle,
                   ),
                 ),
