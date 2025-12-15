@@ -78,8 +78,11 @@ class ChatApiService {
   }
 
   /// NEW CHAT
-  static Future<Map<String, dynamic>> newChat({required String userId}) {
-    return _post({"userId": userId, "message": "Hello!", "action": "newChat"});
+  static Future<Map<String, dynamic>> newChat({
+    required String userId,
+    String message = "Hello!",
+  }) {
+    return _post({"userId": userId, "message": message, "action": "newChat"});
   }
 
   /// CONTINUE CHAT

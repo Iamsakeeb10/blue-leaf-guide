@@ -7,6 +7,18 @@ class ChatFirestoreService {
 
   String? get currentUserId => _auth.currentUser?.uid;
 
+  /// Update chat title
+  Future<void> updateChatTitle(int chatId, String newTitle) async {
+    if (currentUserId == null) return;
+
+    await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('chat_sessions')
+        .doc(chatId.toString())
+        .update({'title': newTitle});
+  }
+
   /// Save or update a chat session
   Future<void> saveChatSession({
     required int chatId,

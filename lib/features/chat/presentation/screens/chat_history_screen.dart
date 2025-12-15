@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../main.dart';
 import '../../../../shared/widgets/custom_appbar.dart';
+import '../../../../shared/widgets/custom_dialog.dart';
 import '../../../../shared/widgets/custom_popup_menu.dart';
 import '../../data/chat_api_service.dart';
 
@@ -82,32 +84,35 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
   }
 
   Future<void> _deleteChat(int chatId) async {
-    final confirm = await showDialog<bool>(
+    await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Chat'),
-        content: const Text('Are you sure you want to delete this chat?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
+      builder: (context) => CustomDialog(
+        title: 'Delete Chat',
+        subtitle: 'Are you sure you want to delete this chat?',
+        primaryButtonText: 'Delete',
+        secondaryButtonText: 'Cancel',
+        primaryButtonOnPressed: () async {
+          Navigator.of(context).pop(); // Close the dialog first
+
+          await _firestoreService.deleteChatSession(chatId);
+
+          if (mounted) {
+            scaffoldMessengerKey.currentState?.showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Chat deleted successsfully...',
+                  style: TextStyle(color: Colors.white),
+                ),
+                backgroundColor: AppColors.errorRed,
+              ),
+            );
+          }
+        },
+        secondaryButtonOnPressed: () {
+          Navigator.of(context).pop(); // Just close the dialog
+        },
       ),
     );
-
-    if (confirm == true) {
-      await _firestoreService.deleteChatSession(chatId);
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Chat deleted')));
-      }
-    }
   }
 
   Future<void> _showRenameDialog(
@@ -119,21 +124,72 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Rename Chat'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(hintText: 'Enter new chat name'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
         ),
+        title: Text(
+          'Rename Chat',
+          style: TextStyle(
+            fontSize: 18.sp,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: controller,
+              autofocus: true,
+              style: TextStyle(fontSize: 14.sp, color: AppColors.textPrimary),
+              decoration: InputDecoration(
+                hintText: 'Enter new chat name',
+                hintStyle: TextStyle(
+                  color: AppColors.textSecondary.withOpacity(0.5),
+                ),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16.w,
+                  vertical: 12.h,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                  borderSide: BorderSide(
+                    color: AppColors.textPrimary.withOpacity(0.1),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                  borderSide: const BorderSide(color: AppColors.brand500),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actionsPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 14.sp),
+            ),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.brand500,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+            ),
+            child: Text(
               'Rename',
-              style: TextStyle(color: AppColors.brand500),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -142,13 +198,18 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
 
     if (confirmed == true) {
       final newTitle = controller.text.trim();
-      if (newTitle.isNotEmpty) {
-        // await _firestoreService.renameChatSession(item.chatId, newTitle);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Chat renamed successfully')),
-          );
-        }
+      if (newTitle.isNotEmpty && newTitle != item.title) {
+        await _firestoreService.updateChatTitle(item.chatId, newTitle);
+
+        scaffoldMessengerKey.currentState?.showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Chat renamed successfully',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: AppColors.timelinePrimary,
+          ),
+        );
       }
     }
   }
@@ -218,7 +279,7 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
           width: double.infinity,
           height: 50.h,
           child: ElevatedButton(
-            onPressed: () => context.push('/new-chat'), // navigate to new chat
+            onPressed: () => context.push('/chat'), // navigate to new chat
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.brand500,
               shape: RoundedRectangleBorder(

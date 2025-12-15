@@ -110,8 +110,11 @@ class _ChatScreenState extends State<ChatScreen> {
       _scrollToBottom();
 
       try {
-        // Create new chat but ignore the "Hello!" message
-        final newChatResponse = await ChatApiService.newChat(userId: _userId!);
+        // Create new chat with the actual user message
+        final newChatResponse = await ChatApiService.newChat(
+          userId: _userId!,
+          message: messageText,
+        );
 
         if (newChatResponse['error'] == true) {
           _showError('Failed to create chat');
@@ -134,35 +137,11 @@ class _ChatScreenState extends State<ChatScreen> {
 
         _currentChatId = chatId;
 
-        // Now send the actual user message
-        final response = await ChatApiService.sendMessage(
-          userId: _userId!,
-          chatId: _currentChatId!,
-          message: messageText,
-        );
-
-        if (response['error'] == true) {
-          _showError('Failed to send message');
-          setState(() {
-            _messages.removeLast();
-            _isSending = false;
-          });
-          return;
-        }
-
-        // Extract messages but filter out the initial "Hello!" exchange
-        final allMessages = ChatApiService.extractMessages(response);
-
-        // Filter to only show messages that are NOT the initial greeting
-        final filteredMessages = allMessages.where((m) {
-          final content = (m['content'] ?? '').toLowerCase();
-          return content != 'hello!' &&
-              content != 'hi there! how can i help you today?' &&
-              content != 'hi! how can i help you today?';
-        }).toList();
+        // Extract messages from the new chat response
+        final allMessages = ChatApiService.extractMessages(newChatResponse);
 
         setState(() {
-          _messages = filteredMessages.map((m) {
+          _messages = allMessages.map((m) {
             return ChatMessage(
               text: m['content'] ?? '',
               isUser: m['role'] == 'user',
