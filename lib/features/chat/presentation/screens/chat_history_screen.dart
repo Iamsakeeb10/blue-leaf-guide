@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -11,7 +12,6 @@ import '../../../../shared/widgets/custom_dialog.dart';
 import '../../../../shared/widgets/custom_popup_menu.dart';
 import '../../data/chat_api_service.dart';
 import '../../data/chat_firestore_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class ChatHistoryScreen extends StatefulWidget {
   const ChatHistoryScreen({super.key});
@@ -117,7 +117,7 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
 
           if (mounted) {
             setState(() {}); // Refresh the list
-            
+
             scaffoldMessengerKey.currentState?.showSnackBar(
               const SnackBar(
                 content: Text(
@@ -223,17 +223,17 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
         await _firestoreService.updateChatTitle(item.chatId, newTitle);
 
         if (mounted) {
-           setState(() {}); // Refresh list to reflect changes if needed
-           
-           scaffoldMessengerKey.currentState?.showSnackBar(
-             const SnackBar(
-               content: Text(
-                 'Chat renamed successfully',
-                 style: TextStyle(color: Colors.white),
-               ),
-               backgroundColor: AppColors.timelinePrimary,
-             ),
-           );
+          setState(() {}); // Refresh list to reflect changes if needed
+
+          scaffoldMessengerKey.currentState?.showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Chat renamed successfully',
+                style: TextStyle(color: Colors.white),
+              ),
+              backgroundColor: AppColors.timelinePrimary,
+            ),
+          );
         }
       }
     }
@@ -255,52 +255,61 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
 
           // Note: We don't block fully on error, we try to show what we can or empty
           if (apiSnapshot.hasError) {
-             debugPrint("Error loading chats API: ${apiSnapshot.error}");
+            debugPrint("Error loading chats API: ${apiSnapshot.error}");
           }
 
           final apiData = apiSnapshot.data;
-          final List<dynamic> rawApiChats = (apiData != null && apiData['chats'] is List) 
-              ? apiData['chats'] 
+          final List<dynamic> rawApiChats =
+              (apiData != null && apiData['chats'] is List)
+              ? apiData['chats']
               : [];
 
           return StreamBuilder<List<ChatSessionModel>>(
             stream: _firestoreService.getChatSessions(),
             builder: (context, streamSnapshot) {
               final firestoreChats = streamSnapshot.data ?? [];
-              
+
               // Merge Logic
               final Map<int, ChatSessionModel> firestoreMap = {
-                for (var item in firestoreChats) item.chatId: item
+                for (var item in firestoreChats) item.chatId: item,
               };
 
               final List<ChatSessionModel> mergedChats = [];
-              
+
               for (var rawChat in rawApiChats) {
-                 if (rawChat is! Map) continue;
-                 
-                 // Fix: Try to get chatId from direct key first, then fallback
-                 final int? chatId = int.tryParse(rawChat['chatId'].toString()) ?? 
-                                     ChatApiService.extractChatId({'messages': [rawChat]}) ?? 
-                                     int.tryParse(rawChat['id'].toString());
+                if (rawChat is! Map) continue;
 
-                 if (chatId == null || chatId == 0) continue;
+                // Fix: Try to get chatId from direct key first, then fallback
+                final int? chatId =
+                    int.tryParse(rawChat['chatId'].toString()) ??
+                    ChatApiService.extractChatId({
+                      'messages': [rawChat],
+                    }) ??
+                    int.tryParse(rawChat['id'].toString());
 
-                 final apiTitle = rawChat['title'] as String?;
-                 // Try to parse time, or default to now
-                 final apiTimeStr = rawChat['createdAt'] ?? rawChat['updatedAt'];
-                 final apiTime = DateTime.tryParse(apiTimeStr ?? '') ?? DateTime.now();
+                if (chatId == null || chatId == 0) continue;
 
-                 final localData = firestoreMap[chatId];
-                 
-                 mergedChats.add(ChatSessionModel(
-                   chatId: chatId,
-                   title: localData?.title ?? apiTitle ?? 'Chat $chatId', 
-                   lastMessageTime: apiTime, 
-                 ));
+                final apiTitle = rawChat['title'] as String?;
+                // Try to parse time, or default to now
+                final apiTimeStr = rawChat['createdAt'] ?? rawChat['updatedAt'];
+                final apiTime =
+                    DateTime.tryParse(apiTimeStr ?? '') ?? DateTime.now();
+
+                final localData = firestoreMap[chatId];
+
+                mergedChats.add(
+                  ChatSessionModel(
+                    chatId: chatId,
+                    title: localData?.title ?? apiTitle ?? 'Chat $chatId',
+                    lastMessageTime: apiTime,
+                  ),
+                );
               }
-              
+
               // Sort by date desc
-              mergedChats.sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
+              mergedChats.sort(
+                (a, b) => b.lastMessageTime.compareTo(a.lastMessageTime),
+              );
 
               if (mergedChats.isEmpty) {
                 return _buildEmptyState();
@@ -311,7 +320,9 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
               return ListView.builder(
                 padding: EdgeInsets.only(
                   top: 20.0.h,
-                  bottom: MediaQuery.of(context).padding.bottom + 80.h, // Add padding for FAB
+                  bottom:
+                      MediaQuery.of(context).padding.bottom +
+                      80.h, // Add padding for FAB
                 ),
                 itemCount: grouped.length,
                 itemBuilder: (context, groupIndex) {
@@ -334,7 +345,10 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
                       ),
                       ...List.generate(items.length, (index) {
                         final isLast = index == items.length - 1;
-                        return _buildHistoryCard(items[index], showBorder: !isLast);
+                        return _buildHistoryCard(
+                          items[index],
+                          showBorder: !isLast,
+                        );
                       }),
                     ],
                   );
@@ -352,9 +366,9 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
           height: 50.h,
           child: ElevatedButton(
             onPressed: () {
-               context.push('/chat').then((_) {
-                 if (mounted) setState(() {}); // Refresh list
-               });
+              context.push('/chat').then((_) {
+                if (mounted) setState(() {}); // Refresh list
+              });
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.brand500,
@@ -457,14 +471,14 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
                     text: 'Rename',
                     textColor: AppColors.textPrimary.withOpacity(0.8),
                     onPressed: () {
-                      _showRenameDialog(context, item);
+                      // _showRenameDialog(context, item);
                     },
                   ),
                   PopupMenuItemData(
                     text: 'Delete',
                     textColor: AppColors.errorRed,
                     onPressed: () {
-                      _deleteChat(item.chatId);
+                      // _deleteChat(item.chatId);
                     },
                   ),
                 ],
