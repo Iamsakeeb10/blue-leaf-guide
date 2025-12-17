@@ -7,7 +7,7 @@ class ChatFirestoreService {
 
   String? get currentUserId => _auth.currentUser?.uid;
 
-  /// Update chat title
+  /// Update chat title with upsert (create if doesn't exist)
   Future<void> updateChatTitle(int chatId, String newTitle) async {
     if (currentUserId == null) return;
 
@@ -16,7 +16,12 @@ class ChatFirestoreService {
         .doc(currentUserId)
         .collection('chat_sessions')
         .doc(chatId.toString())
-        .update({'title': newTitle});
+        .set({
+          'chatId': chatId,
+          'title': newTitle,
+          'lastMessageTime': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true)); // ← This ensures it creates if not exists
   }
 
   /// Save or update a chat session

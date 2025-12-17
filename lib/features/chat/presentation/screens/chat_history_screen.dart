@@ -97,6 +97,7 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
           Navigator.of(context).pop(); // Close the dialog first
 
           // Create a flag to track success
+          // ignore: unused_local_variable
           bool apiSuccess = false;
 
           // Delete from API first (source of truth for existence)
@@ -134,6 +135,30 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
         },
       ),
     );
+  }
+
+  // ✅ NEW: Sync API chats to Firestore
+  Future<void> _syncChatsToFirestore(List<dynamic> rawApiChats) async {
+    for (var rawChat in rawApiChats) {
+      if (rawChat is! Map) continue;
+
+      final int? chatId = int.tryParse(rawChat['chatId'].toString());
+      if (chatId == null || chatId == 0) continue;
+
+      final title = rawChat['title'] as String? ?? 'Chat $chatId';
+      final timeStr =
+          rawChat['lastMessageAt'] ??
+          rawChat['createdAt'] ??
+          rawChat['updatedAt'];
+      final time = DateTime.tryParse(timeStr ?? '') ?? DateTime.now();
+
+      // Save to Firestore (will create if doesn't exist)
+      await _firestoreService.saveChatSession(
+        chatId: chatId,
+        title: title,
+        lastMessageTime: time,
+      );
+    }
   }
 
   Future<void> _showRenameDialog(
@@ -220,18 +245,49 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
     if (confirmed == true) {
       final newTitle = controller.text.trim();
       if (newTitle.isNotEmpty && newTitle != item.title) {
-        await _firestoreService.updateChatTitle(item.chatId, newTitle);
+        bool apiSuccess = false;
+
+        // Call API first
+        try {
+          final userId = FirebaseAuth.instance.currentUser?.uid;
+          if (userId != null) {
+            final response = await ChatApiService.renameChat(
+              userId: userId,
+              chatId: item.chatId,
+              title: newTitle,
+            );
+
+            if (response['error'] != true) {
+              apiSuccess = true;
+            } else {
+              debugPrint("API rename failed: ${response['message']}");
+            }
+          }
+        } catch (e) {
+          debugPrint("Error renaming chat via API: $e");
+        }
+
+        // Update Firestore (using upsert now, so it won't fail if doesn't exist)
+        try {
+          await _firestoreService.updateChatTitle(item.chatId, newTitle);
+        } catch (e) {
+          debugPrint("Error updating Firestore: $e");
+        }
 
         if (mounted) {
-          setState(() {}); // Refresh list to reflect changes if needed
+          setState(() {});
 
           scaffoldMessengerKey.currentState?.showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text(
-                'Chat renamed successfully',
-                style: TextStyle(color: Colors.white),
+                apiSuccess
+                    ? 'Chat renamed successfully'
+                    : 'Chat renamed locally (server error)',
+                style: const TextStyle(color: Colors.white),
               ),
-              backgroundColor: AppColors.timelinePrimary,
+              backgroundColor: apiSuccess
+                  ? AppColors.timelinePrimary
+                  : AppColors.errorRed,
             ),
           );
         }
@@ -253,7 +309,6 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // Note: We don't block fully on error, we try to show what we can or empty
           if (apiSnapshot.hasError) {
             debugPrint("Error loading chats API: ${apiSnapshot.error}");
           }
@@ -264,12 +319,14 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
               ? apiData['chats']
               : [];
 
+          // ✅ NEW: Sync API chats to Firestore when loaded
+          _syncChatsToFirestore(rawApiChats);
+
           return StreamBuilder<List<ChatSessionModel>>(
             stream: _firestoreService.getChatSessions(),
             builder: (context, streamSnapshot) {
               final firestoreChats = streamSnapshot.data ?? [];
 
-              // Merge Logic
               final Map<int, ChatSessionModel> firestoreMap = {
                 for (var item in firestoreChats) item.chatId: item,
               };
@@ -279,7 +336,6 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
               for (var rawChat in rawApiChats) {
                 if (rawChat is! Map) continue;
 
-                // Fix: Try to get chatId from direct key first, then fallback
                 final int? chatId =
                     int.tryParse(rawChat['chatId'].toString()) ??
                     ChatApiService.extractChatId({
@@ -290,8 +346,10 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
                 if (chatId == null || chatId == 0) continue;
 
                 final apiTitle = rawChat['title'] as String?;
-                // Try to parse time, or default to now
-                final apiTimeStr = rawChat['createdAt'] ?? rawChat['updatedAt'];
+                final apiTimeStr =
+                    rawChat['lastMessageAt'] ??
+                    rawChat['createdAt'] ??
+                    rawChat['updatedAt'];
                 final apiTime =
                     DateTime.tryParse(apiTimeStr ?? '') ?? DateTime.now();
 
@@ -306,7 +364,6 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
                 );
               }
 
-              // Sort by date desc
               mergedChats.sort(
                 (a, b) => b.lastMessageTime.compareTo(a.lastMessageTime),
               );
@@ -320,9 +377,7 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
               return ListView.builder(
                 padding: EdgeInsets.only(
                   top: 20.0.h,
-                  bottom:
-                      MediaQuery.of(context).padding.bottom +
-                      80.h, // Add padding for FAB
+                  bottom: MediaQuery.of(context).padding.bottom + 80.h,
                 ),
                 itemCount: grouped.length,
                 itemBuilder: (context, groupIndex) {
@@ -360,14 +415,14 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 36.w), // spacing from sides
+        padding: EdgeInsets.symmetric(horizontal: 36.w),
         child: SizedBox(
           width: double.infinity,
           height: 50.h,
           child: ElevatedButton(
             onPressed: () {
               context.push('/chat').then((_) {
-                if (mounted) setState(() {}); // Refresh list
+                if (mounted) setState(() {});
               });
             },
             style: ElevatedButton.styleFrom(
@@ -381,7 +436,6 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
               children: [
                 Icon(Icons.add, size: 24.r, color: Colors.white),
                 SizedBox(width: 8.w),
-
                 Text(
                   'New Chat',
                   style: TextStyle(
@@ -471,14 +525,14 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
                     text: 'Rename',
                     textColor: AppColors.textPrimary.withOpacity(0.8),
                     onPressed: () {
-                      // _showRenameDialog(context, item);
+                      _showRenameDialog(context, item);
                     },
                   ),
                   PopupMenuItemData(
                     text: 'Delete',
                     textColor: AppColors.errorRed,
                     onPressed: () {
-                      // _deleteChat(item.chatId);
+                      _deleteChat(item.chatId);
                     },
                   ),
                 ],

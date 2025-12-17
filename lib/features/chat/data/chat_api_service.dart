@@ -104,24 +104,16 @@ class ChatApiService {
     required String userId,
     required int chatId,
   }) {
-    return _post({"userId": userId, "chatId": chatId.toString(), "action": "history"});
+    return _post({
+      "userId": userId,
+      "chatId": chatId.toString(),
+      "action": "history",
+    });
   }
 
   /// LIST CHATS
   static Future<Map<String, dynamic>> listChats({required String userId}) {
     return _post({"userId": userId, "action": "listChats"});
-  }
-
-  /// DELETE CHAT
-  static Future<Map<String, dynamic>> deleteChat({
-    required String userId,
-    required int chatId,
-  }) {
-    return _post({
-      "userId": userId,
-      "chatId": chatId.toString(),
-      "action": "deleteChat",
-    });
   }
 
   /// Helper to extract chatId from response
@@ -153,5 +145,31 @@ class ChatApiService {
     if (value is int) return value;
     if (value is String) return int.tryParse(value);
     return null;
+  }
+
+  /// DELETE CHAT - Send chatId as integer, not string
+  static Future<Map<String, dynamic>> deleteChat({
+    required String userId,
+    required int chatId,
+  }) {
+    return _post({
+      "userId": userId,
+      "chatId": chatId.toString(), // ← Changed from chatId.toString() to chatId
+      "action": "deleteChat",
+    });
+  }
+
+  /// RENAME CHAT - Already correct, but ensure consistency
+  static Future<Map<String, dynamic>> renameChat({
+    required String userId,
+    required int chatId,
+    required String title,
+  }) {
+    return _post({
+      "userId": userId,
+      "chatId": chatId, // ← Keep as integer
+      "title": title,
+      "action": "RenameChat",
+    });
   }
 }
